@@ -26,10 +26,12 @@
     --olive:     #6f7536;   /* olive green */
     --good:      #5b7a2c;   /* growth (olive green) */
     --bad:       #9d3320;   /* decline (terracotta red) */
+    --piety:     #3f7d86;   /* sacred teal (Eusebeia) */
     --border:    #b6985f;   /* aged brass border */
     --border-d:  #8a6f3e;
     --shadow:    0 6px 16px rgba(0,0,0,.45);
     --font-serif:"Iowan Old Style","Palatino Linotype","Book Antiqua","Georgia",serif;
+    --chron-w:   290px;     /* chronicle side-panel width (toggled) */
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,7 +60,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 28px;
+    padding: 12px 28px;
     background:
       repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 9px),
       linear-gradient(180deg, #2a201700, #00000040),
@@ -85,14 +87,14 @@
     letter-spacing: 1px;
   }
 
-  #status-readout { display: flex; gap: 10px; }
+  #status-readout { display: flex; gap: 6px; }
 
   .stat-chip {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 96px;
-    padding: 4px 12px;
+    min-width: 92px;
+    padding: 3px 12px;
     border-left: 1px solid #44372a;
   }
   .stat-chip:first-child { border-left: none; }
@@ -104,22 +106,29 @@
     color: #93805f;
   }
   .stat-chip .value {
-    font-size: 22px;
+    font-size: 21px;
     color: #e9dcbe;
-    margin-top: 3px;
+    margin-top: 2px;
     text-shadow: 1px 1px 0 #000;
   }
   .stat-chip .value.phase { color: var(--ochre); font-size: 15px; font-style: italic; }
+  /* Macro-variables (Kleos / Eusebeia) — visually distinct from time */
+  .stat-chip.macro { border-left: 1px solid #44372a; }
+  .stat-chip.macro .label { color: #a99368; }
+  .value.macro-kleos { color: #e6c463; }
+  .value.macro-piety { color: #7fc4cf; }
 
-  /* ---------- Main Viewport ---------- */
+  /* ---------- Main Viewport: a three-column field ---------- */
   #viewport {
     flex: 1;
     display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 18px;
-    padding: 18px 28px;
+    grid-template-columns: 290px minmax(0, 1fr) var(--chron-w);
+    gap: 16px;
+    padding: 16px 24px;
     min-height: 0;
+    transition: grid-template-columns .25s ease;
   }
+  #viewport.chron-lg { --chron-w: 470px; }
 
   /* Parchment panels with an aged, double-ruled border */
   .panel {
@@ -155,7 +164,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 9px 4px;
+    padding: 8px 4px;
     border-bottom: 1px dotted var(--border-d);
   }
   .stat-row:last-child { border-bottom: none; }
@@ -210,8 +219,98 @@
     font-variant: small-caps;
   }
 
-  /* ---------- Map panel base ---------- */
-  #map-panel .panel-body { padding: 0; position: relative; }
+  /* ---------- Map panel: the painted lands of Demos ---------- */
+  #map-panel .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  #map-panel .panel-body { padding: 0; position: relative; overflow: hidden; }
+  .map-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .map-btn {
+    font-family: var(--font-serif);
+    font-variant: small-caps;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #f3e6c8;
+    background: linear-gradient(180deg, var(--terra), var(--terra-dark));
+    border: 1px solid #5e2616;
+    border-radius: 4px;
+    padding: 5px 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 #4d1f12;
+    text-shadow: 1px 1px 0 #3a160c;
+  }
+  .map-btn:hover  { filter: brightness(1.08); }
+  .map-btn:active { transform: translateY(2px); box-shadow: none; }
+  .map-btn .badge {
+    background: #f3e6c8; color: var(--terra-dark);
+    border-radius: 8px; padding: 0 6px; margin-left: 6px; font-weight: 700;
+  }
+
+  #map-field { position: absolute; inset: 0; background: #9cc0d8; }
+  .map-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* Interactive overlay sitting atop the painting */
+  #map-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .map-label {
+    position: absolute; transform: translate(-50%, -50%);
+    z-index: 4; pointer-events: auto; text-align: center;
+    padding: 4px 11px; white-space: nowrap;
+    background: rgba(245,235,208,.92);
+    border: 1px solid var(--terra-dark);
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,.45);
+  }
+  .map-label .ml-name { font-size: 12px; font-weight: 700; color: var(--terra-dark); font-variant: small-caps; letter-spacing: .5px; }
+  .map-label .ml-sub  { font-size: 10px; color: var(--ink-soft); font-style: italic; }
+  .map-label .ml-sub.joined { color: var(--olive); font-style: normal; font-weight: 700; }
+  .map-label.polis { border-color: var(--ochre); border-width: 2px; background: rgba(248,239,214,.96); }
+  .map-label.polis .ml-name { color: #8a5a16; font-size: 13px; }
+  .map-label.hamlet { cursor: pointer; transition: transform .1s ease, box-shadow .15s ease; }
+  .map-label.hamlet:hover { transform: translate(-50%,-50%) scale(1.06); box-shadow: 0 6px 16px rgba(0,0,0,.55); }
+  .map-label.hamlet.absorbed { cursor: default; border-color: var(--olive); background: rgba(229,233,206,.92); }
+
+  #unrest-banner {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 6; background: var(--bad); color: #f3e6c8;
+    font-variant: small-caps; letter-spacing: 1px; font-size: 13px;
+    padding: 5px 14px; border-radius: 4px; border: 1px solid #5e2616;
+    box-shadow: var(--shadow); pointer-events: none;
+  }
+
+  /* ---------- Chronicle: a collapsible side scroll ---------- */
+  #chronicle { min-height: 0; }
+  #chronicle .panel-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .chron-enlarge {
+    font-family: var(--font-serif); font-variant: small-caps; letter-spacing: 1px;
+    font-size: 11px; color: #f3e6c8; cursor: pointer;
+    background: linear-gradient(180deg, var(--terra), var(--terra-dark));
+    border: 1px solid #5e2616; border-radius: 4px; padding: 3px 9px;
+    box-shadow: 0 2px 0 #4d1f12; text-shadow: 1px 1px 0 #3a160c;
+  }
+  .chron-enlarge:hover { filter: brightness(1.08); }
+  .chron-enlarge:active { transform: translateY(2px); box-shadow: none; }
+  #chronicle-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    background-image: repeating-linear-gradient(180deg, transparent 0 26px, rgba(140,105,55,.12) 26px 27px);
+  }
+  .log-entry { padding: 5px 0; animation: fadein .3s ease; color: var(--ink); }
+  .log-entry .log-year {
+    color: var(--terra-dark); font-weight: 700; margin-right: 8px; font-variant: small-caps;
+  }
+  .log-entry.log-event   .log-text { color: var(--olive); font-weight: 600; }
+  .log-entry.log-system  .log-text { color: var(--ink-soft); font-style: italic; }
+  .log-entry.log-warning .log-text { color: var(--bad); font-weight: 700; }
+
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
   /* ---------- Control Panel: a stone shelf ---------- */
   #control-panel {
@@ -219,7 +318,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 28px;
+    padding: 11px 28px;
     background:
       repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, transparent 2px 9px),
       var(--stone);
@@ -255,129 +354,7 @@
     box-shadow: none;
   }
 
-  /* ---------- Chronicle Log: an unrolled scroll ---------- */
-  #chronicle {
-    height: 210px;
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(180deg, var(--parch), var(--parch-2));
-    border-top: 3px solid var(--border-d);
-  }
-  #chronicle .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-d);
-  }
-  #chronicle-log {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 28px 16px;
-    font-size: 14px;
-    line-height: 1.6;
-    background-image: repeating-linear-gradient(180deg, transparent 0 27px, rgba(140,105,55,.12) 27px 28px);
-  }
-  .log-entry {
-    padding: 5px 0;
-    animation: fadein .3s ease;
-    color: var(--ink);
-  }
-  .log-entry .log-year {
-    color: var(--terra-dark);
-    font-weight: 700;
-    margin-right: 10px;
-    font-variant: small-caps;
-  }
-  .log-entry.log-event   .log-text   { color: var(--olive); font-weight: 600; }
-  .log-entry.log-system  .log-text   { color: var(--ink-soft); font-style: italic; }
-  .log-entry.log-warning .log-text   { color: var(--bad); font-weight: 700; }
-
-  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
-
-  /* ---------- Map: the lands of Demos ---------- */
-  #map-panel .panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .map-tools { display: flex; gap: 8px; }
-  .map-btn {
-    font-family: var(--font-serif);
-    font-variant: small-caps;
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: #f3e6c8;
-    background: linear-gradient(180deg, var(--terra), var(--terra-dark));
-    border: 1px solid #5e2616;
-    border-radius: 4px;
-    padding: 5px 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 0 #4d1f12;
-    text-shadow: 1px 1px 0 #3a160c;
-  }
-  .map-btn:hover  { filter: brightness(1.08); }
-  .map-btn:active { transform: translateY(2px); box-shadow: none; }
-  .map-btn .badge {
-    background: #f3e6c8; color: var(--terra-dark);
-    border-radius: 8px; padding: 0 6px; margin-left: 6px; font-weight: 700;
-  }
-
-  #map-field {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 50% 50%, rgba(176,125,43,.10), transparent 62%),
-      repeating-linear-gradient(45deg, rgba(124,53,32,.06) 0 22px, rgba(110,117,54,.05) 22px 44px);
-  }
-
-  /* central Polis marker */
-  #polis-marker {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    text-align: center; z-index: 2;
-    background: linear-gradient(160deg, #efe3c6, #e2d2a9);
-    border: 2px solid var(--terra-dark);
-    border-radius: 6px; padding: 12px 20px;
-    box-shadow: var(--shadow), inset 0 0 18px rgba(140,105,55,.25);
-  }
-  #polis-marker .polis-icon { font-size: 30px; }
-  #polis-marker .polis-name { font-variant: small-caps; font-weight: 700; color: var(--terra-dark); letter-spacing: 1px; }
-  #polis-marker .polis-pop  { font-size: 12px; color: var(--ink-soft); }
-
-  /* neighbouring hamlet markers */
-  .hamlet-marker {
-    position: absolute; transform: translate(-50%,-50%);
-    width: 134px; text-align: center; cursor: pointer; z-index: 2;
-    background: rgba(255,255,255,.22);
-    border: 1px dashed var(--border-d);
-    border-radius: 5px; padding: 8px 6px;
-    transition: transform .1s ease, box-shadow .15s ease, background .15s ease;
-  }
-  .hamlet-marker:hover {
-    background: rgba(255,255,255,.42);
-    box-shadow: var(--shadow);
-    transform: translate(-50%,-50%) scale(1.04);
-  }
-  .hamlet-marker .h-icon { font-size: 24px; }
-  .hamlet-marker .h-name { font-size: 12px; font-weight: 700; color: var(--ink); font-variant: small-caps; line-height: 1.15; }
-  .hamlet-marker .h-pop  { font-size: 11px; color: var(--ink-soft); font-style: italic; }
-  .hamlet-marker .h-tag  { font-size: 10px; letter-spacing: 1px; color: var(--terra-dark); text-transform: uppercase; }
-  .hamlet-marker.absorbed {
-    cursor: default; opacity: .65;
-    border-style: solid; border-color: var(--olive);
-    background: rgba(111,117,54,.20);
-  }
-  .hamlet-marker.absorbed .h-tag { color: var(--olive); }
-  .hamlet-marker.absorbed:hover { transform: translate(-50%,-50%); box-shadow: none; }
-
-  #unrest-banner {
-    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-    z-index: 3; background: var(--bad); color: #f3e6c8;
-    font-variant: small-caps; letter-spacing: 1px; font-size: 13px;
-    padding: 5px 14px; border-radius: 4px; border: 1px solid #5e2616;
-    box-shadow: var(--shadow);
-  }
-
-  /* ---------- Modals (Labor & Administration) ---------- */
+  /* ---------- Modals ---------- */
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 50;
     background: rgba(20,12,6,.72);
@@ -398,7 +375,7 @@
     padding: 16px; overflow-y: auto;
   }
 
-  /* hamlet action cards inside the Administration modal */
+  /* Cards shared by Administration & Civic Investments modals */
   .hamlet-card {
     border: 1px solid var(--border-d);
     border-radius: 5px; padding: 14px 16px; margin-bottom: 14px;
@@ -436,6 +413,21 @@
     text-align: center; color: var(--olive); font-weight: 700; font-size: 16px;
     padding: 28px 8px; font-variant: small-caps; letter-spacing: 1px; line-height: 1.5;
   }
+  .civic-built {
+    flex: 1; color: var(--olive); font-weight: 700; font-variant: small-caps;
+    letter-spacing: 1px; padding: 10px 4px; font-size: 14px;
+  }
+
+  /* Crisis modal — a darker, urgent tone */
+  .crisis-panel { border-color: var(--bad); outline-color: #6e2418; }
+  .crisis-panel .panel-header { color: var(--bad); }
+  .crisis-head { display: flex; align-items: center; gap: 14px; }
+  .crisis-icon { font-size: 36px; }
+  .crisis-name { font-size: 21px; font-weight: 700; color: var(--bad); font-variant: small-caps; letter-spacing: 1px; }
+  .crisis-desc { margin: 12px 0; font-size: 14px; line-height: 1.55; color: var(--ink); }
+  .crisis-threat { font-size: 13px; color: var(--bad); font-weight: 600; margin-bottom: 14px; }
+  .crisis-threat b { font-weight: 700; }
+  .crisis-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
   /* Scrollbars styled like worn leather */
   ::-webkit-scrollbar { width: 11px; }
@@ -453,6 +445,14 @@
       <span id="city-name">—</span>
     </div>
     <div id="status-readout">
+      <div class="stat-chip macro">
+        <span class="label">⭐ Kleos</span>
+        <span class="value macro-kleos" id="hud-kleos">0</span>
+      </div>
+      <div class="stat-chip macro">
+        <span class="label">🔥 Eusebeia</span>
+        <span class="value macro-piety" id="hud-eusebeia">0</span>
+      </div>
       <div class="stat-chip">
         <span class="label">Year</span>
         <span class="value" id="hud-year">—</span>
@@ -478,19 +478,162 @@
       </div>
     </section>
 
-    <!-- The map is now the primary view -->
+    <!-- The map is the primary view, a painted landscape -->
     <section class="panel" id="map-panel">
       <div class="panel-header">
         <span>The Lands of Demos</span>
         <span class="map-tools">
           <button class="map-btn" id="open-labor">⚒ Labor of the Demos</button>
+          <button class="map-btn" id="open-civic">🔥 Civic Investments</button>
           <button class="map-btn" id="open-admin">⚖ Administration<span class="badge" id="admin-badge">0</span></button>
         </span>
       </div>
       <div class="panel-body">
-        <div id="map-field"><!-- Polis &amp; hamlets rendered by renderMap() --></div>
+        <div id="map-field">
+          <!-- Painted scene (static); interactive labels rendered into #map-overlay -->
+          <svg class="map-scene" viewBox="0 0 1000 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#9cc0d8"/>
+                <stop offset="0.55" stop-color="#cdbf94"/>
+                <stop offset="1" stop-color="#f3cf8e"/>
+              </linearGradient>
+              <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="#fff6d8"/>
+                <stop offset="0.4" stop-color="#ffe7a8" stop-opacity="0.75"/>
+                <stop offset="1" stop-color="#ffd27f" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8fb6bd"/><stop offset="1" stop-color="#3c6f86"/>
+              </linearGradient>
+              <linearGradient id="mfar" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#bcc7d4"/><stop offset="1" stop-color="#97a6b8"/>
+              </linearGradient>
+              <linearGradient id="mnear" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8e9aa9"/><stop offset="1" stop-color="#697889"/>
+              </linearGradient>
+              <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#9fae66"/><stop offset="1" stop-color="#7e8f4b"/>
+              </linearGradient>
+              <linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#86994c"/><stop offset="1" stop-color="#697c39"/>
+              </linearGradient>
+              <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#6e803d"/><stop offset="1" stop-color="#54672e"/>
+              </linearGradient>
+              <linearGradient id="hilltop" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#abb96e"/><stop offset="1" stop-color="#869552"/>
+              </linearGradient>
+              <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#c4683a"/><stop offset="1" stop-color="#97411f"/>
+              </linearGradient>
+            </defs>
+
+            <!-- sky & sun -->
+            <rect x="0" y="0" width="1000" height="372" fill="url(#sky)"/>
+            <circle cx="775" cy="92" r="125" fill="url(#sun)"/>
+            <circle cx="775" cy="92" r="34" fill="#fff7dd"/>
+
+            <!-- clouds -->
+            <g fill="#fbf4e4">
+              <g opacity="0.85"><ellipse cx="180" cy="80" rx="62" ry="20"/><ellipse cx="232" cy="70" rx="44" ry="17"/><ellipse cx="132" cy="74" rx="38" ry="15"/></g>
+              <g opacity="0.78"><ellipse cx="520" cy="54" rx="70" ry="20"/><ellipse cx="575" cy="47" rx="42" ry="15"/></g>
+              <g opacity="0.7"><ellipse cx="885" cy="155" rx="54" ry="16"/><ellipse cx="918" cy="148" rx="34" ry="12"/></g>
+            </g>
+
+            <!-- distant sea on the right -->
+            <path d="M620 332 L1000 300 L1000 472 L662 472 Z" fill="url(#sea)"/>
+            <g stroke="#d6e9ea" stroke-width="2" opacity="0.5">
+              <line x1="700" y1="360" x2="982" y2="345"/>
+              <line x1="742" y1="392" x2="982" y2="382"/>
+              <line x1="786" y1="424" x2="982" y2="418"/>
+            </g>
+
+            <!-- far mountains -->
+            <path d="M-20 332 L80 232 L160 292 L250 200 L340 286 L430 226 L520 300 L600 250 L700 332 Z"
+                  fill="url(#mfar)" opacity="0.92"/>
+            <!-- near mountains (left) with snow caps -->
+            <path d="M-20 352 L120 214 L240 322 L330 240 L430 342 Z" fill="url(#mnear)"/>
+            <path d="M120 214 L150 250 L100 256 Z" fill="#f4f2eb" opacity="0.92"/>
+            <path d="M330 240 L356 278 L304 280 Z" fill="#f4f2eb" opacity="0.85"/>
+
+            <!-- layered rolling hills (the land) -->
+            <path d="M0 360 Q250 322 500 350 T1000 342 L1000 600 L0 600 Z" fill="url(#hillFar)"/>
+            <path d="M0 432 Q300 382 620 420 T1000 432 L1000 600 L0 600 Z" fill="url(#hillMid)"/>
+            <path d="M0 512 Q260 470 540 506 T1000 522 L1000 600 L0 600 Z" fill="url(#hillNear)"/>
+
+            <!-- the central hilltop -->
+            <path d="M320 432 Q420 250 500 245 Q586 250 700 432 Z" fill="url(#hilltop)"/>
+            <path d="M500 245 Q586 250 700 432 L520 432 Z" fill="#000" opacity="0.06"/>
+
+            <!-- dashed roads from the polis out to each hamlet -->
+            <g stroke="#dcc07a" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round" opacity="0.55" fill="none">
+              <path d="M495 360 C 380 380, 280 360, 175 308"/>
+              <path d="M498 366 C 430 432, 360 472, 300 488"/>
+              <path d="M522 360 C 644 402, 742 422, 800 446"/>
+            </g>
+
+            <!-- ===== Central village (the Polis) ===== -->
+            <g id="scene-polis">
+              <!-- temple -->
+              <g transform="translate(468,248)">
+                <polygon points="0,18 62,18 31,-7" fill="url(#roof)"/>
+                <rect x="1" y="18" width="60" height="6" fill="#efe7d2"/>
+                <g fill="#f3ecd9">
+                  <rect x="6" y="24" width="6" height="28"/><rect x="20" y="24" width="6" height="28"/>
+                  <rect x="36" y="24" width="6" height="28"/><rect x="50" y="24" width="6" height="28"/>
+                </g>
+                <rect x="-1" y="52" width="64" height="6" fill="#d8c79f"/>
+              </g>
+              <!-- houses -->
+              <g transform="translate(424,300)"><rect x="0" y="8" width="26" height="20" fill="#e3cfa4"/><polygon points="-2,8 28,8 13,-4" fill="url(#roof)"/></g>
+              <g transform="translate(548,302)"><rect x="0" y="8" width="30" height="22" fill="#decba0"/><polygon points="-2,8 32,8 15,-5" fill="url(#roof)"/></g>
+              <g transform="translate(506,320)"><rect x="0" y="6" width="22" height="18" fill="#e6d3a8"/><polygon points="-2,6 24,6 11,-4" fill="url(#roof)"/></g>
+              <!-- olive trees -->
+              <g fill="#5c6f34"><circle cx="408" cy="318" r="9"/><circle cx="588" cy="324" r="8"/></g>
+            </g>
+
+            <!-- ===== Foothill Clan ===== -->
+            <g id="scene-foothill" transform="translate(118,246)">
+              <g fill="#46582b"><polygon points="6,62 24,62 15,28"/><polygon points="40,68 60,68 50,30"/></g>
+              <g transform="translate(0,52)"><rect x="0" y="6" width="24" height="18" fill="#bbb4a2"/><polygon points="-2,6 26,6 12,-7" fill="#6b6356"/></g>
+              <g transform="translate(30,58)"><rect x="0" y="6" width="22" height="16" fill="#aaa392"/><polygon points="-2,6 24,6 11,-6" fill="#5f584c"/></g>
+              <g fill="#d9d2c4" opacity="0.55"><circle cx="12" cy="42" r="4"/><circle cx="16" cy="33" r="5"/><circle cx="21" cy="24" r="6"/></g>
+            </g>
+
+            <!-- ===== River Valley Tribe ===== -->
+            <g id="scene-river" transform="translate(226,430)">
+              <path d="M-46 60 Q40 40 92 70 Q152 96 244 70 L244 96 Q152 122 92 96 Q40 72 -46 90 Z" fill="#5e93a8" opacity="0.92"/>
+              <g stroke="#6f7d3a" stroke-width="2"><line x1="104" y1="70" x2="104" y2="54"/><line x1="110" y1="72" x2="112" y2="55"/><line x1="98" y1="71" x2="96" y2="57"/></g>
+              <g transform="translate(42,28)"><rect x="0" y="8" width="26" height="18" fill="#e3cfa4"/><polygon points="-2,8 28,8 13,-4" fill="url(#roof)"/></g>
+              <g transform="translate(2,40)"><rect x="0" y="8" width="22" height="16" fill="#dcc79c"/><polygon points="-2,8 24,8 11,-4" fill="url(#roof)"/></g>
+            </g>
+
+            <!-- ===== Coastal Fishermen ===== -->
+            <g id="scene-coastal" transform="translate(738,398)">
+              <path d="M-22 52 Q80 32 204 50 L204 84 L-22 84 Z" fill="#e6d7ad" opacity="0.85"/>
+              <g transform="translate(120,18)">
+                <path d="M0 8 Q18 24 42 8 Z" fill="#7a4a26"/>
+                <line x1="21" y1="8" x2="21" y2="-14" stroke="#7a4a26" stroke-width="2"/>
+                <polygon points="21,-14 21,2 36,-5" fill="#efe7d2"/>
+              </g>
+              <g transform="translate(20,28)"><rect x="0" y="8" width="24" height="16" fill="#e3cfa4"/><polygon points="-2,8 26,8 12,-4" fill="url(#roof)"/></g>
+              <g transform="translate(54,34)"><rect x="0" y="6" width="20" height="14" fill="#dcc79c"/><polygon points="-2,6 22,6 10,-4" fill="url(#roof)"/></g>
+            </g>
+          </svg>
+          <div id="map-overlay"><!-- labels rendered by renderMap() --></div>
+        </div>
       </div>
     </section>
+
+    <!-- Chronicle: a collapsible side scroll -->
+    <aside class="panel" id="chronicle">
+      <div class="panel-header">
+        <span>The Chronicle</span>
+        <button class="chron-enlarge" id="chron-enlarge">⤢ Enlarge</button>
+      </div>
+      <div id="chronicle-log"></div>
+    </aside>
   </main>
 
   <!-- ============ CONTROL PANEL ============ -->
@@ -498,15 +641,6 @@
     <span id="control-hint">Advance the chronicle one year at a time.</span>
     <button id="end-turn-btn">End Turn</button>
   </div>
-
-  <!-- ============ CHRONICLE LOG ============ -->
-  <section id="chronicle">
-    <div class="panel-header">
-      <span>The Chronicle</span>
-      <span id="era-range" style="color:var(--ink-soft);font-weight:400;letter-spacing:1px;">900 BC – 750 BC</span>
-    </div>
-    <div id="chronicle-log"></div>
-  </section>
 
   <!-- ============ LABOR MODAL ============ -->
   <div class="modal-backdrop" id="labor-modal" hidden>
@@ -517,6 +651,19 @@
       </div>
       <div id="labor-body" class="modal-grid">
         <!-- populated by render() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CIVIC INVESTMENTS MODAL ============ -->
+  <div class="modal-backdrop" id="civic-modal" hidden>
+    <div class="modal panel">
+      <div class="panel-header">
+        <span>Civic Investments</span>
+        <button class="modal-close" data-close="civic-modal" aria-label="Close">×</button>
+      </div>
+      <div id="civic-body" class="modal-body">
+        <!-- populated by renderCivic() -->
       </div>
     </div>
   </div>
@@ -534,13 +681,24 @@
     </div>
   </div>
 
+  <!-- ============ CRISIS MODAL (must be resolved) ============ -->
+  <div class="modal-backdrop" id="crisis-modal" hidden>
+    <div class="modal panel crisis-panel">
+      <div class="panel-header">A Crisis Befalls the Polis</div>
+      <div id="crisis-body" class="modal-body">
+        <!-- populated by renderCrisis() -->
+      </div>
+    </div>
+  </div>
+
 <script>
 "use strict";
 
 /* ===================================================================
    DEMOS — CORE ENGINE
    A central Game State Object driven by a strict Finite State Machine.
-   Phase 1 adds the early-game survival resource economy.
+   Phase 1: survival economy, synoikismos, and the early cultural/
+   religious systems (Kleos & Eusebeia) that bind the people.
    =================================================================== */
 
 /* ---------- Configuration / Constants ---------- */
@@ -559,6 +717,9 @@ const CONFIG = Object.freeze({
   ANNEX_SUCCESS: 0.60,   // chance a coercive annexation succeeds
   UNREST_TURNS:  3,      // turns of civil unrest after a failed annexation
   UNREST_FACTOR: 0.5,    // production multiplier while unrest lasts
+
+  // Culture & religion.
+  CRISIS_CHANCE: 0.15,   // chance per turn of an early structural crisis
 });
 
 /* The FSM states the game can occupy. */
@@ -593,6 +754,12 @@ const YIELD = Object.freeze({
   grapes: 1,
 });
 
+/* Civic Investments — cultural & religious actions. */
+const CIVIC = Object.freeze({
+  bard:  { grain: 8, cattle: 2, kleos: 6 },   // Fund an Aoidos: +Kleos at once
+  altar: { timber: 25, clay: 20, piety: 2 },  // Open-Air Altar: +Piety/turn, built once
+});
+
 /* ---------- The central Game State Object ---------- */
 const GameState = {
   status:   GameStatus.BOOT,
@@ -612,6 +779,12 @@ const GameState = {
     clay:       15,    // structural material
   },
 
+  // Macro-variables: the cultural & religious standing of the Polis.
+  macros: {
+    kleos:    0,   // Renown / Glory — draws wandering migrants
+    eusebeia: 0,   // Piety — a buffer spent to weather crises
+  },
+
   // Current turn's job head-counts (derived; for display).
   jobs: {},
 
@@ -620,6 +793,12 @@ const GameState = {
 
   // Permanent per-turn resource bonuses gained from absorbed hamlets.
   bonuses: {},
+
+  // Whether the open-air altar has been raised (passive piety).
+  altarBuilt: false,
+
+  // An unresolved crisis awaiting the player's response, if any.
+  pendingCrisis: null,
 
   // Turns of civil unrest remaining (from a failed annexation).
   unrest: 0,
@@ -659,11 +838,34 @@ const DAWN_EVENTS = [
 ];
 
 /*
+ * Early structural CRISES (15% chance per turn). Each may be weathered
+ * by spending Piety to "Invoke Divine Favor" (mitigated outcome); lacking
+ * the Piety, the city suffers the full damage.
+ */
+const CRISES = [
+  { id: "blight", name: "Crop Blight", icon: "🐛", pietyCost: 8,
+    desc: "A grey rot creeps through the barley; the standing harvest withers in the field.",
+    damage: { grain: -32 }, mitigated: { grain: -8 } },
+  { id: "quake", name: "Earthquake Tremor", icon: "🌋", pietyCost: 11,
+    desc: "The earth shudders. Mud-brick walls crack and a storehouse spills into the dust.",
+    damage: { clay: -12, timber: -10, population: -6 }, mitigated: { clay: -4, population: -1 } },
+  { id: "plague", name: "Fever in the Wells", icon: "🤒", pietyCost: 12,
+    desc: "A sickness rises from the wells and spreads hut to hut, laying the people low.",
+    damage: { population: -13 }, mitigated: { population: -3 } },
+  { id: "tempest", name: "Tempest from the Sea", icon: "⛈️", pietyCost: 9,
+    desc: "A violent storm batters the coast, scattering the flocks and soaking the grain.",
+    damage: { cattle: -5, grain: -14 }, mitigated: { grain: -3 } },
+  { id: "wolves", name: "Wolves from the Hills", icon: "🐺", pietyCost: 7,
+    desc: "A hard season drives gaunt wolves down from the high country, upon the herds.",
+    damage: { cattle: -7 }, mitigated: { cattle: -2 } },
+];
+
+/*
  * SYNOIKISMOS — the surrounding independent hamlets that may be unified
  * into the Polis. Each controls a unique resource asset that, once
  * absorbed, is permanently folded into the city's turn generation.
  *
- *  pos   — placement on the map field (percent of the field).
+ *  pos   — placement of the interactive label on the map (percent).
  *  asset — { label, bonus } added to GameState.bonuses on absorption.
  *  feast — Diplomatic Feast cost (wine/grapes + cattle); instant success.
  *  annex — Coercive Annexation cost (cattle + grain supplies); 60% success.
@@ -671,7 +873,7 @@ const DAWN_EVENTS = [
 const HAMLETS = [
   {
     id: "foothill", name: "The Foothill Clan", icon: "⛰️",
-    population: 30, pos: { top: "16%", left: "18%" },
+    population: 30, pos: { top: "52%", left: "14%" },
     desc: "Hardy highlanders who fell timber and quarry stone from the upland forests.",
     asset: { label: "timber from the high forests", bonus: { timber: +6 } },
     feast: { grapes: 30, cattle: 6 },
@@ -679,7 +881,7 @@ const HAMLETS = [
   },
   {
     id: "coastal", name: "The Coastal Fishermen", icon: "🌊",
-    population: 25, pos: { top: "70%", left: "76%" },
+    population: 25, pos: { top: "80%", left: "80%" },
     desc: "Fisherfolk whose nets bring a steady catch to feed the growing city.",
     asset: { label: "a steady catch that swells the food stores", bonus: { grain: +8 } },
     feast: { grapes: 26, cattle: 5 },
@@ -687,7 +889,7 @@ const HAMLETS = [
   },
   {
     id: "river", name: "The River Valley Tribe", icon: "🏞️",
-    population: 40, pos: { top: "74%", left: "22%" },
+    population: 40, pos: { top: "85%", left: "28%" },
     desc: "Potters and farmers of the fertile river bend, rich in clay and grain.",
     asset: { label: "clay and grain from the river bend", bonus: { clay: +6, grain: +3 } },
     feast: { grapes: 34, cattle: 8 },
@@ -706,6 +908,16 @@ function formatYear(y) {
 
 /** Pick a random element from an array. */
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/** Format a stat-change object as readable text, e.g. "−30 Grain, −6 Population". */
+function formatChanges(obj) {
+  const parts = Object.keys(obj).map(k => {
+    const v = obj[k];
+    const label = STAT_META[k] ? STAT_META[k].label : k;
+    return `${v >= 0 ? "+" : "−"}${Math.abs(v)} ${label}`;
+  });
+  return parts.join(", ");
+}
 
 /**
  * Append an entry to the chronicle and (if mounted) the log panel.
@@ -743,8 +955,9 @@ function assignJobs(population) {
 
 /**
  * Process the deterministic part of a timeline tick:
- * passive production from labour, then grain consumption / starvation,
- * and surplus-driven population growth.
+ * passive production from labour, grain consumption / starvation,
+ * surplus-driven population growth, then the cultural systems
+ * (altar piety and Kleos-driven migration).
  */
 function processTick() {
   const s = GameState.stats;
@@ -811,16 +1024,37 @@ function processTick() {
       "warning"
     );
   }
+
+  // --- Cult: the open-air altar yields piety each turn ---
+  if (GameState.altarBuilt) {
+    GameState.macros.eusebeia += CIVIC.altar.piety;
+  }
+
+  // --- Renown: high Kleos draws wandering migrants; glory then fades ---
+  const kleos = GameState.macros.kleos;
+  if (kleos > 0) {
+    const chance = Math.min(0.55, 0.04 + kleos / 400);
+    if (Math.random() < chance) {
+      const migrants = 2 + Math.floor(kleos / 40) + Math.floor(Math.random() * 3);
+      applyStats({ population: +migrants });
+      logChronicle(
+        `Drawn by the renown of ${GameState.cityName}, ${migrants} wandering folk settle among you.`,
+        "event"
+      );
+    }
+    GameState.macros.kleos = Math.max(0, kleos - 1);   // glory slowly fades
+  }
 }
 
 /**
  * THE CORE TURN FUNCTION.
- * Advances state, processes the timeline tick, rolls a possible event,
+ * Advances state, processes the timeline tick, rolls events and crises,
  * and writes feedback to the Chronicle. Guards against running outside
- * the PLAYING state (FSM discipline).
+ * the PLAYING state, or while a crisis awaits a decision.
  */
 function nextTurn() {
   if (GameState.status !== GameStatus.PLAYING) return;
+  if (GameState.pendingCrisis) return;   // a crisis must be answered first
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
@@ -839,14 +1073,22 @@ function nextTurn() {
     logChronicle(ev.text, "event");
   }
 
-  // --- 4. FSM transitions: collapse or era completion ---
+  // --- 4. Random structural crisis (15% chance) ---
+  //     The crisis opens a modal; its damage is applied on the player's choice.
+  let crisisTriggered = false;
+  if (Math.random() < CONFIG.CRISIS_CHANCE) {
+    triggerCrisis();
+    crisisTriggered = true;
+  }
+
+  // --- 5. FSM transitions: collapse or era completion ---
   if (GameState.stats.population <= 0) {
     collapse();
   } else if (GameState.year <= CONFIG.END_YEAR) {
     endEra();
   }
 
-  // --- 5. Repaint UI ---
+  // --- 6. Repaint UI (crisis modal, if any, was already opened) ---
   render();
 }
 
@@ -870,7 +1112,7 @@ function collapse() {
 }
 
 /* ===================================================================
-   SYNOIKISMOS — uniting neighbouring hamlets into the Polis
+   CULTURE & RELIGION — Civic Investments and Crises
    =================================================================== */
 
 /** Spend resources outside the turn loop (clamped, no delta tracking). */
@@ -880,6 +1122,106 @@ function spend(changes) {
     GameState.stats[key] = Math.max(0, GameState.stats[key] + changes[key]);
   }
 }
+
+/** Civic Investment: fund a travelling bard, raising Kleos at once. */
+function fundBard() {
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  const c = CIVIC.bard;
+  if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
+    logChronicle("There is too little to provision a travelling bard.", "warning");
+    afterAction();
+    return;
+  }
+  spend({ grain: -c.grain, cattle: -c.cattle });
+  GameState.macros.kleos += c.kleos;
+  logChronicle(
+    `An aoidos sings the deeds of ${GameState.cityName} in far-off halls; ` +
+    `its renown grows (+${c.kleos} Kleos).`,
+    "event"
+  );
+  afterAction();
+}
+
+/** Civic Investment: erect the open-air altar (one-time; yields piety/turn). */
+function buildAltar() {
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  if (GameState.altarBuilt) return;
+  const c = CIVIC.altar;
+  if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay) {
+    logChronicle("There is not yet timber and clay enough to raise an altar.", "warning");
+    afterAction();
+    return;
+  }
+  spend({ timber: -c.timber, clay: -c.clay });
+  GameState.altarBuilt = true;
+  logChronicle(
+    `An open-air altar is raised upon the hill; its sacred smoke will rise each year ` +
+    `(+${c.piety} Piety / turn).`,
+    "system"
+  );
+  afterAction();
+}
+
+/** Roll a random crisis and present it for the player's decision. */
+function triggerCrisis() {
+  const crisis = pick(CRISES);
+  GameState.pendingCrisis = crisis;
+  logChronicle(`A crisis befalls the Polis: ${crisis.name}!`, "warning");
+  renderCrisis();
+  openModal("crisis-modal");
+}
+
+/**
+ * Resolve the pending crisis.
+ * @param {boolean} invoke  true to Invoke Divine Favor (spend Piety);
+ *                          false to Endure the full damage.
+ */
+function resolveCrisis(invoke) {
+  const c = GameState.pendingCrisis;
+  if (!c) return;
+
+  if (invoke && GameState.macros.eusebeia >= c.pietyCost) {
+    GameState.macros.eusebeia -= c.pietyCost;
+    applyStats(c.mitigated);
+    logChronicle(
+      `The people beseech the gods with sacrifice; divine favor softens the ${c.name} ` +
+      `(only ${formatChanges(c.mitigated)}).`,
+      "event"
+    );
+  } else {
+    applyStats(c.damage);
+    logChronicle(
+      `Without divine favor, the ${c.name} strikes hard: ${formatChanges(c.damage)}.`,
+      "warning"
+    );
+  }
+
+  GameState.pendingCrisis = null;
+  closeModal("crisis-modal");
+
+  // A crisis may prove fatal.
+  if (GameState.stats.population <= 0 && GameState.status === GameStatus.PLAYING) {
+    collapse();
+  }
+  render();
+}
+
+/** Repaint everything after an administrative / civic action. */
+function afterAction() {
+  render();
+}
+
+/* ---------- Modal controls ---------- */
+function openModal(id)  { document.getElementById(id).hidden = false; }
+function closeModal(id) { document.getElementById(id).hidden = true; }
+
+function openLabor() { render(); openModal("labor-modal"); }
+function openCivic() { renderCivic(); openModal("civic-modal"); }
+function openAdmin() { renderAdmin(); openModal("admin-modal"); }
+
+/* ===================================================================
+   SYNOIKISMOS — uniting neighbouring hamlets into the Polis
+   =================================================================== */
 
 /** Look up a runtime hamlet by id. */
 function getHamlet(id) {
@@ -912,7 +1254,7 @@ function absorbHamlet(h) {
 
 /** Diplomatic Feast: high wine + cattle cost, but certain success. */
 function attemptFeast(id) {
-  if (GameState.status !== GameStatus.PLAYING) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.feast;
@@ -930,7 +1272,7 @@ function attemptFeast(id) {
 
 /** Coercive Annexation: cattle + supplies cost, 60% success, unrest on failure. */
 function attemptAnnex(id) {
-  if (GameState.status !== GameStatus.PLAYING) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.annex;
@@ -957,26 +1299,16 @@ function attemptAnnex(id) {
   afterAction();
 }
 
-/** Repaint everything after an administrative action. */
-function afterAction() {
-  render();
-}
-
-/* ---------- Modal controls ---------- */
-function openModal(id)  { document.getElementById(id).hidden = false; }
-function closeModal(id) { document.getElementById(id).hidden = true; }
-
-function openLabor() { render(); openModal("labor-modal"); }
-function openAdmin() { renderAdmin(); openModal("admin-modal"); }
-
 /* ===================================================================
    RENDERING
    =================================================================== */
 
-/** Repaint the entire HUD, resource panel, and labour panel from GameState. */
+/** Repaint the HUD, resource panel, labour panel, map and civic views. */
 function render() {
   // Top bar
   document.getElementById("city-name").textContent = `by Penguin`;
+  document.getElementById("hud-kleos").textContent    = GameState.macros.kleos;
+  document.getElementById("hud-eusebeia").textContent = GameState.macros.eusebeia;
   document.getElementById("hud-year").textContent  = formatYear(GameState.year);
   document.getElementById("hud-turn").textContent  = GameState.turn;
   document.getElementById("hud-phase").textContent = GameState.phase;
@@ -1021,27 +1353,36 @@ function render() {
     labor.appendChild(card);
   }
 
-  // Map and administration views.
+  // Map, civic and administration views.
   renderMap();
+  renderCivic();
   renderAdmin();
 
-  // Control panel reflects the FSM.
+  // Control panel reflects the FSM and any pending crisis.
   const btn = document.getElementById("end-turn-btn");
+  const hint = document.getElementById("control-hint");
   if (GameState.status === GameStatus.ENDED) {
     btn.disabled = true;
     btn.textContent = "Era Complete";
-    document.getElementById("control-hint").textContent =
-      GameState.stats.population <= 0
-        ? "The Demos is no more. Refresh to begin anew."
-        : "The Dawn Era has ended. A new age awaits in a future phase.";
+    hint.textContent = GameState.stats.population <= 0
+      ? "The Demos is no more. Refresh to begin anew."
+      : "The Dawn Era has ended. A new age awaits in a future phase.";
+  } else if (GameState.pendingCrisis) {
+    btn.disabled = true;
+    btn.textContent = "End Turn";
+    hint.textContent = "A crisis demands your answer before the year may turn.";
+  } else {
+    btn.disabled = false;
+    btn.textContent = "End Turn";
+    hint.textContent = "Advance the chronicle one year at a time.";
   }
 }
 
-/** Render the map field: the central Polis and the neighbouring hamlets. */
+/** Render the interactive overlay (labels) atop the painted map scene. */
 function renderMap() {
-  const field = document.getElementById("map-field");
-  if (!field) return;
-  field.innerHTML = "";
+  const overlay = document.getElementById("map-overlay");
+  if (!overlay) return;
+  overlay.innerHTML = "";
 
   // Civil-unrest banner.
   if (GameState.unrest > 0) {
@@ -1050,35 +1391,35 @@ function renderMap() {
     banner.textContent =
       `⚠ Civil unrest — production reduced for ` +
       `${GameState.unrest} ${GameState.unrest === 1 ? "turn" : "turns"}`;
-    field.appendChild(banner);
+    overlay.appendChild(banner);
   }
 
-  // The central Polis.
+  // The central Polis label (sits below the painted temple).
   const polis = document.createElement("div");
-  polis.id = "polis-marker";
+  polis.className = "map-label polis";
+  polis.style.left = "50%";
+  polis.style.top  = "60%";
   polis.innerHTML =
-    `<div class="polis-icon">🏛️</div>` +
-    `<div class="polis-name">${GameState.cityName}</div>` +
-    `<div class="polis-pop">${GameState.stats.population} souls</div>`;
-  field.appendChild(polis);
+    `<div class="ml-name">🏛️ ${GameState.cityName}</div>` +
+    `<div class="ml-sub">${GameState.stats.population} souls</div>`;
+  overlay.appendChild(polis);
 
-  // Neighbouring hamlets.
+  // Neighbouring hamlet labels.
   GameState.hamlets.forEach(h => {
     const m = document.createElement("div");
-    m.className = "hamlet-marker" + (h.absorbed ? " absorbed" : "");
-    m.style.top = h.pos.top;
+    m.className = "map-label hamlet" + (h.absorbed ? " absorbed" : "");
     m.style.left = h.pos.left;
+    m.style.top  = h.pos.top;
     m.innerHTML =
-      `<div class="h-icon">${h.icon}</div>` +
-      `<div class="h-name">${h.name}</div>` +
+      `<div class="ml-name">${h.icon} ${h.name}</div>` +
       (h.absorbed
-        ? `<div class="h-tag">✓ joined</div>`
-        : `<div class="h-pop">${h.population} souls</div><div class="h-tag">independent</div>`);
+        ? `<div class="ml-sub joined">✓ joined the Polis</div>`
+        : `<div class="ml-sub">${h.population} souls · click to unite</div>`);
     if (!h.absorbed) {
       m.title = "Open Administration to unite this hamlet";
       m.addEventListener("click", openAdmin);
     }
-    field.appendChild(m);
+    overlay.appendChild(m);
   });
 
   // Update the Administration badge with the count of free hamlets.
@@ -1088,6 +1429,86 @@ function renderMap() {
     badge.textContent = remaining;
     badge.style.display = remaining ? "" : "none";
   }
+}
+
+/** Render the Civic Investments modal body. */
+function renderCivic() {
+  const body = document.getElementById("civic-body");
+  if (!body) return;
+
+  const b = CIVIC.bard, a = CIVIC.altar;
+  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis;
+  const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
+  const canAltar = !GameState.altarBuilt && GameState.stats.timber >= a.timber && GameState.stats.clay >= a.clay;
+
+  body.innerHTML =
+    `<p class="admin-intro">Before written law binds them, your people are held together by shared ` +
+    `glory and shared gods. Fund renown to draw newcomers, and raise an altar to weather the wrath of fate.</p>` +
+
+    `<div class="hamlet-card">` +
+      `<div class="hc-head"><span class="hc-name">🎻 Fund an Aoidos</span><span class="hc-pop">Renown · Kleos</span></div>` +
+      `<div class="hc-desc">A travelling bard carries the deeds of your Polis to distant halls, ` +
+        `drawing wandering folk toward your gates.</div>` +
+      `<div class="hc-asset">Effect: <b>+${b.kleos} Kleos</b> at once — higher Kleos lures more migrants</div>` +
+      `<div class="hamlet-actions">` +
+        `<button class="action-btn diplomatic" id="civic-bard" ${(!canBard || ended) ? "disabled" : ""}>` +
+          `<span class="ab-title">🎻 Fund the Aoidos</span>` +
+          `<span class="ab-cost">🌾 ${b.grain} grain · 🐄 ${b.cattle} cattle</span>` +
+        `</button>` +
+      `</div>` +
+    `</div>` +
+
+    `<div class="hamlet-card">` +
+      `<div class="hc-head"><span class="hc-name">🔥 Open-Air Altar</span><span class="hc-pop">Piety · Eusebeia</span></div>` +
+      `<div class="hc-desc">A stone altar beneath the open sky, where sacrifice keeps the favour of the gods — ` +
+        `a bulwark to be spent against crisis.</div>` +
+      `<div class="hc-asset">Effect: <b>+${a.piety} Piety / turn</b> once raised</div>` +
+      `<div class="hamlet-actions">` +
+        (GameState.altarBuilt
+          ? `<div class="civic-built">✓ The altar stands — sacred smoke rises each turn (+${a.piety} Piety).</div>`
+          : `<button class="action-btn" id="civic-altar" ${(!canAltar || ended) ? "disabled" : ""}>` +
+              `<span class="ab-title">🔥 Erect the Altar</span>` +
+              `<span class="ab-cost">🪵 ${a.timber} timber · 🧱 ${a.clay} clay — built once</span>` +
+            `</button>`) +
+      `</div>` +
+    `</div>`;
+
+  const bardBtn = document.getElementById("civic-bard");
+  if (bardBtn) bardBtn.addEventListener("click", fundBard);
+  const altarBtn = document.getElementById("civic-altar");
+  if (altarBtn) altarBtn.addEventListener("click", buildAltar);
+}
+
+/** Render the pending crisis into the (non-dismissable) crisis modal. */
+function renderCrisis() {
+  const c = GameState.pendingCrisis;
+  const body = document.getElementById("crisis-body");
+  if (!c || !body) return;
+
+  const canInvoke = GameState.macros.eusebeia >= c.pietyCost;
+
+  body.innerHTML =
+    `<div class="crisis-head"><span class="crisis-icon">${c.icon}</span>` +
+      `<span class="crisis-name">${c.name}</span></div>` +
+    `<p class="crisis-desc">${c.desc}</p>` +
+    `<div class="crisis-threat">Unchecked, this would cost the Polis: <b>${formatChanges(c.damage)}</b></div>` +
+    `<div class="crisis-actions">` +
+      `<button class="action-btn diplomatic" id="crisis-invoke" ${canInvoke ? "" : "disabled"}>` +
+        `<span class="ab-title">🙏 Invoke Divine Favor</span>` +
+        `<span class="ab-cost">` +
+          (canInvoke
+            ? `Spend 🔥 ${c.pietyCost} Piety — losses softened to ${formatChanges(c.mitigated)}`
+            : `Requires 🔥 ${c.pietyCost} Piety (you have ${GameState.macros.eusebeia})`) +
+        `</span>` +
+      `</button>` +
+      `<button class="action-btn" id="crisis-endure">` +
+        `<span class="ab-title">🛡 Endure the Crisis</span>` +
+        `<span class="ab-cost">Suffer the full toll: ${formatChanges(c.damage)}</span>` +
+      `</button>` +
+    `</div>`;
+
+  document.getElementById("crisis-invoke").addEventListener("click", () => resolveCrisis(true));
+  document.getElementById("crisis-endure").addEventListener("click", () => resolveCrisis(false));
 }
 
 /** Render the Administration (Synoikismos) modal body. */
@@ -1111,7 +1532,7 @@ function renderAdmin() {
     const f = h.feast, a = h.annex;
     const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
     const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain;
-    const ended = GameState.status !== GameStatus.PLAYING;
+    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis;
 
     html +=
       `<div class="hamlet-card">` +
@@ -1170,6 +1591,9 @@ function initGame() {
   GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false }));
   GameState.bonuses = {};
   GameState.unrest = 0;
+  GameState.altarBuilt = false;
+  GameState.pendingCrisis = null;
+  GameState.macros = { kleos: 0, eusebeia: 0 };
 
   render();
   logChronicle(
@@ -1179,8 +1603,8 @@ function initGame() {
   );
   logChronicle("Farmers sow grain, herders tend cattle, and the kilns are lit.", "system");
   logChronicle(
-    "Three independent hamlets dwell nearby. Through synoikismos — by feast or by force — " +
-    "they may yet be united into the Polis. Open Administration to begin.",
+    "Bards may spread your renown and an altar may court the gods — open Civic Investments. " +
+    "Three independent hamlets dwell nearby; through synoikismos they may join the Polis.",
     "system"
   );
   logChronicle("The Dawn Era begins. Press “End Turn” to let the years unfold.", "system");
@@ -1188,15 +1612,28 @@ function initGame() {
   // End Turn.
   document.getElementById("end-turn-btn").addEventListener("click", nextTurn);
 
-  // Map tools: open the Labor and Administration modals.
+  // Map tools: open the Labor, Civic and Administration modals.
   document.getElementById("open-labor").addEventListener("click", openLabor);
+  document.getElementById("open-civic").addEventListener("click", openCivic);
   document.getElementById("open-admin").addEventListener("click", openAdmin);
 
-  // Modal close buttons and backdrop clicks.
+  // Chronicle enlarge / shrink toggle.
+  document.getElementById("chron-enlarge").addEventListener("click", () => {
+    const vp = document.getElementById("viewport");
+    vp.classList.toggle("chron-lg");
+    document.getElementById("chron-enlarge").textContent =
+      vp.classList.contains("chron-lg") ? "⤡ Shrink" : "⤢ Enlarge";
+  });
+
+  // Modal close buttons.
   document.querySelectorAll(".modal-close").forEach(btn =>
     btn.addEventListener("click", () => closeModal(btn.getAttribute("data-close"))));
+
+  // Backdrop clicks dismiss modals — except the crisis modal, which must be answered.
   document.querySelectorAll(".modal-backdrop").forEach(back =>
-    back.addEventListener("click", e => { if (e.target === back) back.hidden = true; }));
+    back.addEventListener("click", e => {
+      if (e.target === back && back.id !== "crisis-modal") back.hidden = true;
+    }));
 }
 
 window.addEventListener("DOMContentLoaded", initGame);
