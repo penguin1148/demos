@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Demos — The Dawn Era</title>
+<style>
+  /* ===========================================================
+     Demos — Phase 1: The Dawn Era (900 BC – 750 BC)
+     Single-file prototype. Dark theme, modern layout.
+     =========================================================== */
+
+  :root {
+    --bg:            #0e1116;
+    --bg-panel:      #161b22;
+    --bg-panel-2:    #1c232d;
+    --border:        #2a323d;
+    --accent:        #c9a227;   /* aged gold */
+    --accent-soft:   #e0c158;
+    --text:          #e6e1d3;   /* parchment */
+    --text-dim:      #8b939f;
+    --good:          #6fcf73;
+    --bad:           #e06c6c;
+    --shadow:        0 4px 18px rgba(0,0,0,.45);
+    --font-greek:    "Optima", "Palatino Linotype", "Georgia", serif;
+    --font-ui:       "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Top Bar ---------- */
+  #top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: linear-gradient(180deg, #181f29, #11161d);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    z-index: 2;
+  }
+
+  #title-block {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  #title-block h1 {
+    font-family: var(--font-greek);
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent-soft);
+    text-transform: uppercase;
+  }
+
+  #city-name {
+    font-family: var(--font-greek);
+    font-size: 15px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  #status-readout {
+    display: flex;
+    gap: 28px;
+  }
+
+  .stat-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 88px;
+  }
+
+  .stat-chip .label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .stat-chip .value {
+    font-family: var(--font-greek);
+    font-size: 20px;
+    color: var(--text);
+    margin-top: 2px;
+  }
+
+  .stat-chip .value.phase { color: var(--accent-soft); font-size: 16px; }
+
+  /* ---------- Main Viewport ---------- */
+  #viewport {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    padding: 16px 24px;
+    min-height: 0;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .panel-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Statistics list */
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .stat-row:last-child { border-bottom: none; }
+
+  .stat-row .stat-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .stat-row .stat-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .stat-row .stat-val {
+    font-family: var(--font-greek);
+    font-size: 18px;
+    color: var(--text);
+  }
+  .stat-val.delta-up::after   { content: " ▲"; color: var(--good); font-size: 11px; }
+  .stat-val.delta-down::after { content: " ▼"; color: var(--bad);  font-size: 11px; }
+
+  /* Map placeholder */
+  #map-panel .panel-body {
+    padding: 0;
+    position: relative;
+  }
+  #map-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background:
+      repeating-linear-gradient(45deg, #141a22 0 20px, #11161d 20px 40px);
+    color: var(--text-dim);
+    text-align: center;
+  }
+  #map-placeholder .glyph { font-size: 48px; opacity: .35; }
+  #map-placeholder p { font-size: 13px; max-width: 320px; line-height: 1.5; }
+  #map-placeholder .hint { font-size: 11px; font-style: italic; opacity: .6; }
+
+  /* ---------- Control Panel ---------- */
+  #control-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 24px;
+    background: var(--bg-panel-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #control-hint {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  #end-turn-btn {
+    font-family: var(--font-greek);
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #1a1407;
+    background: linear-gradient(180deg, var(--accent-soft), var(--accent));
+    border: none;
+    border-radius: 8px;
+    padding: 12px 36px;
+    cursor: pointer;
+    transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+    box-shadow: 0 3px 0 #8a6f1a, var(--shadow);
+  }
+  #end-turn-btn:hover   { filter: brightness(1.08); }
+  #end-turn-btn:active  { transform: translateY(2px); box-shadow: 0 1px 0 #8a6f1a; }
+  #end-turn-btn:disabled {
+    filter: grayscale(.7) brightness(.6);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* ---------- Chronicle Log ---------- */
+  #chronicle {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+  }
+  #chronicle .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #chronicle-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 24px 16px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .log-entry {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(42,50,61,.5);
+    animation: fadein .3s ease;
+  }
+  .log-entry .log-year {
+    color: var(--accent);
+    font-family: var(--font-greek);
+    font-weight: 600;
+    margin-right: 10px;
+  }
+  .log-entry .log-text { color: var(--text); }
+  .log-entry.log-event .log-text { color: var(--accent-soft); }
+  .log-entry.log-system .log-text { color: var(--text-dim); font-style: italic; }
+
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a4452; }
+</style>
+</head>
+<body>
+
+  <!-- ============ TOP BAR ============ -->
+  <header id="top-bar">
+    <div id="title-block">
+      <h1>Demos</h1>
+      <span id="city-name">—</span>
+    </div>
+    <div id="status-readout">
+      <div class="stat-chip">
+        <span class="label">Year</span>
+        <span class="value" id="hud-year">—</span>
+      </div>
+      <div class="stat-chip">
+        <span class="label">Turn</span>
+        <span class="value" id="hud-turn">—</span>
+      </div>
+      <div class="stat-chip">
+        <span class="label">Phase</span>
+        <span class="value phase" id="hud-phase">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN VIEWPORT ============ -->
+  <main id="viewport">
+    <!-- Statistics -->
+    <section class="panel" id="stats-panel">
+      <div class="panel-header">City Statistics</div>
+      <div class="panel-body" id="stats-body">
+        <!-- populated by render() -->
+      </div>
+    </section>
+
+    <!-- Map placeholder -->
+    <section class="panel" id="map-panel">
+      <div class="panel-header">Landscape &amp; Settlement</div>
+      <div class="panel-body">
+        <div id="map-placeholder">
+          <span class="glyph">⛰️</span>
+          <p>The land lies quiet around your fledgling settlement.</p>
+          <span class="hint">The city map will take shape here as Demos grows.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ CONTROL PANEL ============ -->
+  <div id="control-panel">
+    <span id="control-hint">Advance the chronicle one year at a time.</span>
+    <button id="end-turn-btn">End Turn</button>
+  </div>
+
+  <!-- ============ CHRONICLE LOG ============ -->
+  <section id="chronicle">
+    <div class="panel-header">
+      <span>The Chronicle</span>
+      <span id="era-range" style="color:var(--text-dim);font-weight:400;letter-spacing:1px;">900 BC – 750 BC</span>
+    </div>
+    <div id="chronicle-log"></div>
+  </section>
+
+<script>
+"use strict";
+
+/* ===================================================================
+   DEMOS — CORE ENGINE
+   A central Game State Object driven by a strict Finite State Machine.
+   =================================================================== */
+
+/* ---------- Configuration / Constants ---------- */
+const CONFIG = Object.freeze({
+  START_YEAR:   900,   // 900 BC
+  END_YEAR:     750,   // 750 BC — end of the Dawn Era
+  YEARS_PER_TURN: 1,
+  PHASE_NAME:   "The Dawn Era",
+});
+
+/* The FSM states the game can occupy. */
+const GameStatus = Object.freeze({
+  BOOT:    "BOOT",     // before initialization
+  PLAYING: "PLAYING",  // accepting turns
+  ENDED:   "ENDED",    // era complete
+});
+
+/* ---------- The central Game State Object ---------- */
+const GameState = {
+  status:     GameStatus.BOOT,
+  cityName:   "Demos",
+  year:       CONFIG.START_YEAR,   // counts DOWN (BC)
+  turn:       0,
+  phase:      CONFIG.PHASE_NAME,
+
+  // Core city statistics for the Dawn Era.
+  stats: {
+    population: 120,
+    food:       80,
+    faith:      10,
+    culture:    5,
+    influence:  0,
+  },
+
+  // Deltas captured during the last tick, used to render trend arrows.
+  lastDeltas: {},
+
+  // The chronicle: an append-only list of historical entries.
+  chronicle: [],
+};
+
+/* ---------- Display metadata for statistics ---------- */
+const STAT_META = {
+  population: { icon: "👥", label: "Population" },
+  food:       { icon: "🌾", label: "Food Stores" },
+  faith:      { icon: "🏛️", label: "Faith" },
+  culture:    { icon: "📜", label: "Culture" },
+  influence:  { icon: "⚔️", label: "Influence" },
+};
+
+/* ---------- Flavor: era-appropriate random events ---------- */
+const DAWN_EVENTS = [
+  { text: "A bountiful harvest fills the granaries.",            stats: { food: +12, population: +4 } },
+  { text: "Wandering shepherds settle among your people.",       stats: { population: +6 } },
+  { text: "Elders raise a humble shrine to the gods.",           stats: { faith: +5, culture: +2 } },
+  { text: "A dry season thins the flocks.",                      stats: { food: -8 } },
+  { text: "Potters refine their craft; trade trinkets appear.",  stats: { culture: +4, influence: +2 } },
+  { text: "A feud between families unsettles the village.",      stats: { influence: -3, culture: -1 } },
+  { text: "Travellers bring tales of distant Mycenae.",          stats: { culture: +3 } },
+  { text: "Fishermen find rich waters along the coast.",         stats: { food: +9 } },
+  { text: "A mild winter spares the young and old.",             stats: { population: +5, faith: +1 } },
+  { text: "Olive saplings are planted on the hillsides.",        stats: { food: +3, culture: +2 } },
+];
+
+/* ===================================================================
+   ENGINE LOGIC
+   =================================================================== */
+
+/** Convert internal year value to a display string (e.g. "900 BC"). */
+function formatYear(y) {
+  return y > 0 ? `${y} BC` : `${Math.abs(y) + 1} AD`;
+}
+
+/** Pick a random element from an array. */
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/**
+ * Append an entry to the chronicle and (if mounted) the log panel.
+ * @param {string} text  The message body.
+ * @param {string} kind  "system" | "turn" | "event"
+ */
+function logChronicle(text, kind = "turn") {
+  const entry = { year: GameState.year, text, kind };
+  GameState.chronicle.push(entry);
+  renderLogEntry(entry);
+}
+
+/**
+ * Apply a set of stat changes, clamping at zero, and record deltas.
+ * @param {Object} changes  e.g. { food: +10, population: -2 }
+ */
+function applyStats(changes) {
+  for (const key in changes) {
+    if (!(key in GameState.stats)) continue;
+    const before = GameState.stats[key];
+    const after = Math.max(0, before + changes[key]);
+    GameState.stats[key] = after;
+    GameState.lastDeltas[key] = (GameState.lastDeltas[key] || 0) + (after - before);
+  }
+}
+
+/**
+ * Process the deterministic part of a timeline tick:
+ * natural growth, consumption, and derived effects.
+ */
+function processTick() {
+  const s = GameState.stats;
+
+  // Food is consumed by the population; surplus enables growth.
+  const consumption = Math.floor(s.population / 20);
+  const surplus = s.food - consumption;
+
+  applyStats({ food: -consumption });
+
+  if (surplus > 0) {
+    // Surplus food feeds modest population growth.
+    const growth = Math.max(1, Math.floor(surplus / 10));
+    applyStats({ population: +growth });
+  } else {
+    // Famine: people leave or perish.
+    applyStats({ population: -Math.max(1, Math.floor(s.population / 25)) });
+    logChronicle("Scarcity grips the settlement; some families depart.", "system");
+  }
+
+  // Faith and culture compound slowly over the generations.
+  applyStats({ faith: +1 });
+  if (GameState.turn % 3 === 0) applyStats({ culture: +1 });
+}
+
+/**
+ * THE CORE TURN FUNCTION.
+ * Advances state, processes the timeline tick, rolls a possible event,
+ * and writes feedback to the Chronicle. Guards against running outside
+ * the PLAYING state (FSM discipline).
+ */
+function nextTurn() {
+  if (GameState.status !== GameStatus.PLAYING) return;
+
+  // --- 1. Advance the clock ---
+  GameState.turn += 1;
+  GameState.year -= CONFIG.YEARS_PER_TURN;   // years count down (BC)
+  GameState.lastDeltas = {};                  // reset trend tracking
+
+  logChronicle(`Turn ${GameState.turn} begins. The year is ${formatYear(GameState.year)}.`, "turn");
+
+  // --- 2. Deterministic timeline tick ---
+  processTick();
+
+  // --- 3. Stochastic historical event (~55% chance) ---
+  if (Math.random() < 0.55) {
+    const ev = pick(DAWN_EVENTS);
+    applyStats(ev.stats);
+    logChronicle(ev.text, "event");
+  }
+
+  // --- 4. Check for era completion (FSM transition) ---
+  if (GameState.year <= CONFIG.END_YEAR) {
+    endEra();
+  }
+
+  // --- 5. Repaint UI ---
+  render();
+}
+
+/** FSM transition: PLAYING -> ENDED. */
+function endEra() {
+  GameState.status = GameStatus.ENDED;
+  logChronicle(
+    `The Dawn Era draws to a close. After ${GameState.turn} years, ` +
+    `${GameState.cityName} stands ready for the age to come.`,
+    "system"
+  );
+}
+
+/* ===================================================================
+   RENDERING
+   =================================================================== */
+
+/** Repaint the entire HUD and statistics panel from GameState. */
+function render() {
+  // Top bar
+  document.getElementById("city-name").textContent = `of ${GameState.cityName}`;
+  document.getElementById("hud-year").textContent  = formatYear(GameState.year);
+  document.getElementById("hud-turn").textContent  = GameState.turn;
+  document.getElementById("hud-phase").textContent = GameState.phase;
+
+  // Statistics panel
+  const body = document.getElementById("stats-body");
+  body.innerHTML = "";
+  for (const key in GameState.stats) {
+    const meta = STAT_META[key] || { icon: "•", label: key };
+    const delta = GameState.lastDeltas[key] || 0;
+    const deltaClass = delta > 0 ? "delta-up" : delta < 0 ? "delta-down" : "";
+
+    const row = document.createElement("div");
+    row.className = "stat-row";
+    row.innerHTML =
+      `<span class="stat-name"><span class="stat-icon">${meta.icon}</span>${meta.label}</span>` +
+      `<span class="stat-val ${deltaClass}">${GameState.stats[key]}</span>`;
+    body.appendChild(row);
+  }
+
+  // Control panel state reflects the FSM.
+  const btn = document.getElementById("end-turn-btn");
+  if (GameState.status === GameStatus.ENDED) {
+    btn.disabled = true;
+    btn.textContent = "Era Complete";
+    document.getElementById("control-hint").textContent =
+      "The Dawn Era has ended. A new age awaits in a future phase.";
+  }
+}
+
+/** Append a single chronicle entry to the log panel and scroll into view. */
+function renderLogEntry(entry) {
+  const log = document.getElementById("chronicle-log");
+  const el = document.createElement("div");
+  el.className = "log-entry" + (entry.kind === "event" ? " log-event"
+                              : entry.kind === "system" ? " log-system" : "");
+  el.innerHTML =
+    `<span class="log-year">${formatYear(entry.year)}</span>` +
+    `<span class="log-text">${entry.text}</span>`;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ===================================================================
+   BOOTSTRAP
+   =================================================================== */
+
+function initGame() {
+  GameState.status = GameStatus.PLAYING;   // FSM: BOOT -> PLAYING
+  render();
+  logChronicle(
+    `In the year ${formatYear(CONFIG.START_YEAR)}, a scattering of families ` +
+    `founds the settlement of ${GameState.cityName}.`,
+    "system"
+  );
+  logChronicle("The Dawn Era begins. Press “End Turn” to let the years unfold.", "system");
+
+  document.getElementById("end-turn-btn").addEventListener("click", nextTurn);
+}
+
+window.addEventListener("DOMContentLoaded", initGame);
+</script>
+</body>
+</html>
