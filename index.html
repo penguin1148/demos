@@ -200,23 +200,26 @@
   .delta.neg { color: var(--bad); }
   .delta.zero { color: var(--ink-soft); opacity: .55; }
 
-  /* ---------- Labour (job assignments) cards ---------- */
-  .job-card {
-    text-align: center;
-    padding: 10px 6px;
-    background: rgba(255,255,255,.18);
-    border: 1px solid var(--border-d);
-    border-radius: 3px;
-    box-shadow: inset 0 0 12px rgba(140,105,55,.15);
+  /* ---------- Labour allocation (job distribution sliders) ---------- */
+  .job-alloc {
+    display: flex; align-items: center; gap: 12px;
+    padding: 7px 2px; border-bottom: 1px dotted var(--border-d);
   }
-  .job-card .job-icon { font-size: 22px; }
-  .job-card .job-count { font-size: 20px; font-weight: 700; color: var(--ink); }
-  .job-card .job-name {
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    font-variant: small-caps;
+  .job-alloc:last-of-type { border-bottom: none; }
+  .ja-icon { font-size: 20px; width: 24px; text-align: center; }
+  .ja-name { flex: 0 0 120px; font-size: 14px; color: var(--ink); }
+  .ja-name small { display: block; font-size: 11px; color: var(--ink-soft); font-style: italic; }
+  .ja-range { flex: 1; accent-color: var(--terra); cursor: pointer; }
+  .ja-count { flex: 0 0 88px; text-align: right; font-size: 13px; color: var(--ink-soft); }
+  .ja-count b { color: var(--ink); font-size: 16px; }
+  .ja-balance { margin-top: 14px; padding: 10px 12px; border-radius: 5px; font-size: 13px; font-weight: 600; line-height: 1.4; }
+  .ja-balance.good { background: rgba(91,122,44,.16);  color: var(--good); border: 1px solid var(--good); }
+  .ja-balance.bad  { background: rgba(157,51,32,.14);  color: var(--bad);  border: 1px solid var(--bad); }
+  .ja-balance b { font-weight: 700; }
+  .ja-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 14px; font-size: 13px; color: var(--ink);
+    font-variant: small-caps; letter-spacing: 1px;
   }
 
   /* ---------- Map panel: the painted lands of Demos ---------- */
@@ -587,15 +590,69 @@
             <path d="M320 432 Q420 250 500 245 Q586 250 700 432 Z" fill="url(#hilltop)"/>
             <path d="M500 245 Q586 250 700 432 L520 432 Z" fill="#000" opacity="0.06"/>
 
-            <!-- the sea, meeting a curving coastline in the lower-right -->
-            <path d="M1000 318 L1000 600 L588 600 C 660 528, 732 486, 802 452 C 882 412, 952 360, 1000 318 Z" fill="url(#sea)"/>
-            <!-- a band of pale sand along the shore -->
-            <path d="M556 600 C 632 524, 710 480, 786 442 C 866 402, 938 348, 1000 300 L1000 318 C 952 360, 882 412, 802 452 C 732 486, 660 528, 588 600 Z" fill="#e7d9af" opacity="0.85"/>
-            <!-- gentle waves -->
-            <g stroke="#d6e9ea" stroke-width="2" opacity="0.45" fill="none">
-              <path d="M812 470 Q890 452 968 432"/>
-              <path d="M788 512 Q884 494 970 474"/>
-              <path d="M770 556 Q880 540 980 524"/>
+            <!-- the sea: a bay receding to the horizon at the far right -->
+            <path d="M1000 350 L1000 600 L520 600 C 600 548, 690 512, 760 478 C 850 436, 940 392, 1000 350 Z" fill="url(#sea)"/>
+            <!-- faint horizon shimmer where the water meets the sky -->
+            <path d="M1000 350 C 952 378, 902 404, 858 426 C 906 408, 956 384, 1000 360 Z" fill="#cfe6e8" opacity="0.4"/>
+            <!-- a band of pale sand along the curving shoreline -->
+            <path d="M500 600 C 584 546, 676 508, 748 472 C 838 430, 930 384, 1000 338 L1000 350 C 940 392, 850 436, 760 478 C 690 512, 600 548, 520 600 Z" fill="#e7d9af" opacity="0.85"/>
+            <!-- gentle waves following the bay -->
+            <g stroke="#d6e9ea" stroke-width="2" opacity="0.4" fill="none">
+              <path d="M820 470 Q900 446 982 414"/>
+              <path d="M800 512 Q892 492 985 460"/>
+              <path d="M782 556 Q892 540 986 512"/>
+            </g>
+
+            <!-- the river: winds down from the hills and empties into the sea -->
+            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 540 567, 602 566, 662 556"
+                  fill="none" stroke="#5e93a8" stroke-width="14" stroke-linecap="round" opacity="0.9"/>
+            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 540 567, 602 566, 662 556"
+                  fill="none" stroke="#cfe6e8" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+
+            <!-- wild trees, shrubs and open plains scattered across the land -->
+            <g id="scene-flora">
+              <!-- distant trees (small, hazy) -->
+              <g fill="#71834a">
+                <g transform="translate(70,372) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(150,360) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(215,378) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(300,362) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(470,360) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(560,356) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(640,360) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(720,352) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(805,360) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+                <g transform="translate(905,374) scale(0.8)"><rect x="-1.5" y="0" width="3" height="7" fill="#6b4f2a"/><ellipse cx="0" cy="-4" rx="7" ry="8"/></g>
+              </g>
+              <!-- midground trees -->
+              <g fill="#5f7338">
+                <g transform="translate(55,434)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(120,454)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(186,440)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(360,452)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(700,434)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(760,452)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+                <g transform="translate(820,434)"><rect x="-1.5" y="0" width="3" height="8" fill="#6b4f2a"/><ellipse cx="0" cy="-5" rx="8" ry="9"/></g>
+              </g>
+              <!-- foreground trees (larger, deeper green) -->
+              <g fill="#51632c">
+                <g transform="translate(40,526) scale(1.3)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(112,544) scale(1.3)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(176,524) scale(1.3)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(242,550) scale(1.3)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(330,556) scale(1.3)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(150,502) scale(1.15)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(300,506) scale(1.15)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+                <g transform="translate(420,548) scale(1.2)"><rect x="-1.5" y="0" width="3" height="8" fill="#5d4426"/><ellipse cx="0" cy="-5" rx="9" ry="10"/></g>
+              </g>
+              <!-- low shrubs dotting the plains -->
+              <g fill="#6e803d">
+                <ellipse cx="92" cy="404" rx="5" ry="3.5"/><ellipse cx="250" cy="420" rx="5" ry="3.5"/>
+                <ellipse cx="332" cy="470" rx="6" ry="4"/><ellipse cx="520" cy="470" rx="6" ry="4"/>
+                <ellipse cx="96" cy="470" rx="5" ry="3.5"/><ellipse cx="200" cy="560" rx="7" ry="4.5"/>
+                <ellipse cx="380" cy="506" rx="6" ry="4"/><ellipse cx="648" cy="452" rx="5" ry="3.5"/>
+                <ellipse cx="710" cy="470" rx="6" ry="4"/><ellipse cx="150" cy="560" rx="6" ry="4"/>
+              </g>
             </g>
 
             <!-- dashed roads from the polis out to each hamlet -->
@@ -629,12 +686,12 @@
               <g fill="#d9d2c4" opacity="0.55"><circle cx="12" cy="42" r="4"/><circle cx="16" cy="33" r="5"/><circle cx="21" cy="24" r="6"/></g>
             </g>
 
-            <!-- ===== River Valley Tribe ===== -->
+            <!-- ===== River Valley Tribe — huts on the bank of the landscape river ===== -->
             <g id="scene-river" transform="translate(226,430)">
-              <path d="M-46 60 Q40 40 92 70 Q152 96 244 70 L244 96 Q152 122 92 96 Q40 72 -46 90 Z" fill="#5e93a8" opacity="0.92"/>
-              <g stroke="#6f7d3a" stroke-width="2"><line x1="104" y1="70" x2="104" y2="54"/><line x1="110" y1="72" x2="112" y2="55"/><line x1="98" y1="71" x2="96" y2="57"/></g>
               <g transform="translate(42,28)"><rect x="0" y="8" width="26" height="18" fill="#e3cfa4"/><polygon points="-2,8 28,8 13,-4" fill="url(#roof)"/></g>
               <g transform="translate(2,40)"><rect x="0" y="8" width="22" height="16" fill="#dcc79c"/><polygon points="-2,8 24,8 11,-4" fill="url(#roof)"/></g>
+              <!-- reeds along the river bank -->
+              <g stroke="#6f7d3a" stroke-width="2"><line x1="34" y1="96" x2="34" y2="80"/><line x1="40" y1="98" x2="42" y2="80"/><line x1="28" y1="97" x2="26" y2="82"/></g>
             </g>
 
             <!-- ===== Coastal Fishermen — huts on the shore, boat afloat ===== -->
@@ -681,8 +738,8 @@
         <span>Labor of the Demos</span>
         <button class="modal-close" data-close="labor-modal" aria-label="Close">×</button>
       </div>
-      <div id="labor-body" class="modal-grid">
-        <!-- populated by render() -->
+      <div id="labor-body" class="modal-body">
+        <!-- populated by renderLabor() -->
       </div>
     </div>
   </div>
@@ -778,12 +835,21 @@ const GameStatus = Object.freeze({
  * phases will let the player reassign labour.
  */
 const JOBS = Object.freeze({
-  farmers:      { ratio: 0.40, icon: "🌾", name: "Farmers",     yields: "grain"  },
-  herders:      { ratio: 0.12, icon: "🐄", name: "Herders",     yields: "cattle" },
-  woodcutters:  { ratio: 0.16, icon: "🪓", name: "Woodcutters", yields: "timber" },
-  potters:      { ratio: 0.14, icon: "🏺", name: "Potters",     yields: "clay"   },
-  oliveGrowers: { ratio: 0.10, icon: "🫒", name: "Olive Tenders", yields: "olives" },
-  vintners:     { ratio: 0.08, icon: "🍇", name: "Vintners",    yields: "grapes" },
+  farmers:      { icon: "🌾", name: "Farmers",     yields: "grain"  },
+  herders:      { icon: "🐄", name: "Herders",     yields: "cattle" },
+  woodcutters:  { icon: "🪓", name: "Woodcutters", yields: "timber" },
+  potters:      { icon: "🏺", name: "Potters",     yields: "clay"   },
+  oliveGrowers: { icon: "🫒", name: "Olive Tenders", yields: "olives" },
+  vintners:     { icon: "🍇", name: "Vintners",    yields: "grapes" },
+});
+
+/*
+ * Default labour allocation, as relative weights the player may re-balance
+ * from the Labor panel. The early city must keep the vast majority of its
+ * people farming — drop farmers much below ~40% and the granaries run dry.
+ */
+const DEFAULT_ALLOC = Object.freeze({
+  farmers: 56, herders: 8, woodcutters: 14, potters: 11, oliveGrowers: 6, vintners: 5,
 });
 
 /* Yield per worker, per turn, for the resource that job produces. */
@@ -842,7 +908,10 @@ const GameState = {
   pendingFestival: false,
   festivalAlloc: { cattle: 0, grapes: 0, grain: 0 },
 
-  // Current turn's job head-counts (derived; for display).
+  // Player-set labour allocation (relative weights per trade).
+  jobAllocation: {},
+
+  // Current turn's job head-counts (derived from the allocation; for display).
   jobs: {},
 
   // Synoikismos: runtime copy of the neighbouring hamlets.
@@ -1001,12 +1070,14 @@ function applyStats(changes) {
   }
 }
 
-/** Divide the population among the fixed job assignments. */
+/** Divide the population among the trades according to the player's weights. */
 function assignJobs(population) {
+  const w = GameState.jobAllocation;
+  let total = 0;
+  for (const key in JOBS) total += (w[key] || 0);
+  if (total <= 0) total = 1;
   const counts = {};
-  for (const key in JOBS) {
-    counts[key] = Math.round(population * JOBS[key].ratio);
-  }
+  for (const key in JOBS) counts[key] = Math.round(population * (w[key] || 0) / total);
   return counts;
 }
 
@@ -1042,6 +1113,7 @@ function processTick() {
   const factor = GameState.unrest > 0 ? CONFIG.UNREST_FACTOR : 1;
   for (const key in prod) prod[key] = Math.floor(prod[key] * factor);
 
+  const grainProduced = prod.grain;   // grain grown this turn (for the growth model)
   applyStats(prod);
 
   if (GameState.unrest > 0) {
@@ -1057,16 +1129,15 @@ function processTick() {
   const needed = Math.ceil(s.population * CONFIG.GRAIN_PER_CITIZEN);
 
   if (s.grain >= needed) {
-    // The settlement is fed; surplus supports modest growth.
+    // The settlement is fed; a sustainable per-turn surplus supports growth.
     applyStats({ grain: -needed });
-    const surplus = s.grain;   // grain remaining after the meal
+    const turnSurplus = grainProduced - needed;   // what this year's harvest spared
 
-    let growth = Math.floor(surplus / 40);
+    let growth = Math.max(0, Math.floor(turnSurplus / 25));
     if (s.olives > 0) growth += 1;                              // health & hygiene
     if (s.grapes > 0 && GameState.turn % 2 === 0) growth += 1;  // festivals & births
-    growth = Math.min(growth, Math.ceil(s.population * 0.08));  // cap natural growth
     growth -= Math.floor(GameState.unhappiness / 8);            // discontent dampens growth
-    if (growth < 0) growth = 0;
+    growth = Math.max(0, Math.min(growth, 6));                  // modest absolute cap (no runaway)
 
     if (growth > 0) {
       applyStats({ population: +growth });
@@ -1083,6 +1154,13 @@ function processTick() {
       "warning"
     );
     GameState.unhappiness += 3;   // hunger breeds discontent
+  }
+
+  // Grain cannot be hoarded forever in this early era — surplus beyond a few
+  // years' supply spoils in the storage pits, keeping famine a real threat.
+  const grainCap = Math.max(120, needed * 5);
+  if (GameState.stats.grain > grainCap) {
+    applyStats({ grain: -(GameState.stats.grain - grainCap) });
   }
 
   // --- Cult: the open-air altar yields piety each turn ---
@@ -1596,20 +1674,8 @@ function render() {
     body.appendChild(row);
   }
 
-  // Labour panel
-  const labor = document.getElementById("labor-body");
-  labor.innerHTML = "";
-  for (const key in JOBS) {
-    const job = JOBS[key];
-    const count = (GameState.jobs && GameState.jobs[key]) || 0;
-    const card = document.createElement("div");
-    card.className = "job-card";
-    card.innerHTML =
-      `<div class="job-icon">${job.icon}</div>` +
-      `<div class="job-count">${count}</div>` +
-      `<div class="job-name">${job.name}</div>`;
-    labor.appendChild(card);
-  }
+  // Labour allocation panel.
+  renderLabor();
 
   // Map, civic and administration views.
   renderMap();
@@ -1638,6 +1704,79 @@ function render() {
   }
 }
 
+/** Render the Labor panel: sliders to distribute citizens among the trades. */
+function renderLabor() {
+  const body = document.getElementById("labor-body");
+  if (!body) return;
+  const alloc = GameState.jobAllocation;
+
+  let rows = "";
+  for (const key in JOBS) {
+    const job = JOBS[key];
+    rows +=
+      `<div class="job-alloc">` +
+        `<span class="ja-icon">${job.icon}</span>` +
+        `<span class="ja-name">${job.name}<small>${job.yields}</small></span>` +
+        `<input type="range" min="0" max="100" value="${alloc[key] || 0}" data-job="${key}" class="ja-range">` +
+        `<span class="ja-count" id="ja-count-${key}"></span>` +
+      `</div>`;
+  }
+
+  body.innerHTML =
+    `<p class="admin-intro">Distribute your citizens among the trades. In these early years the ` +
+    `<b>vast majority must farm</b>, or the granaries will run dry. Weights are relative; the head-counts ` +
+    `update live and take effect from the next turn.</p>` +
+    rows +
+    `<div class="ja-balance" id="ja-balance"></div>` +
+    `<div class="ja-foot"><span id="ja-total"></span>` +
+      `<button class="map-btn" id="labor-reset">Reset to recommended</button></div>`;
+
+  body.querySelectorAll(".ja-range").forEach(r => r.addEventListener("input", onLaborInput));
+  document.getElementById("labor-reset").addEventListener("click", () => {
+    GameState.jobAllocation = { ...DEFAULT_ALLOC };
+    body.querySelectorAll(".ja-range").forEach(r =>
+      { r.value = GameState.jobAllocation[r.getAttribute("data-job")] || 0; });
+    GameState.jobs = assignJobs(GameState.stats.population);
+    updateLaborReadout();
+  });
+
+  updateLaborReadout();
+}
+
+/** A labour slider moved: update the weight, recompute counts, refresh readouts. */
+function onLaborInput(e) {
+  GameState.jobAllocation[e.target.getAttribute("data-job")] = +e.target.value;
+  GameState.jobs = assignJobs(GameState.stats.population);
+  updateLaborReadout();
+}
+
+/** Refresh the live head-counts, percentages and grain outlook (no slider rebuild). */
+function updateLaborReadout() {
+  const pop = GameState.stats.population, alloc = GameState.jobAllocation;
+  let total = 0;
+  for (const key in JOBS) total += (alloc[key] || 0);
+  if (total <= 0) total = 1;
+  const counts = assignJobs(pop);
+
+  for (const key in JOBS) {
+    const el = document.getElementById(`ja-count-${key}`);
+    if (el) el.innerHTML = `<b>${counts[key]}</b> · ${Math.round((alloc[key] || 0) / total * 100)}%`;
+  }
+
+  const grainProd = counts.farmers * YIELD.grain + (GameState.bonuses.grain || 0);
+  const grainNeed = Math.ceil(pop * CONFIG.GRAIN_PER_CITIZEN);
+  const bal = grainProd - grainNeed;
+  const balEl = document.getElementById("ja-balance");
+  if (balEl) {
+    balEl.className = "ja-balance " + (bal >= 0 ? "good" : "bad");
+    balEl.innerHTML = bal >= 0
+      ? `🌾 Harvest outlook: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a surplus of +${bal}/yr.`
+      : `⚠ Harvest outlook: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a shortfall of ${bal}/yr; famine looms.`;
+  }
+  const tot = document.getElementById("ja-total");
+  if (tot) tot.textContent = `👥 ${pop} citizens`;
+}
+
 /** Render the interactive overlay (labels) atop the painted map scene. */
 function renderMap() {
   const overlay = document.getElementById("map-overlay");
@@ -1664,21 +1803,19 @@ function renderMap() {
     `<div class="ml-sub">${GameState.stats.population} souls</div>`;
   overlay.appendChild(polis);
 
-  // Neighbouring hamlet labels.
+  // Labels for the still-independent hamlets. Once a hamlet is integrated its
+  // text box disappears, leaving only its physical huts painted on the land.
   GameState.hamlets.forEach(h => {
+    if (h.absorbed) return;
     const m = document.createElement("div");
-    m.className = "map-label hamlet" + (h.absorbed ? " absorbed" : "");
+    m.className = "map-label hamlet";
     m.style.left = h.pos.left;
     m.style.top  = h.pos.top;
     m.innerHTML =
       `<div class="ml-name">${h.icon} ${h.name}</div>` +
-      (h.absorbed
-        ? `<div class="ml-sub joined">✓ joined the Polis</div>`
-        : `<div class="ml-sub">${h.population} souls · click to unite</div>`);
-    if (!h.absorbed) {
-      m.title = "Open Administration to unite this hamlet";
-      m.addEventListener("click", openAdmin);
-    }
+      `<div class="ml-sub">${h.population} souls · click to unite</div>`;
+    m.title = "Open Administration to unite this hamlet";
+    m.addEventListener("click", openAdmin);
     overlay.appendChild(m);
   });
 
@@ -1845,6 +1982,7 @@ function renderLogEntry(entry) {
 
 function initGame() {
   GameState.status = GameStatus.PLAYING;   // FSM: BOOT -> PLAYING
+  GameState.jobAllocation = { ...DEFAULT_ALLOC };
   GameState.jobs = assignJobs(GameState.stats.population);
 
   // Seed the runtime hamlets from config (deep copy so config stays pristine).
