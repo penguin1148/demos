@@ -429,6 +429,31 @@
   .crisis-threat b { font-weight: 700; }
   .crisis-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+  .value.macro-discontent { color: #9bbf6a; }
+
+  /* Hekatomb festival minigame */
+  .festival-panel { border-color: var(--ochre); outline-color: #8a6f2a; }
+  .festival-panel .panel-header { color: #8a5a16; }
+  .fest-intro { font-size: 13px; color: var(--ink-soft); font-style: italic; margin-bottom: 14px; line-height: 1.5; }
+  .fest-pool {
+    border: 1px solid var(--border-d); border-radius: 5px; padding: 12px 14px; margin-bottom: 12px;
+    background: rgba(255,255,255,.18); box-shadow: inset 0 0 16px rgba(140,105,55,.15);
+  }
+  .fest-pool .fp-title { font-variant: small-caps; font-weight: 700; letter-spacing: 1px; color: var(--terra-dark); font-size: 16px; }
+  .fest-pool .fp-desc { font-size: 12px; color: var(--ink-soft); margin: 3px 0 8px; line-height: 1.45; }
+  .fest-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+  .fest-row label { flex: 0 0 132px; font-size: 13px; color: var(--ink); }
+  .fest-row input[type=range] { flex: 1; accent-color: var(--terra); cursor: pointer; }
+  .fest-row .fest-val { flex: 0 0 86px; text-align: right; font-weight: 700; color: var(--ink); font-size: 13px; }
+  .fest-gain { font-size: 13px; color: var(--olive); font-weight: 700; margin-top: 4px; }
+  .fest-pool.fest-granary { border-color: var(--olive); }
+  .fest-pool.fest-granary .fp-title { color: var(--olive); }
+  .fest-leftover { display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px; color: var(--ink); }
+  .fest-leftover b { color: var(--terra-dark); }
+  .fest-warn { color: var(--bad); font-size: 12px; font-weight: 700; min-height: 16px; margin: 6px 0; }
+  .fest-confirm .action-btn { width: 100%; text-align: center; }
+  .fest-confirm .action-btn .ab-title { font-size: 16px; }
+
   /* Scrollbars styled like worn leather */
   ::-webkit-scrollbar { width: 11px; }
   ::-webkit-scrollbar-track { background: rgba(0,0,0,.08); }
@@ -452,6 +477,10 @@
       <div class="stat-chip macro">
         <span class="label">🔥 Eusebeia</span>
         <span class="value macro-piety" id="hud-eusebeia">0</span>
+      </div>
+      <div class="stat-chip macro">
+        <span class="label">😟 Discontent</span>
+        <span class="value macro-discontent" id="hud-discontent">0</span>
       </div>
       <div class="stat-chip">
         <span class="label">Year</span>
@@ -541,14 +570,6 @@
               <g opacity="0.7"><ellipse cx="885" cy="155" rx="54" ry="16"/><ellipse cx="918" cy="148" rx="34" ry="12"/></g>
             </g>
 
-            <!-- distant sea on the right -->
-            <path d="M620 332 L1000 300 L1000 472 L662 472 Z" fill="url(#sea)"/>
-            <g stroke="#d6e9ea" stroke-width="2" opacity="0.5">
-              <line x1="700" y1="360" x2="982" y2="345"/>
-              <line x1="742" y1="392" x2="982" y2="382"/>
-              <line x1="786" y1="424" x2="982" y2="418"/>
-            </g>
-
             <!-- far mountains -->
             <path d="M-20 332 L80 232 L160 292 L250 200 L340 286 L430 226 L520 300 L600 250 L700 332 Z"
                   fill="url(#mfar)" opacity="0.92"/>
@@ -566,31 +587,38 @@
             <path d="M320 432 Q420 250 500 245 Q586 250 700 432 Z" fill="url(#hilltop)"/>
             <path d="M500 245 Q586 250 700 432 L520 432 Z" fill="#000" opacity="0.06"/>
 
+            <!-- the sea, meeting a curving coastline in the lower-right -->
+            <path d="M1000 318 L1000 600 L588 600 C 660 528, 732 486, 802 452 C 882 412, 952 360, 1000 318 Z" fill="url(#sea)"/>
+            <!-- a band of pale sand along the shore -->
+            <path d="M556 600 C 632 524, 710 480, 786 442 C 866 402, 938 348, 1000 300 L1000 318 C 952 360, 882 412, 802 452 C 732 486, 660 528, 588 600 Z" fill="#e7d9af" opacity="0.85"/>
+            <!-- gentle waves -->
+            <g stroke="#d6e9ea" stroke-width="2" opacity="0.45" fill="none">
+              <path d="M812 470 Q890 452 968 432"/>
+              <path d="M788 512 Q884 494 970 474"/>
+              <path d="M770 556 Q880 540 980 524"/>
+            </g>
+
             <!-- dashed roads from the polis out to each hamlet -->
             <g stroke="#dcc07a" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round" opacity="0.55" fill="none">
               <path d="M495 360 C 380 380, 280 360, 175 308"/>
               <path d="M498 366 C 430 432, 360 472, 300 488"/>
-              <path d="M522 360 C 644 402, 742 422, 800 446"/>
+              <path d="M520 362 C 590 410, 645 448, 688 470"/>
             </g>
 
-            <!-- ===== Central village (the Polis) ===== -->
+            <!-- ===== Central village (the Polis): only simple mud-brick huts ===== -->
             <g id="scene-polis">
-              <!-- temple -->
-              <g transform="translate(468,248)">
-                <polygon points="0,18 62,18 31,-7" fill="url(#roof)"/>
-                <rect x="1" y="18" width="60" height="6" fill="#efe7d2"/>
-                <g fill="#f3ecd9">
-                  <rect x="6" y="24" width="6" height="28"/><rect x="20" y="24" width="6" height="28"/>
-                  <rect x="36" y="24" width="6" height="28"/><rect x="50" y="24" width="6" height="28"/>
-                </g>
-                <rect x="-1" y="52" width="64" height="6" fill="#d8c79f"/>
-              </g>
-              <!-- houses -->
-              <g transform="translate(424,300)"><rect x="0" y="8" width="26" height="20" fill="#e3cfa4"/><polygon points="-2,8 28,8 13,-4" fill="url(#roof)"/></g>
-              <g transform="translate(548,302)"><rect x="0" y="8" width="30" height="22" fill="#decba0"/><polygon points="-2,8 32,8 15,-5" fill="url(#roof)"/></g>
-              <g transform="translate(506,320)"><rect x="0" y="6" width="22" height="18" fill="#e6d3a8"/><polygon points="-2,6 24,6 11,-4" fill="url(#roof)"/></g>
+              <!-- the largest dwelling — the meeting house, still a humble hut -->
+              <g transform="translate(452,260)"><rect x="0" y="9" width="36" height="26" fill="#e3cfa4"/><polygon points="-3,9 39,9 18,-6" fill="url(#roof)"/></g>
+              <!-- surrounding huts of varied size -->
+              <g transform="translate(416,300)"><rect x="0" y="8" width="26" height="20" fill="#decba0"/><polygon points="-2,8 28,8 13,-5" fill="url(#roof)"/></g>
+              <g transform="translate(522,298)"><rect x="0" y="8" width="30" height="22" fill="#e6d3a8"/><polygon points="-2,8 32,8 15,-5" fill="url(#roof)"/></g>
+              <g transform="translate(486,322)"><rect x="0" y="7" width="22" height="17" fill="#e0cc9f"/><polygon points="-2,7 24,7 11,-4" fill="url(#roof)"/></g>
+              <g transform="translate(556,326)"><rect x="0" y="6" width="20" height="15" fill="#dcc79c"/><polygon points="-2,6 22,6 10,-4" fill="url(#roof)"/></g>
+              <!-- a humble stone hearth at the village centre -->
+              <ellipse cx="500" cy="350" rx="13" ry="5" fill="#8a7b5e" opacity="0.7"/>
+              <circle cx="500" cy="347" r="3" fill="#d98a3c" opacity="0.9"/>
               <!-- olive trees -->
-              <g fill="#5c6f34"><circle cx="408" cy="318" r="9"/><circle cx="588" cy="324" r="8"/></g>
+              <g fill="#5c6f34"><circle cx="404" cy="320" r="9"/><circle cx="590" cy="320" r="8"/><circle cx="560" cy="338" r="6"/></g>
             </g>
 
             <!-- ===== Foothill Clan ===== -->
@@ -609,16 +637,20 @@
               <g transform="translate(2,40)"><rect x="0" y="8" width="22" height="16" fill="#dcc79c"/><polygon points="-2,8 24,8 11,-4" fill="url(#roof)"/></g>
             </g>
 
-            <!-- ===== Coastal Fishermen ===== -->
-            <g id="scene-coastal" transform="translate(738,398)">
-              <path d="M-22 52 Q80 32 204 50 L204 84 L-22 84 Z" fill="#e6d7ad" opacity="0.85"/>
-              <g transform="translate(120,18)">
+            <!-- ===== Coastal Fishermen — huts on the shore, boat afloat ===== -->
+            <g id="scene-coastal" transform="translate(640,452)">
+              <!-- fishing boat, afloat just off the coastline -->
+              <g transform="translate(172,18)">
                 <path d="M0 8 Q18 24 42 8 Z" fill="#7a4a26"/>
                 <line x1="21" y1="8" x2="21" y2="-14" stroke="#7a4a26" stroke-width="2"/>
                 <polygon points="21,-14 21,2 36,-5" fill="#efe7d2"/>
               </g>
-              <g transform="translate(20,28)"><rect x="0" y="8" width="24" height="16" fill="#e3cfa4"/><polygon points="-2,8 26,8 12,-4" fill="url(#roof)"/></g>
-              <g transform="translate(54,34)"><rect x="0" y="6" width="20" height="14" fill="#dcc79c"/><polygon points="-2,6 22,6 10,-4" fill="url(#roof)"/></g>
+              <!-- mud-brick huts on the sand -->
+              <g transform="translate(24,18)"><rect x="0" y="8" width="24" height="16" fill="#e3cfa4"/><polygon points="-2,8 26,8 12,-4" fill="url(#roof)"/></g>
+              <g transform="translate(58,24)"><rect x="0" y="6" width="20" height="14" fill="#dcc79c"/><polygon points="-2,6 22,6 10,-4" fill="url(#roof)"/></g>
+              <!-- a drying-net pole by the water -->
+              <line x1="98" y1="30" x2="98" y2="8" stroke="#7a4a26" stroke-width="2"/>
+              <line x1="98" y1="12" x2="114" y2="16" stroke="#7a4a26" stroke-width="1.5"/>
             </g>
           </svg>
           <div id="map-overlay"><!-- labels rendered by renderMap() --></div>
@@ -677,6 +709,16 @@
       </div>
       <div id="admin-body" class="modal-body">
         <!-- populated by renderAdmin() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HEKATOMB FESTIVAL MODAL (must be completed) ============ -->
+  <div class="modal-backdrop" id="festival-modal" hidden>
+    <div class="modal panel festival-panel">
+      <div class="panel-header">The Hekatomb Festival</div>
+      <div id="festival-body" class="modal-body">
+        <!-- populated by renderFestival() -->
       </div>
     </div>
   </div>
@@ -760,6 +802,14 @@ const CIVIC = Object.freeze({
   altar: { timber: 25, clay: 20, piety: 2 },  // Open-Air Altar: +Piety/turn, built once
 });
 
+/* The Hekatomb — a great sacrifice held every tenth turn. */
+const HEKATOMB = Object.freeze({
+  INTERVAL:       10,    // a festival every 10th turn
+  pietyPerCattle: 5,     // Altar Pool: cattle -> Piety (a massive surge)
+  kleosPerGrape:  2,     // Feast Pool: wine -> Kleos
+  kleosPerGrain:  0.4,   // Feast Pool: grain -> Kleos
+});
+
 /* ---------- The central Game State Object ---------- */
 const GameState = {
   status:   GameStatus.BOOT,
@@ -784,6 +834,13 @@ const GameState = {
     kleos:    0,   // Renown / Glory — draws wandering migrants
     eusebeia: 0,   // Piety — a buffer spent to weather crises
   },
+
+  // Accumulated citizen discontent (eased by the Hekatomb feast).
+  unhappiness: 0,
+
+  // An unresolved Hekatomb festival awaiting the player's offerings.
+  pendingFestival: false,
+  festivalAlloc: { cattle: 0, grapes: 0, grain: 0 },
 
   // Current turn's job head-counts (derived; for display).
   jobs: {},
@@ -881,7 +938,7 @@ const HAMLETS = [
   },
   {
     id: "coastal", name: "The Coastal Fishermen", icon: "🌊",
-    population: 25, pos: { top: "80%", left: "80%" },
+    population: 25, pos: { top: "84%", left: "69%" },
     desc: "Fisherfolk whose nets bring a steady catch to feed the growing city.",
     asset: { label: "a steady catch that swells the food stores", bonus: { grain: +8 } },
     feast: { grapes: 26, cattle: 5 },
@@ -1008,6 +1065,8 @@ function processTick() {
     if (s.olives > 0) growth += 1;                              // health & hygiene
     if (s.grapes > 0 && GameState.turn % 2 === 0) growth += 1;  // festivals & births
     growth = Math.min(growth, Math.ceil(s.population * 0.08));  // cap natural growth
+    growth -= Math.floor(GameState.unhappiness / 8);            // discontent dampens growth
+    if (growth < 0) growth = 0;
 
     if (growth > 0) {
       applyStats({ population: +growth });
@@ -1023,6 +1082,7 @@ function processTick() {
       `⚠ The granaries lie empty — famine claims ${starved} ${starved === 1 ? "soul" : "souls"}.`,
       "warning"
     );
+    GameState.unhappiness += 3;   // hunger breeds discontent
   }
 
   // --- Cult: the open-air altar yields piety each turn ---
@@ -1044,6 +1104,17 @@ function processTick() {
     }
     GameState.macros.kleos = Math.max(0, kleos - 1);   // glory slowly fades
   }
+
+  // --- Civic mood: deep discontent drives families away; it then settles ---
+  if (GameState.unhappiness >= 15) {
+    const leavers = Math.min(GameState.stats.population, 2 + Math.floor((GameState.unhappiness - 15) / 5));
+    applyStats({ population: -leavers });
+    logChronicle(
+      `Discontent festers; ${leavers} disillusioned ${leavers === 1 ? "soul leaves" : "souls leave"} the Demos.`,
+      "warning"
+    );
+  }
+  if (GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - 1);
 }
 
 /**
@@ -1054,7 +1125,7 @@ function processTick() {
  */
 function nextTurn() {
   if (GameState.status !== GameStatus.PLAYING) return;
-  if (GameState.pendingCrisis) return;   // a crisis must be answered first
+  if (GameState.pendingCrisis || GameState.pendingFestival) return;   // must be answered first
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
@@ -1062,6 +1133,13 @@ function nextTurn() {
   GameState.lastDeltas = {};                  // reset net-change tracking
 
   logChronicle(`Turn ${GameState.turn} begins. The year is ${formatYear(GameState.year)}.`, "turn");
+
+  // --- 1b. Every tenth year: the Hekatomb Festival replaces the normal tick ---
+  if (GameState.turn % HEKATOMB.INTERVAL === 0) {
+    openFestival();
+    render();
+    return;
+  }
 
   // --- 2. Deterministic production / consumption tick ---
   processTick();
@@ -1125,7 +1203,7 @@ function spend(changes) {
 
 /** Civic Investment: fund a travelling bard, raising Kleos at once. */
 function fundBard() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
   const c = CIVIC.bard;
   if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
     logChronicle("There is too little to provision a travelling bard.", "warning");
@@ -1144,7 +1222,7 @@ function fundBard() {
 
 /** Civic Investment: erect the open-air altar (one-time; yields piety/turn). */
 function buildAltar() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
   if (GameState.altarBuilt) return;
   const c = CIVIC.altar;
   if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay) {
@@ -1190,6 +1268,7 @@ function resolveCrisis(invoke) {
     );
   } else {
     applyStats(c.damage);
+    GameState.unhappiness += 2;   // an unanswered crisis sours the people
     logChronicle(
       `Without divine favor, the ${c.name} strikes hard: ${formatChanges(c.damage)}.`,
       "warning"
@@ -1208,6 +1287,180 @@ function resolveCrisis(invoke) {
 
 /** Repaint everything after an administrative / civic action. */
 function afterAction() {
+  render();
+}
+
+/* ===================================================================
+   THE HEKATOMB — a seasonal festival minigame every tenth turn
+   =================================================================== */
+
+/** Begin the festival: reset the allocation and open the (blocking) modal. */
+function openFestival() {
+  GameState.pendingFestival = true;
+  GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
+  logChronicle(
+    `The year ${formatYear(GameState.year)} brings the Hekatomb Festival — ` +
+    `the people gather to honour the gods.`,
+    "system"
+  );
+  renderFestival();
+  openModal("festival-modal");
+}
+
+/** Build the festival modal: three sliders feeding the three sacrificial pools. */
+function renderFestival() {
+  const body = document.getElementById("festival-body");
+  if (!body) return;
+  const s = GameState.stats, a = GameState.festivalAlloc;
+
+  // Keep any prior allocation within current stock.
+  a.cattle = Math.min(a.cattle, s.cattle);
+  a.grapes = Math.min(a.grapes, s.grapes);
+  a.grain  = Math.min(a.grain,  s.grain);
+
+  body.innerHTML =
+    `<p class="fest-intro">Every tenth year the Polis offers a great sacrifice — a hekatomb. ` +
+    `Allocate your stores between the altar, the feast, and the winter granary. ` +
+    `Whatever you keep will carry your people through the coming decade.</p>` +
+
+    `<div class="fest-pool">` +
+      `<div class="fp-title">🔥 The Altar Pool</div>` +
+      `<div class="fp-desc">Cattle sacrificed upon the altar bring an immense surge of Piety (Eusebeia).</div>` +
+      `<div class="fest-row"><label>🐄 Cattle to altar</label>` +
+        `<input type="range" id="fest-cattle" min="0" max="${s.cattle}" value="${a.cattle}">` +
+        `<span class="fest-val" id="fest-cattle-val"></span></div>` +
+      `<div class="fest-gain" id="fest-altar-gain"></div>` +
+    `</div>` +
+
+    `<div class="fest-pool">` +
+      `<div class="fp-title">🍷 The Feast Pool</div>` +
+      `<div class="fp-desc">Wine and grain spent on a public feast bring a surge of Kleos — and renew the ` +
+        `people's spirit, resetting all accumulated discontent.</div>` +
+      `<div class="fest-row"><label>🍇 Wine (grapes)</label>` +
+        `<input type="range" id="fest-grapes" min="0" max="${s.grapes}" value="${a.grapes}">` +
+        `<span class="fest-val" id="fest-grapes-val"></span></div>` +
+      `<div class="fest-row"><label>🌾 Grain</label>` +
+        `<input type="range" id="fest-grain" min="0" max="${s.grain}" value="${a.grain}">` +
+        `<span class="fest-val" id="fest-grain-val"></span></div>` +
+      `<div class="fest-gain" id="fest-feast-gain"></div>` +
+    `</div>` +
+
+    `<div class="fest-pool fest-granary">` +
+      `<div class="fp-title">🌾 The Winter Granary</div>` +
+      `<div class="fp-desc">Whatever is not sacrificed remains in your stores against the coming decade.</div>` +
+      `<div class="fest-leftover" id="fest-leftover"></div>` +
+    `</div>` +
+
+    `<div class="fest-warn" id="fest-warn"></div>` +
+    `<div class="fest-confirm">` +
+      `<button class="action-btn diplomatic" id="fest-confirm">` +
+        `<span class="ab-title">🍷 Pour Libations &amp; End Festival</span>` +
+        `<span class="ab-cost" id="fest-confirm-sub"></span>` +
+      `</button>` +
+    `</div>`;
+
+  ["fest-cattle", "fest-grapes", "fest-grain"].forEach(id =>
+    document.getElementById(id).addEventListener("input", onFestivalInput));
+  document.getElementById("fest-confirm").addEventListener("click", confirmFestival);
+
+  updateFestivalPreview();
+}
+
+/** Read the sliders into the allocation, then refresh the live preview. */
+function onFestivalInput() {
+  const a = GameState.festivalAlloc;
+  a.cattle = +document.getElementById("fest-cattle").value;
+  a.grapes = +document.getElementById("fest-grapes").value;
+  a.grain  = +document.getElementById("fest-grain").value;
+  updateFestivalPreview();
+}
+
+/** Show the resulting Piety/Kleos gains, the granary remainder, and warnings. */
+function updateFestivalPreview() {
+  const s = GameState.stats, a = GameState.festivalAlloc;
+  const piety = a.cattle * HEKATOMB.pietyPerCattle;
+  const kleos = Math.round(a.grapes * HEKATOMB.kleosPerGrape + a.grain * HEKATOMB.kleosPerGrain);
+  const feastOffered = (a.grapes + a.grain) > 0;
+
+  document.getElementById("fest-cattle-val").textContent = `${a.cattle} / ${s.cattle}`;
+  document.getElementById("fest-grapes-val").textContent = `${a.grapes} / ${s.grapes}`;
+  document.getElementById("fest-grain-val").textContent  = `${a.grain} / ${s.grain}`;
+
+  document.getElementById("fest-altar-gain").textContent = a.cattle > 0
+    ? `→ +${piety} Piety`
+    : "→ the altar stands empty (the gods are slighted)";
+  document.getElementById("fest-feast-gain").textContent = feastOffered
+    ? `→ +${kleos} Kleos · discontent reset to 0`
+    : "→ no feast is held (the people grow resentful)";
+
+  document.getElementById("fest-leftover").innerHTML =
+    `<span>🐄 <b>${s.cattle - a.cattle}</b> cattle</span>` +
+    `<span>🍇 <b>${s.grapes - a.grapes}</b> grapes</span>` +
+    `<span>🌾 <b>${s.grain - a.grain}</b> grain</span>`;
+
+  const leftGrain = s.grain - a.grain;
+  const yearlyNeed = Math.ceil(s.population * CONFIG.GRAIN_PER_CITIZEN);
+  document.getElementById("fest-warn").textContent =
+    leftGrain < yearlyNeed
+      ? "⚠ Little grain remains — the granary may not hold against famine."
+      : "";
+}
+
+/**
+ * Validate the allocation, apply the surges/penalties, then close the
+ * festival and resume normal play.
+ */
+function confirmFestival() {
+  if (!GameState.pendingFestival) return;
+  const s = GameState.stats, a = GameState.festivalAlloc;
+
+  // Validate: clamp each pool to what is actually in store.
+  a.cattle = Math.max(0, Math.min(a.cattle, s.cattle));
+  a.grapes = Math.max(0, Math.min(a.grapes, s.grapes));
+  a.grain  = Math.max(0, Math.min(a.grain,  s.grain));
+
+  const pietyGain = a.cattle * HEKATOMB.pietyPerCattle;
+  const kleosGain = Math.round(a.grapes * HEKATOMB.kleosPerGrape + a.grain * HEKATOMB.kleosPerGrain);
+  const feastOffered = (a.grapes + a.grain) > 0;
+
+  spend({ cattle: -a.cattle, grapes: -a.grapes, grain: -a.grain });
+  GameState.macros.eusebeia += pietyGain;
+  GameState.macros.kleos    += kleosGain;
+
+  logChronicle(
+    `The Hekatomb is offered: ${a.cattle} cattle, ${a.grapes} measures of wine and ` +
+    `${a.grain} of grain laid before the gods.`,
+    "event"
+  );
+
+  // Altar pool — piety, or a penalty for an empty altar.
+  if (pietyGain > 0) {
+    logChronicle(`Sacred smoke billows from the altar; the people's piety surges (+${pietyGain} Eusebeia).`, "event");
+  } else {
+    GameState.unhappiness += 3;
+    logChronicle("The altar stood empty through the festival; the gods take note of the slight.", "warning");
+  }
+
+  // Feast pool — kleos and a reset of discontent, or a penalty for no feast.
+  if (feastOffered) {
+    const before = GameState.unhappiness;
+    GameState.unhappiness = 0;
+    logChronicle(
+      `The feast renews the bonds of the Demos; renown spreads (+${kleosGain} Kleos)` +
+      `${before > 0 ? `, and discontent is quelled (${before} → 0)` : ""}.`,
+      "event"
+    );
+  } else {
+    GameState.unhappiness += 5;
+    logChronicle("No feast was held; the people feel slighted, and discontent festers.", "warning");
+  }
+
+  GameState.pendingFestival = false;
+  closeModal("festival-modal");
+
+  // The festival may fall on the final year of the era.
+  if (GameState.stats.population <= 0) collapse();
+  else if (GameState.year <= CONFIG.END_YEAR) endEra();
   render();
 }
 
@@ -1254,7 +1507,7 @@ function absorbHamlet(h) {
 
 /** Diplomatic Feast: high wine + cattle cost, but certain success. */
 function attemptFeast(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.feast;
@@ -1272,7 +1525,7 @@ function attemptFeast(id) {
 
 /** Coercive Annexation: cattle + supplies cost, 60% success, unrest on failure. */
 function attemptAnnex(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.annex;
@@ -1290,6 +1543,7 @@ function attemptAnnex(id) {
     absorbHamlet(h);
   } else {
     GameState.unrest = CONFIG.UNREST_TURNS;
+    GameState.unhappiness += 4;   // a failed conquest breeds discontent
     logChronicle(
       `The annexation of ${h.name} fails! Resentment spreads — ` +
       `civil unrest will sap production for ${CONFIG.UNREST_TURNS} turns.`,
@@ -1309,6 +1563,10 @@ function render() {
   document.getElementById("city-name").textContent = `by Penguin`;
   document.getElementById("hud-kleos").textContent    = GameState.macros.kleos;
   document.getElementById("hud-eusebeia").textContent = GameState.macros.eusebeia;
+  const dis = document.getElementById("hud-discontent");
+  dis.textContent = GameState.unhappiness;
+  dis.style.color = GameState.unhappiness >= 12 ? "#e07a5f"
+                  : GameState.unhappiness >= 6  ? "#d6a44a" : "#9bbf6a";
   document.getElementById("hud-year").textContent  = formatYear(GameState.year);
   document.getElementById("hud-turn").textContent  = GameState.turn;
   document.getElementById("hud-phase").textContent = GameState.phase;
@@ -1367,10 +1625,12 @@ function render() {
     hint.textContent = GameState.stats.population <= 0
       ? "The Demos is no more. Refresh to begin anew."
       : "The Dawn Era has ended. A new age awaits in a future phase.";
-  } else if (GameState.pendingCrisis) {
+  } else if (GameState.pendingCrisis || GameState.pendingFestival) {
     btn.disabled = true;
     btn.textContent = "End Turn";
-    hint.textContent = "A crisis demands your answer before the year may turn.";
+    hint.textContent = GameState.pendingFestival
+      ? "The Hekatomb Festival awaits your offerings."
+      : "A crisis demands your answer before the year may turn.";
   } else {
     btn.disabled = false;
     btn.textContent = "End Turn";
@@ -1394,7 +1654,7 @@ function renderMap() {
     overlay.appendChild(banner);
   }
 
-  // The central Polis label (sits below the painted temple).
+  // The central Polis label (sits below the painted hilltop village).
   const polis = document.createElement("div");
   polis.className = "map-label polis";
   polis.style.left = "50%";
@@ -1437,7 +1697,7 @@ function renderCivic() {
   if (!body) return;
 
   const b = CIVIC.bard, a = CIVIC.altar;
-  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis;
+  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival;
   const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
   const canAltar = !GameState.altarBuilt && GameState.stats.timber >= a.timber && GameState.stats.clay >= a.clay;
 
@@ -1532,7 +1792,7 @@ function renderAdmin() {
     const f = h.feast, a = h.annex;
     const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
     const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain;
-    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis;
+    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival;
 
     html +=
       `<div class="hamlet-card">` +
@@ -1593,6 +1853,9 @@ function initGame() {
   GameState.unrest = 0;
   GameState.altarBuilt = false;
   GameState.pendingCrisis = null;
+  GameState.pendingFestival = false;
+  GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
+  GameState.unhappiness = 0;
   GameState.macros = { kleos: 0, eusebeia: 0 };
 
   render();
@@ -1607,6 +1870,7 @@ function initGame() {
     "Three independent hamlets dwell nearby; through synoikismos they may join the Polis.",
     "system"
   );
+  logChronicle("Every tenth year the people hold the Hekatomb, a great sacrifice to renew the Polis.", "system");
   logChronicle("The Dawn Era begins. Press “End Turn” to let the years unfold.", "system");
 
   // End Turn.
@@ -1629,10 +1893,12 @@ function initGame() {
   document.querySelectorAll(".modal-close").forEach(btn =>
     btn.addEventListener("click", () => closeModal(btn.getAttribute("data-close"))));
 
-  // Backdrop clicks dismiss modals — except the crisis modal, which must be answered.
+  // Backdrop clicks dismiss modals — except the crisis and festival modals,
+  // which must be resolved before play resumes.
+  const blocking = ["crisis-modal", "festival-modal"];
   document.querySelectorAll(".modal-backdrop").forEach(back =>
     back.addEventListener("click", e => {
-      if (e.target === back && back.id !== "crisis-modal") back.hidden = true;
+      if (e.target === back && !blocking.includes(back.id)) back.hidden = true;
     }));
 }
 
