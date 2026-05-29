@@ -369,7 +369,7 @@
     <div id="right-col">
       <!-- Labour assignments -->
       <section class="panel" id="labor-panel">
-        <div class="panel-header">Labour of the Demos</div>
+        <div class="panel-header">Labor of the Demos</div>
         <div id="labor-body">
           <!-- populated by render() -->
         </div>
@@ -674,7 +674,7 @@ function collapse() {
 /** Repaint the entire HUD, resource panel, and labour panel from GameState. */
 function render() {
   // Top bar
-  document.getElementById("city-name").textContent = `of ${GameState.cityName}`;
+  document.getElementById("city-name").textContent = `by Penguin`;
   document.getElementById("hud-year").textContent  = formatYear(GameState.year);
   document.getElementById("hud-turn").textContent  = GameState.turn;
   document.getElementById("hud-phase").textContent = GameState.phase;
