@@ -614,6 +614,11 @@
               <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stop-color="#8fb6bd"/><stop offset="1" stop-color="#3c6f86"/>
               </linearGradient>
+              <!-- same palette as the sea, mapped to map coordinates so the
+                   river reads as the very same water as the ocean it joins -->
+              <linearGradient id="seaRiver" gradientUnits="userSpaceOnUse" x1="0" y1="350" x2="0" y2="600">
+                <stop offset="0" stop-color="#8fb6bd"/><stop offset="1" stop-color="#3c6f86"/>
+              </linearGradient>
               <linearGradient id="mfar" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stop-color="#bcc7d4"/><stop offset="1" stop-color="#97a6b8"/>
               </linearGradient>
@@ -658,7 +663,7 @@
             <path d="M330 240 L356 278 L304 280 Z" fill="#f4f2eb" opacity="0.85"/>
 
             <!-- layered rolling hills (the land) -->
-            <path d="M0 360 Q250 322 500 350 T1000 342 L1000 600 L0 600 Z" fill="url(#hillFar)"/>
+            <path d="M0 360 Q250 322 500 348 Q740 300 1000 312 L1000 600 L0 600 Z" fill="url(#hillFar)"/>
             <path d="M0 432 Q300 382 620 420 T1000 432 L1000 600 L0 600 Z" fill="url(#hillMid)"/>
             <path d="M0 512 Q260 470 540 506 T1000 522 L1000 600 L0 600 Z" fill="url(#hillNear)"/>
 
@@ -679,10 +684,11 @@
               <path d="M782 556 Q892 540 986 512"/>
             </g>
 
-            <!-- the river: winds down from the hills and empties into the sea -->
-            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 540 567, 602 566, 662 556"
-                  fill="none" stroke="#5e93a8" stroke-width="14" stroke-linecap="round" opacity="0.9"/>
-            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 540 567, 602 566, 662 556"
+            <!-- the river: winds down from the hills and empties into the sea,
+                 ending right at the waterline in the same colour as the ocean -->
+            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 514 567, 548 569, 580 573"
+                  fill="none" stroke="url(#seaRiver)" stroke-width="14" stroke-linecap="round"/>
+            <path d="M306 414 C 252 452, 246 498, 264 524 C 286 556, 380 560, 470 564 C 514 567, 548 569, 580 573"
                   fill="none" stroke="#cfe6e8" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
 
             <!-- wild trees, shrubs and open plains scattered across the land -->
@@ -923,9 +929,13 @@ const CONFIG = Object.freeze({
   // harvests draw down — making famine a real, if avoidable, risk.
   GRAIN_PER_CITIZEN: 0.8,
 
-  // Synoikismos — absorbing neighbouring hamlets.
-  ANNEX_SUCCESS: 0.60,   // chance a coercive annexation succeeds
-  UNREST_TURNS:  3,      // turns of civil unrest after a failed annexation
+  // Synoikismos — absorbing neighbouring hamlets. Coercion is a slow,
+  // grinding affair: each push only wears down part of a hamlet's
+  // resistance, and a hamlet falls only once its resistance is broken
+  // over several turns — never in a turn or two.
+  ANNEX_SUCCESS: 0.42,   // chance a single coercive push lands
+  ANNEX_COOLDOWN: 1,     // turns the host must regroup between pushes
+  UNREST_TURNS:  4,      // turns of civil unrest after a failed push
   UNREST_FACTOR: 0.5,    // production multiplier while unrest lasts
 
   // Culture & religion.
@@ -975,9 +985,8 @@ const YIELD = Object.freeze({
 
 /* Civic Investments — cultural & religious actions. */
 const CIVIC = Object.freeze({
-  bard:   { grain: 8, cattle: 2, kleos: 6 },          // Fund an Aoidos: +Kleos at once
-  altar:  { timber: 25, clay: 20, piety: 2 },         // Open-Air Altar: +Piety/turn, built once
-  hearth: { timber: 45, clay: 35, cattle: 12 },       // Ancestral Hearth: unlocks the Divine Epiphany
+  bard:   { grain: 8, cattle: 2, kleos: 6 },           // Fund an Aoidos: +Kleos at once
+  hearth: { timber: 140, clay: 100, cattle: 32 },      // Ancestral Hearth: a great undertaking that unlocks the Divine Epiphany
 });
 
 /* The Hekatomb — a great sacrifice held every tenth turn. */
@@ -1037,10 +1046,10 @@ const GameState = {
     population: 120,   // total headcount
     grain:      90,    // primary food source
     cattle:     8,     // animal wealth — early-game currency
-    olives:     12,    // long-term investment / hygiene asset
-    grapes:     6,     // social catalyst / ritual drink
-    timber:     20,    // structural material
-    clay:       15,    // structural material
+    olives:     0,     // long-term investment / hygiene asset — earned by labour
+    grapes:     0,     // social catalyst / ritual drink — earned by labour
+    timber:     0,     // structural material — earned by labour
+    clay:       0,     // structural material — earned by labour
   },
 
   // Macro-variables: the cultural & religious standing of the Polis.
@@ -1067,9 +1076,6 @@ const GameState = {
 
   // Permanent per-turn resource bonuses gained from absorbed hamlets.
   bonuses: {},
-
-  // Whether the open-air altar has been raised (passive piety).
-  altarBuilt: false,
 
   // Religion: the Ancestral Hearth and the pantheon it makes possible.
   hearthBuilt: false,
@@ -1148,33 +1154,36 @@ const CRISES = [
  *
  *  pos   — placement of the interactive label on the map (percent).
  *  asset — { label, bonus } added to GameState.bonuses on absorption.
- *  feast — Diplomatic Feast cost (wine/grapes + cattle); instant success.
- *  annex — Coercive Annexation cost (cattle + grain supplies); 60% success.
+ *  feast — Diplomatic Feast cost (wine/grapes + cattle); slow, costly, certain.
+ *  annex — Coercive Annexation cost per push (cattle + grain supplies).
+ *  resistance — successful pushes needed before the hamlet is broken; a
+ *               hamlet can be pushed at most once per turn, so unifying one
+ *               by force is the work of many turns, not a couple.
  */
 const HAMLETS = [
   {
     id: "foothill", name: "The Foothill Clan", icon: "⛰️",
-    population: 30, pos: { top: "52%", left: "14%" },
+    population: 30, pos: { top: "52%", left: "14%" }, resistance: 3,
     desc: "Hardy highlanders who fell timber and quarry stone from the upland forests.",
     asset: { label: "timber from the high forests", bonus: { timber: +6 } },
-    feast: { grapes: 30, cattle: 6 },
-    annex: { cattle: 10, grain: 8 },
+    feast: { grapes: 72, cattle: 16 },
+    annex: { cattle: 18, grain: 22 },
   },
   {
     id: "coastal", name: "The Coastal Fishermen", icon: "🌊",
-    population: 25, pos: { top: "84%", left: "69%" },
+    population: 25, pos: { top: "84%", left: "69%" }, resistance: 3,
     desc: "Fisherfolk whose nets bring a steady catch to feed the growing city.",
     asset: { label: "a steady catch that swells the food stores", bonus: { grain: +8 } },
-    feast: { grapes: 26, cattle: 5 },
-    annex: { cattle: 8, grain: 6 },
+    feast: { grapes: 60, cattle: 14 },
+    annex: { cattle: 15, grain: 18 },
   },
   {
     id: "river", name: "The River Valley Tribe", icon: "🏞️",
-    population: 40, pos: { top: "85%", left: "28%" },
+    population: 40, pos: { top: "85%", left: "28%" }, resistance: 4,
     desc: "Potters and farmers of the fertile river bend, rich in clay and grain.",
     asset: { label: "clay and grain from the river bend", bonus: { clay: +6, grain: +3 } },
-    feast: { grapes: 34, cattle: 8 },
-    annex: { cattle: 12, grain: 10 },
+    feast: { grapes: 88, cattle: 22 },
+    annex: { cattle: 24, grain: 30 },
   },
 ];
 
@@ -1316,11 +1325,6 @@ function processTick() {
   const grainCap = Math.max(120, needed * 5);
   if (GameState.stats.grain > grainCap) {
     applyStats({ grain: -(GameState.stats.grain - grainCap) });
-  }
-
-  // --- Cult: the open-air altar yields piety each turn ---
-  if (GameState.altarBuilt) {
-    GameState.macros.eusebeia += CIVIC.altar.piety;
   }
 
   // --- Pantheon: each manifested god confers its standing blessing ---
@@ -1467,26 +1471,6 @@ function fundBard() {
     `An aoidos sings the deeds of ${GameState.cityName} in far-off halls; ` +
     `its renown grows (+${c.kleos} Kleos).`,
     "event"
-  );
-  afterAction();
-}
-
-/** Civic Investment: erect the open-air altar (one-time; yields piety/turn). */
-function buildAltar() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
-  if (GameState.altarBuilt) return;
-  const c = CIVIC.altar;
-  if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay) {
-    logChronicle("There is not yet timber and clay enough to raise an altar.", "warning");
-    afterAction();
-    return;
-  }
-  spend({ timber: -c.timber, clay: -c.clay });
-  GameState.altarBuilt = true;
-  logChronicle(
-    `An open-air altar is raised upon the hill; its sacred smoke will rise each year ` +
-    `(+${c.piety} Piety / turn).`,
-    "system"
   );
   afterAction();
 }
@@ -1937,29 +1921,52 @@ function attemptFeast(id) {
   afterAction();
 }
 
-/** Coercive Annexation: cattle + supplies cost, 60% success, unrest on failure. */
+/**
+ * Coercive Annexation — a grinding, multi-turn siege. Each push costs cattle
+ * and supplies and, if it lands, wears down one point of the hamlet's
+ * resistance; only when its resistance is fully broken does the hamlet fall.
+ * A hamlet may be pushed only once every ANNEX_COOLDOWN turns, so subduing
+ * one by force is the work of many turns, never a couple.
+ */
 function attemptAnnex(id) {
   if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.annex;
 
+  // The host must regroup between assaults — at most one push per turn.
+  if (GameState.turn - h.lastPush < CONFIG.ANNEX_COOLDOWN) {
+    logChronicle(`The warriors marching on ${h.name} must regroup — end the turn before pressing the assault again.`, "warning");
+    afterAction();
+    return;
+  }
   if (GameState.stats.cattle < c.cattle || GameState.stats.grain < c.grain) {
     logChronicle(`The muster against ${h.name} falters — not enough cattle and supplies.`, "warning");
     afterAction();
     return;
   }
-  // Manpower and supplies are committed whether or not the attack succeeds.
+  // Manpower and supplies are committed whether or not the push succeeds.
   spend({ cattle: -c.cattle, grain: -c.grain });
+  h.lastPush = GameState.turn;
 
   if (Math.random() < Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus())) {
-    logChronicle(`The warriors of the Demos bring ${h.name} to heel by force.`, "event");
-    absorbHamlet(h);
+    h.siege += 1;
+    if (h.siege >= h.resistance) {
+      logChronicle(`After a long campaign, the warriors of the Demos finally bring ${h.name} to heel by force.`, "event");
+      absorbHamlet(h);
+    } else {
+      logChronicle(
+        `Another stronghold of ${h.name} falls (${h.siege} / ${h.resistance}), but its people fight on.`,
+        "event"
+      );
+    }
   } else {
+    // A repulsed assault costs ground already won, and breeds resentment.
+    if (h.siege > 0) h.siege -= 1;
     GameState.unrest = CONFIG.UNREST_TURNS;
-    GameState.unhappiness += 4;   // a failed conquest breeds discontent
+    GameState.unhappiness += 4;   // a failed assault breeds discontent
     logChronicle(
-      `The annexation of ${h.name} fails! Resentment spreads — ` +
+      `The assault on ${h.name} is thrown back! Resentment spreads — ` +
       `civil unrest will sap production for ${CONFIG.UNREST_TURNS} turns.`,
       "warning"
     );
@@ -2173,16 +2180,15 @@ function renderCivic() {
   const body = document.getElementById("civic-body");
   if (!body) return;
 
-  const b = CIVIC.bard, a = CIVIC.altar, hc = CIVIC.hearth;
+  const b = CIVIC.bard, hc = CIVIC.hearth;
   const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
   const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
-  const canAltar = !GameState.altarBuilt && GameState.stats.timber >= a.timber && GameState.stats.clay >= a.clay;
   const canHearth = !GameState.hearthBuilt &&
     GameState.stats.timber >= hc.timber && GameState.stats.clay >= hc.clay && GameState.stats.cattle >= hc.cattle;
 
   body.innerHTML =
     `<p class="admin-intro">Before written law binds them, your people are held together by shared ` +
-    `glory and shared gods. Fund renown to draw newcomers, and raise an altar to weather the wrath of fate.</p>` +
+    `glory and shared gods. Fund renown to draw newcomers, and kindle the Ancestral Hearth to open your people to the gods.</p>` +
 
     `<div class="hamlet-card">` +
       `<div class="hc-head"><span class="hc-name">🎻 Fund an Aoidos</span><span class="hc-pop">Renown · Kleos</span></div>` +
@@ -2194,21 +2200,6 @@ function renderCivic() {
           `<span class="ab-title">🎻 Fund the Aoidos</span>` +
           `<span class="ab-cost">🌾 ${b.grain} grain · 🐄 ${b.cattle} cattle</span>` +
         `</button>` +
-      `</div>` +
-    `</div>` +
-
-    `<div class="hamlet-card">` +
-      `<div class="hc-head"><span class="hc-name">🔥 Open-Air Altar</span><span class="hc-pop">Piety · Eusebeia</span></div>` +
-      `<div class="hc-desc">A stone altar beneath the open sky, where sacrifice keeps the favour of the gods — ` +
-        `a bulwark to be spent against crisis.</div>` +
-      `<div class="hc-asset">Effect: <b>+${a.piety} Piety / turn</b> once raised</div>` +
-      `<div class="hamlet-actions">` +
-        (GameState.altarBuilt
-          ? `<div class="civic-built">✓ The altar stands — sacred smoke rises each turn (+${a.piety} Piety).</div>`
-          : `<button class="action-btn" id="civic-altar" ${(!canAltar || ended) ? "disabled" : ""}>` +
-              `<span class="ab-title">🔥 Erect the Altar</span>` +
-              `<span class="ab-cost">🪵 ${a.timber} timber · 🧱 ${a.clay} clay — built once</span>` +
-            `</button>`) +
       `</div>` +
     `</div>` +
 
@@ -2243,8 +2234,6 @@ function renderCivic() {
 
   const bardBtn = document.getElementById("civic-bard");
   if (bardBtn) bardBtn.addEventListener("click", fundBard);
-  const altarBtn = document.getElementById("civic-altar");
-  if (altarBtn) altarBtn.addEventListener("click", buildAltar);
   const hearthBtn = document.getElementById("civic-hearth");
   if (hearthBtn) hearthBtn.addEventListener("click", buildHearth);
 }
@@ -2380,14 +2369,19 @@ function renderAdmin() {
   }
 
   let html =
-    `<p class="admin-intro">Unite the surrounding hamlets into the Polis. ` +
-    `Win them over with a lavish feast, or bring them in by force at the risk of unrest.</p>`;
+    `<p class="admin-intro">Unite the surrounding hamlets into the Polis. Win them over with a ` +
+    `long, lavish feast, or grind them down by force — a siege of many turns that breeds unrest with every repulse.</p>`;
 
   remaining.forEach(h => {
     const f = h.feast, a = h.annex;
     const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
-    const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain;
     const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
+    const regrouping = GameState.turn - h.lastPush < CONFIG.ANNEX_COOLDOWN;
+    const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain && !regrouping;
+    const pct = Math.round(Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus()) * 100);
+    const siegeNote = h.siege > 0
+      ? `<div class="hc-asset">Resistance broken: <b>${h.siege} / ${h.resistance}</b> — ${h.resistance - h.siege} more to subdue</div>`
+      : `<div class="hc-asset">By force: <b>${h.resistance} successful pushes</b> needed, one per turn</div>`;
 
     html +=
       `<div class="hamlet-card">` +
@@ -2397,14 +2391,16 @@ function renderAdmin() {
         `</div>` +
         `<div class="hc-desc">${h.desc}</div>` +
         `<div class="hc-asset">Asset once absorbed: <b>${bonusText(h.asset.bonus)}</b></div>` +
+        siegeNote +
         `<div class="hamlet-actions">` +
           `<button class="action-btn diplomatic" data-feast="${h.id}" ${(!canFeast || ended) ? "disabled" : ""}>` +
             `<span class="ab-title">🍷 Diplomatic Feast</span>` +
             `<span class="ab-cost">🍇 ${f.grapes} wine · 🐄 ${f.cattle} cattle — certain success</span>` +
           `</button>` +
           `<button class="action-btn" data-annex="${h.id}" ${(!canAnnex || ended) ? "disabled" : ""}>` +
-            `<span class="ab-title">⚔ Coercive Annexation</span>` +
-            `<span class="ab-cost">🐄 ${a.cattle} cattle · 🌾 ${a.grain} supplies — ${Math.round(CONFIG.ANNEX_SUCCESS * 100)}% success</span>` +
+            `<span class="ab-title">⚔ Press the Siege</span>` +
+            `<span class="ab-cost">🐄 ${a.cattle} cattle · 🌾 ${a.grain} supplies — ${pct}% per push` +
+              `${regrouping ? " · regrouping, end the turn" : ""}</span>` +
           `</button>` +
         `</div>` +
       `</div>`;
@@ -2444,10 +2440,9 @@ function initGame() {
   GameState.jobs = assignJobs(GameState.stats.population);
 
   // Seed the runtime hamlets from config (deep copy so config stays pristine).
-  GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false }));
+  GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false, siege: 0, lastPush: -99 }));
   GameState.bonuses = {};
   GameState.unrest = 0;
-  GameState.altarBuilt = false;
   GameState.hearthBuilt = false;
   GameState.pendingEpiphany = false;
   GameState.pantheon = [null, null, null];
