@@ -530,19 +530,23 @@
   .rel-empty { font-size: 12.5px; font-style: italic; color: var(--ink-soft); margin: 4px 0 8px; }
   .rel-hand { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
   .rel-card {
-    display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 6px;
+    display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 6px; cursor: pointer;
     background: linear-gradient(170deg, #efe6cf, #e3d3ad); border: 2px solid var(--border-d);
+    font-family: inherit; transition: transform .1s ease, box-shadow .12s ease;
   }
+  .rel-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,.28); }
   .rel-card.aspect  { border-color: #4f6a86; }
   .rel-card.epithet { border-color: #8a6a2a; }
+  .rel-card.sel { box-shadow: 0 0 0 3px rgba(168,73,44,.45); border-color: var(--terra); }
   .rel-card .rc-ic { font-size: 18px; }
   .rel-card .rc-nm { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); font-size: 13px; }
-  .rel-card .rc-btn {
-    font-family: inherit; font-size: 11px; cursor: pointer; padding: 3px 8px; border-radius: 5px;
-    border: 1px solid var(--border-d); background: var(--olive); color: #f3eeda; font-weight: 700;
-  }
-  .rel-card .rc-btn:hover { filter: brightness(1.08); }
   .rc-hint { font-size: 11px; font-style: italic; color: var(--ink-soft); }
+  .bench-preview {
+    margin: 8px 0; padding: 9px 12px; border-radius: 6px; font-size: 13px; line-height: 1.45;
+    background: rgba(106,77,138,.07); border: 1px dashed #6a4d8a; color: var(--ink);
+  }
+  .bench-preview.match    { background: rgba(91,122,44,.14);  border: 1px solid var(--good); }
+  .bench-preview.mismatch { background: rgba(157,51,32,.10);  border: 1px solid var(--bad); }
 
   .cult-card {
     padding: 10px 12px; border-radius: 8px; margin-bottom: 10px;
@@ -571,6 +575,13 @@
              border-left: 3px solid #6f97b3; border-radius: 4px; }
   .sf-log { font-size: 12px; color: var(--ink-soft); margin: 8px 0; line-height: 1.5; }
   .sf-places { flex-direction: column; }
+
+  /* Hamlet integration progress track */
+  .stage-track { font-size: 13px; margin: 6px 0 2px; color: var(--terra-dark); }
+  .stage-track b { font-variant: small-caps; letter-spacing: .5px; }
+  .stage-pip { font-size: 12px; color: var(--border-d); margin-right: 1px; }
+  .stage-pip.done { color: var(--good); }
+  .stage-pip.now  { color: var(--terra); }
 
   /* Pantheon list in the Civic modal */
   .pantheon-list { display: flex; flex-direction: column; gap: 6px; }
@@ -1015,13 +1026,12 @@ const CONFIG = Object.freeze({
   // harvests draw down — making famine a real, if avoidable, risk.
   GRAIN_PER_CITIZEN: 0.8,
 
-  // Synoikismos — absorbing neighbouring hamlets. Coercion is a slow,
-  // grinding affair: each push only wears down part of a hamlet's
-  // resistance, and a hamlet falls only once its resistance is broken
-  // over several turns — never in a turn or two.
-  ANNEX_SUCCESS: 0.42,   // chance a single coercive push lands
-  ANNEX_COOLDOWN: 1,     // turns the host must regroup between pushes
-  UNREST_TURNS:  4,      // turns of civil unrest after a failed push
+  // Synoikismos — drawing neighbouring hamlets into the Polis is no quick
+  // conquest but a long event-chain of overtures, mixing aggression and
+  // negotiation. A hamlet rests between stages, so unification is the work of
+  // many decades and only feasibly completed around turns 70-100.
+  INTEGRATION_GAP: 8,    // years a hamlet "considers" between stages of its chain
+  UNREST_TURNS:  4,      // turns of civil unrest after a heavy-handed overture
   UNREST_FACTOR: 0.5,    // production multiplier while unrest lasts
 
   // Culture & religion.
@@ -1181,33 +1191,109 @@ const MYTHS = Object.freeze({
     pious:  { label: "Feast the hearth-spirits with cattle", cost: { cattle: 4 }, epithet: "soter",
               result: "Health returns to the hearths — the cult becomes a Protector of the home." },
   },
+  forge: {
+    title: "The Bronze That Would Not Cool",
+    desc: "The kiln-fires roar beyond all quenching and the smiths fall sick from the smoke. The half-formed god must master its own flame.",
+    heroic: { label: "Forge a hero's bronze panoply", cost: { kleos: 24 }, trait: "slayer",
+              result: "A wondrous war-gear is hammered out — the cult is hailed for its martial craft." },
+    pious:  { label: "Cool the forge with sacred libation", cost: { cattle: 4 }, epithet: "ktesios",
+              result: "The fires are tamed — the cult becomes a steady Guardian of Stores." },
+  },
+  wild: {
+    title: "The Beast in the Marches",
+    desc: "A great boar lays waste the outlying fields and no hunter returns. The wilderness god must show its mastery of the hunt.",
+    heroic: { label: "Loose the hunters upon the beast", cost: { kleos: 22 }, trait: "slayer",
+              result: "The boar is brought down in a famous hunt — a Monster-Slayer cult is born." },
+    pious:  { label: "Set aside a sacred grove for the beasts", cost: { cattle: 4 }, epithet: "nomios",
+              result: "The wild is appeased — the cult becomes a Herdsman, and the flocks thrive." },
+  },
+  vine: {
+    title: "The Madness of the Vine",
+    desc: "A frenzy seizes the young folk, who dance into the hills and will not return. The vine-god must be reckoned with.",
+    heroic: { label: "Lead the revel and master it", cost: { kleos: 20 }, trait: "warden",
+              result: "The frenzy turns to festival — the cult is renowned for keeping the people whole." },
+    pious:  { label: "Pour out wine in solemn offering", cost: { cattle: 4 }, epithet: "xenios",
+              result: "The god is sated — the cult becomes a gracious Host, drawing folk to your gates." },
+  },
+  war: {
+    title: "The Spear at the Gate",
+    desc: "Raiders mass on the marches, scenting weakness. The war-god demands the people prove their mettle.",
+    heroic: { label: "Meet the raiders in open battle", cost: { kleos: 26 }, trait: "slayer",
+              result: "The raiders are routed — a fearsome Monster-Slayer cult is forged." },
+    pious:  { label: "Ransom the peace with cattle", cost: { cattle: 5 }, epithet: "soter",
+              result: "The marches are quieted — the cult becomes a Protector of the people." },
+  },
+  // Fallback for any pairing without a dedicated myth.
+  _default: {
+    title: "The Proving of the God",
+    desc: "The people demand a sign before they will carry this god toward Olympus. It must prove itself by deed or by devotion.",
+    heroic: { label: "Send a champion to win glory in its name", cost: { kleos: 22 }, trait: "slayer",
+              result: "The deed is done and sung abroad — the cult wins a martial renown." },
+    pious:  { label: "Lay a great sacrifice before it", cost: { cattle: 5 }, epithet: "soter",
+              result: "The offering is accepted — the cult is named a Protector of the people." },
+  },
 });
 
 /* The Aspect deck — the untamed forces the dark-age Greeks feared or relied on. */
 const ASPECTS = {
-  sky:    { name: "The Sky",    sub: "Cloud-Gatherer", god: "Zeus",     icon: "🌩️", desc: "Weather, lightning and rainfall." },
-  sea:    { name: "The Sea",    sub: "Earth-Shaker",   god: "Poseidon", icon: "🌊", desc: "Coastlines, fishing and seafaring." },
-  earth:  { name: "The Earth",  sub: "Grain-Bringer",  god: "Demeter",  icon: "🌾", desc: "Soil, crops and the turning of decay." },
-  hearth: { name: "The Hearth", sub: "Home-Keeper",    god: "Hestia",   icon: "🔥", desc: "The village flame, family and health." },
+  sky:    { name: "The Sky",    sub: "Cloud-Gatherer",   god: "Zeus",       icon: "🌩️", desc: "Weather, lightning and rainfall." },
+  sea:    { name: "The Sea",    sub: "Earth-Shaker",     god: "Poseidon",   icon: "🌊", desc: "Coastlines, fishing and seafaring." },
+  earth:  { name: "The Earth",  sub: "Grain-Bringer",    god: "Demeter",    icon: "🌾", desc: "Soil, crops and the turning of decay." },
+  hearth: { name: "The Hearth", sub: "Home-Keeper",      god: "Hestia",     icon: "🔥", desc: "The village flame, family and health." },
+  forge:  { name: "The Forge",  sub: "Smith-of-Fire",    god: "Hephaistos", icon: "🔨", desc: "Fire tamed to craft — kiln, tool and bronze." },
+  wild:   { name: "The Wild",   sub: "Mistress of Beasts", god: "Artemis",  icon: "🏹", desc: "Forest, hunt and the untamed marches." },
+  vine:   { name: "The Vine",   sub: "Loosener of Care",  god: "Dionysos",  icon: "🍷", desc: "Wine, revel and the wild rebirth of spring." },
+  war:    { name: "The War",    sub: "Sacker of Cities",  god: "Ares",      icon: "⚔️", desc: "Battle-lust, strife and the bronze spear." },
 };
 
 /* The Epithet deck — titles naming the god's work for this town. */
 const EPITHETS = {
-  soter:      { name: "Soter",      sub: "The Protector",        icon: "🛡️", desc: "Defensive favour; calms citizen panic." },
-  georgos:    { name: "Georgos",    sub: "The Farmer",           icon: "🌱", desc: "Directly boosts agricultural yields." },
-  agoraia:    { name: "Agoraia",    sub: "Overseer of Markets",  icon: "⚖️", desc: "Improves barter and resource generation." },
-  xenios:     { name: "Xenios",     sub: "The Host",             icon: "🤝", desc: "Aids diplomacy and attracts bards." },
+  soter:      { name: "Soter",      sub: "The Protector",          icon: "🛡️", desc: "Defensive favour; calms citizen panic." },
+  georgos:    { name: "Georgos",    sub: "The Farmer",             icon: "🌱", desc: "Swells the standing grain." },
+  agoraia:    { name: "Agoraia",    sub: "Overseer of Markets",    icon: "⚖️", desc: "Improves barter — timber, clay and oil." },
+  xenios:     { name: "Xenios",     sub: "The Host",               icon: "🤝", desc: "Aids diplomacy and attracts bards (Kleos)." },
+  nomios:     { name: "Nomios",     sub: "The Herdsman",           icon: "🐂", desc: "Fattens the herds; cattle multiply." },
+  polemios:   { name: "Polemios",   sub: "The Warlike",            icon: "🗡️", desc: "Hardens the people for war; eases conquest, wards raiders." },
+  ktesios:    { name: "Ktesios",    sub: "Guardian of Stores",     icon: "🏺", desc: "Watches the storeroom — grain and clay are kept." },
+  boulaios:   { name: "Boulaios",   sub: "Of the Council",         icon: "🗣️", desc: "Wise counsel; renown grows and tempers cool." },
   // Rare — never drawn; only forged through a Mythic Cycle.
   asphaleios: { name: "Asphaleios", sub: "Securer of Foundations", icon: "🪨", desc: "Calms the people and stays the earth — earthquakes never strike." },
 };
 
-/* Harmonious Aspect→Epithet pairings yield strong, steady gods. Any other
-   pairing produces a "confused" deity of feeble, erratic blessings. */
+/* The drawable Epithets (asphaleios is myth-only). */
+const DRAWABLE_EPITHETS = ["soter", "georgos", "agoraia", "xenios", "nomios", "polemios", "ktesios", "boulaios"];
+
+/* A consecrated god's standing per-turn blessing, by Epithet (at the Heros /
+   Tier-2 baseline). The tier multiplier scales these; harmony and myth-won
+   traits modulate them. `ward` lists crisis ids the god turns aside; `annex`
+   eases hamlet integration. Single source of truth for applyOnePerk(),
+   blessingLine(), applyJealousyPenalty() and wardedCrises(). */
+const EPITHET_EFFECT = Object.freeze({
+  georgos:    { grain: 6 },
+  agoraia:    { timber: 3, clay: 3, olives: 2 },
+  xenios:     { kleos: 3, diplo: true },
+  soter:      { calm: 2 },
+  nomios:     { cattle: 2 },
+  polemios:   { calm: 1, martial: true, ward: ["wolves"] },
+  ktesios:    { grain: 3, clay: 2 },
+  boulaios:   { kleos: 2, calm: 1, diplo: true },
+  asphaleios: { calm: 2, ward: ["quake"] },
+});
+const WARD_NAME = Object.freeze({ quake: "earthquakes", plague: "plague", blight: "blight", wolves: "raiders & wolves", tempest: "sea-storms" });
+
+/* Harmonious Aspect→Epithet pairings yield strong, steady gods; any other
+   pairing makes a "confused" deity of feeble, erratic blessings. Many aspects
+   harmonise with several epithets, and most epithets suit several aspects, so
+   there are many viable gods to chase. */
 const HARMONY = {
-  sky:    ["soter", "xenios"],
-  sea:    ["soter", "agoraia", "asphaleios"],
-  earth:  ["georgos", "agoraia"],
-  hearth: ["soter", "xenios", "asphaleios"],
+  sky:    ["soter", "xenios", "boulaios", "polemios"],
+  sea:    ["soter", "agoraia", "nomios", "asphaleios"],
+  earth:  ["georgos", "agoraia", "ktesios", "nomios"],
+  hearth: ["soter", "xenios", "boulaios", "asphaleios"],
+  forge:  ["agoraia", "ktesios", "polemios"],
+  wild:   ["soter", "nomios", "polemios", "ktesios"],
+  vine:   ["xenios", "georgos", "boulaios"],
+  war:    ["polemios", "soter", "nomios"],
 };
 
 /* ---------- The central Game State Object ---------- */
@@ -1262,6 +1348,7 @@ const GameState = {
   hearthTurn:  -1,                // turn the Hearth was kindled (schedules Epiphanies)
   pendingEpiphany: false,         // a fresh card-grant notice awaits acknowledgement
   hand: { aspects: [], epithets: [] },  // unassigned Aspect/Epithet cards in the people's keeping
+  relSelect: { aspect: null, epithet: null },  // cards selected at the founding bench (preview before committing)
   cults: [],                      // Local Cults (unlocked) and consecrated gods (locked)
   cultSeq: 0,                     // id sequence for cults
   appeaseOldGods: true,           // pay Phthonos appeasement to established gods each turn?
@@ -1340,37 +1427,64 @@ const CRISES = [
  *
  *  pos   — placement of the interactive label on the map (percent).
  *  asset — { label, bonus } added to GameState.bonuses on absorption.
- *  feast — Diplomatic Feast cost (wine/grapes + cattle); slow, costly, certain.
- *  annex — Coercive Annexation cost per push (cattle + grain supplies).
- *  resistance — successful pushes needed before the hamlet is broken; a
- *               hamlet can be pushed at most once per turn, so unifying one
- *               by force is the work of many turns, not a couple.
+ *
+ * Integration is no quick conquest: every hamlet is drawn in through the
+ * shared event-chain below (INTEGRATION_STAGES), one stage at a time, with a
+ * rest between each. Each stage offers an aggressive and a negotiated path —
+ * the player mixes them according to their stores and how their religion is
+ * faring.
  */
 const HAMLETS = [
   {
     id: "foothill", name: "The Foothill Clan", icon: "⛰️",
-    population: 30, pos: { top: "52%", left: "14%" }, resistance: 3,
+    population: 30, pos: { top: "52%", left: "14%" },
     desc: "Hardy highlanders who fell timber and quarry stone from the upland forests.",
     asset: { label: "timber from the high forests", bonus: { timber: +6 } },
-    feast: { grapes: 72, cattle: 16 },
-    annex: { cattle: 18, grain: 22 },
   },
   {
     id: "coastal", name: "The Coastal Fishermen", icon: "🌊",
-    population: 25, pos: { top: "84%", left: "69%" }, resistance: 3,
+    population: 25, pos: { top: "84%", left: "69%" },
     desc: "Fisherfolk whose nets bring a steady catch to feed the growing city.",
     asset: { label: "a steady catch that swells the food stores", bonus: { grain: +8 } },
-    feast: { grapes: 60, cattle: 14 },
-    annex: { cattle: 15, grain: 18 },
   },
   {
     id: "river", name: "The River Valley Tribe", icon: "🏞️",
-    population: 40, pos: { top: "85%", left: "28%" }, resistance: 4,
+    population: 40, pos: { top: "85%", left: "28%" },
     desc: "Potters and farmers of the fertile river bend, rich in clay and grain.",
     asset: { label: "clay and grain from the river bend", bonus: { clay: +6, grain: +3 } },
-    feast: { grapes: 88, cattle: 22 },
-    annex: { cattle: 24, grain: 30 },
   },
+];
+
+/*
+ * The integration event-chain. A hamlet advances through these stages one at a
+ * time, resting CONFIG.INTEGRATION_GAP years between each. Every stage offers
+ * a `force` overture (cheap in social goods but costly in cattle/grain, and it
+ * breeds civil unrest) and a `talk` overture (costly in wine, oil, Kleos and
+ * Piety, but peaceful). A consecrated pantheon eases whichever path it favours.
+ * The `faith` stage is far cheaper if you have a harmonious god — and dear if
+ * you have none. Costs and gaps make a first union realistic only ~turn 70-100.
+ */
+const INTEGRATION_STAGES = [
+  { key: "contact", name: "First Contact",
+    desc: "Outriders and heralds test the will of {name}.",
+    talk:  { label: "Send envoys bearing gifts",   cost: { grapes: 14, olives: 8, kleos: 10 } },
+    force: { label: "Make a show of arms",          cost: { cattle: 6, grain: 14 }, unrest: 2 } },
+  { key: "elders", name: "Win the Elders",
+    desc: "The elders of {name} weigh whether your Polis is worth the joining.",
+    talk:  { label: "Feast and flatter the elders", cost: { grapes: 22, cattle: 6, olives: 10 } },
+    force: { label: "Seize their best grazing land", cost: { cattle: 8, grain: 20 }, unrest: 4 } },
+  { key: "sacred", name: "The Sacred Bond", faith: true,
+    desc: "Only a shared rite can truly knit {name} to your gods — and a god of your own makes it far easier.",
+    talk:  { label: "Hold a joint sacrifice",       cost: { piety: 16, cattle: 8 } },
+    force: { label: "Cow their priests into silence", cost: { cattle: 10, timber: 16 }, unrest: 5 } },
+  { key: "house", name: "Bind the Households",
+    desc: "Blood and bargain must weave your peoples together.",
+    talk:  { label: "Arrange marriage alliances",   cost: { olives: 16, grapes: 18, kleos: 18 } },
+    force: { label: "Take noble children as hostages", cost: { cattle: 12, grain: 24 }, unrest: 6 } },
+  { key: "oath", name: "The Synoikismos Oath",
+    desc: "The final oath that makes {name} forever part of the Polis.",
+    talk:  { label: "Swear the confederate oath",   cost: { kleos: 26, piety: 18, grapes: 20 } },
+    force: { label: "Compel the final submission",   cost: { cattle: 18, grain: 32 }, unrest: 7 } },
 ];
 
 /* ===================================================================
@@ -1984,7 +2098,8 @@ function godName(c) {
 function wardedCrises() {
   const set = new Set();
   for (const c of lockedCults()) {
-    if (c.epithet === "asphaleios") set.add("quake");
+    const eff = EPITHET_EFFECT[c.epithet] || {};
+    if (eff.ward) eff.ward.forEach(w => set.add(w));
     if (c.trait === "warden" || c.stolenFire) set.add("plague");
     if (c.trait === "bounty") set.add("blight");
     if (c.trait === "slayer") set.add("wolves");
@@ -1995,7 +2110,7 @@ function wardedCrises() {
 /* ---------- the Divine Epiphany: a gift of cards ---------- */
 function grantEpiphany() {
   const a = pick(Object.keys(ASPECTS));
-  const e = pick(["soter", "georgos", "agoraia", "xenios"]);   // asphaleios is myth-only
+  const e = pick(DRAWABLE_EPITHETS);   // asphaleios is myth-only
   GameState.hand.aspects.push(a);
   GameState.hand.epithets.push(e);
   GameState.pendingEpiphany = true;
@@ -2014,7 +2129,43 @@ function ackEpiphany() {
   render();
 }
 
-/* ---------- founding & tending Local Cults ---------- */
+/* ---------- founding bench: choose & PREVIEW cards before committing ---------- */
+function relPick(kind, id) {
+  const sel = GameState.relSelect;
+  if (kind === "aspect")  sel.aspect  = (sel.aspect  === id ? null : id);
+  else                    sel.epithet = (sel.epithet === id ? null : id);
+  renderReligion();
+}
+/** Establish a cult from the bench: an Aspect, optionally bound to an Epithet
+    that the player has already previewed for harmony. */
+function establishCult() {
+  const sel = GameState.relSelect;
+  const ai = sel.aspect ? GameState.hand.aspects.indexOf(sel.aspect) : -1;
+  if (ai < 0) return;                                   // an Aspect is required
+  const aspect = GameState.hand.aspects.splice(ai, 1)[0];
+  const cult = {
+    id: ++GameState.cultSeq, aspect, epithet: null,
+    devotion: 0, age: 0, pairedAge: 0, winterAge: 0,
+    locked: false, tier: 0, trait: null, mythDone: false, stolenFire: false,
+  };
+  let epithet = null;
+  const ei = sel.epithet ? GameState.hand.epithets.indexOf(sel.epithet) : -1;
+  if (ei >= 0) {
+    epithet = GameState.hand.epithets.splice(ei, 1)[0];
+    cult.epithet = epithet;
+    cult.harmonious = isHarmonious(aspect, epithet);
+  }
+  GameState.cults.push(cult);
+  GameState.relSelect = { aspect: null, epithet: null };
+  logChronicle(
+    epithet
+      ? `A new Local Cult is raised: ${godName(cult)} — ${cult.harmonious ? "a harmonious pairing that will swell quickly." : "an ill-matched pairing that will grow but slowly."}`
+      : `The people gather to a new, unbound Local Cult of ${ASPECTS[aspect].name}.`,
+    epithet && !cult.harmonious ? "warning" : "event"
+  );
+  renderReligion(); render();
+}
+/* found an unbound aspect-only cult directly (kept for the Hearth/Stolen-Fire play) */
 function foundCult(aspect) {
   const i = GameState.hand.aspects.indexOf(aspect);
   if (i < 0) return;
@@ -2144,52 +2295,44 @@ function applyCultPerks() {
 function applyOnePerk(c) {
   const mult = TIER_MULT[c.tier] * (c.harmonious ? 1 : 0.45);
   const R = (n) => Math.round(n * mult);
-  switch (c.epithet) {
-    case "georgos":
-      applyStats({ grain: R(6 * (c.trait === "bounty" ? 1.6 : 1)) });
-      break;
-    case "agoraia":
-      applyStats({ timber: R(3), clay: R(3), olives: R(2) });
-      break;
-    case "xenios":
-      GameState.macros.kleos += R(3);
-      break;
-    case "soter":
-    case "asphaleios": {
-      const calm = R(2 * (c.trait === "slayer" ? 2 : 1));
-      if (GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - calm);
-      if (GameState.unrest > 0) GameState.unrest = Math.max(0, GameState.unrest - 1);
-      break;
-    }
+  const eff = EPITHET_EFFECT[c.epithet] || {};
+  const stat = {};
+  if (eff.grain)  stat.grain  = R(eff.grain * (c.trait === "bounty" ? 1.6 : 1));
+  if (eff.timber) stat.timber = R(eff.timber);
+  if (eff.clay)   stat.clay   = R(eff.clay);
+  if (eff.olives) stat.olives = R(eff.olives);
+  if (eff.cattle) stat.cattle = R(eff.cattle);
+  if (Object.keys(stat).length) applyStats(stat);
+  if (eff.kleos) GameState.macros.kleos += R(eff.kleos);
+  if (eff.calm) {
+    const calm = R(eff.calm * (c.trait === "slayer" ? 2 : 1));
+    if (GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - calm);
+    if (GameState.unrest > 0) GameState.unrest = Math.max(0, GameState.unrest - 1);
   }
-  if (c.stolenFire && GameState.macros.eusebeia >= 0) GameState.macros.eusebeia += R(2);   // Hestia rekindled
+  if (c.stolenFire) GameState.macros.eusebeia += R(2);   // Hestia rekindled keeps piety flowing
 }
 function applyJealousyPenalty(c) {
-  switch (c.epithet) {
-    case "georgos":    applyStats({ grain: -4 }); break;
-    case "agoraia":    applyStats({ timber: -2, clay: -2 }); break;
-    case "xenios":     GameState.macros.kleos = Math.max(0, GameState.macros.kleos - 2); break;
-    case "soter":
-    case "asphaleios": GameState.unhappiness += 2; break;
-  }
+  const eff = EPITHET_EFFECT[c.epithet] || {};
+  if (eff.grain)  applyStats({ grain: -4 });
+  if (eff.timber || eff.clay) applyStats({ timber: eff.timber ? -2 : 0, clay: eff.clay ? -2 : 0 });
+  if (eff.cattle) applyStats({ cattle: -1 });
+  if (eff.kleos)  GameState.macros.kleos = Math.max(0, GameState.macros.kleos - 2);
+  if (eff.calm)   GameState.unhappiness += 2;
   if (GameState.turn % 3 === 0)
     logChronicle(`Phthonos — ${godName(c)} feels neglected and withholds its blessing.`, "warning");
 }
-/** Harmonious, consecrated Xenios gods smooth annexation (scaled by tier & slayer). */
-function pantheonAnnexBonus() {
-  let b = 0;
-  for (const c of lockedCults()) {
-    if (c.epithet === "xenios" && c.harmonious) b += 0.06 * c.tier;
-    if (c.trait === "slayer") b += 0.05 * c.tier;
-  }
-  return Math.min(0.35, b);
-}
+/* ---------- religion's hand in worldly affairs (hamlet integration) ---------- */
+function hasDiplomaticGod()  { return lockedCults().some(c => (EPITHET_EFFECT[c.epithet] || {}).diplo); }
+function hasMartialGod()     { return lockedCults().some(c => (EPITHET_EFFECT[c.epithet] || {}).martial || c.trait === "slayer"); }
+function hasAnyGod()         { return lockedCults().length > 0; }
+function hasHarmoniousGod()  { return lockedCults().some(c => c.harmonious); }
 
 /* ---------- Mythic Cycle (blocking) ---------- */
 function triggerMyth(c) {
   const key = `${c.aspect}:${c.epithet}`;
-  const myth = MYTHS[key] || MYTHS[c.aspect];
-  GameState.pendingMyth = { cultId: c.id, key: MYTHS[key] ? key : c.aspect };
+  const useKey = MYTHS[key] ? key : (MYTHS[c.aspect] ? c.aspect : "_default");
+  const myth = MYTHS[useKey];
+  GameState.pendingMyth = { cultId: c.id, key: useKey };
   logChronicle(`A Mythic Cycle stirs around ${godName(c)}: ${myth.title}.`, "system");
   renderMyth();
   openModal("myth-modal");
@@ -2318,73 +2461,67 @@ function absorbHamlet(h) {
   );
 }
 
-/** Diplomatic Feast: high wine + cattle cost, but certain success. */
-function attemptFeast(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
-  const h = getHamlet(id);
-  if (!h || h.absorbed) return;
-  const c = h.feast;
+/* ---------- religion's reach helpers are defined above (hasMartialGod etc.) ---------- */
 
-  if (GameState.stats.grapes < c.grapes || GameState.stats.cattle < c.cattle) {
-    logChronicle(`The feast for ${h.name} cannot be laid — too little wine and cattle.`, "warning");
-    afterAction();
-    return;
+/** Resolve a stage's overture cost, eased by a fitting pantheon. */
+function integrationCost(stage, kind) {
+  const base = stage[kind].cost;
+  const cost = {};
+  let factor = 1;
+  if (kind === "talk") {
+    if (hasDiplomaticGod()) factor *= 0.7;             // Xenios/Boulaios gods smooth negotiation
+    if (stage.faith) factor *= hasHarmoniousGod() ? 0.6 : (hasAnyGod() ? 1 : 1.6);
+  } else {
+    if (hasMartialGod()) factor *= 0.7;                // Polemios gods / Slayer cults ease conquest
   }
-  spend({ grapes: -c.grapes, cattle: -c.cattle });
-  logChronicle(`A great feast of wine and roasted cattle wins the favour of ${h.name}.`, "event");
-  absorbHamlet(h);
-  afterAction();
+  for (const k in base) cost[k] = Math.max(1, Math.round(base[k] * factor));
+  return cost;
+}
+/** Civil unrest a forceful overture stirs, softened by a martial god. */
+function integrationUnrest(stage) {
+  const u = stage.force.unrest || 0;
+  return hasMartialGod() ? Math.ceil(u / 2) : u;
 }
 
 /**
- * Coercive Annexation — a grinding, multi-turn siege. Each push costs cattle
- * and supplies and, if it lands, wears down one point of the hamlet's
- * resistance; only when its resistance is fully broken does the hamlet fall.
- * A hamlet may be pushed only once every ANNEX_COOLDOWN turns, so subduing
- * one by force is the work of many turns, never a couple.
+ * Take one overture toward a hamlet's integration. Each lands a single stage of
+ * its event-chain, after which the hamlet rests (CONFIG.INTEGRATION_GAP years)
+ * before the next stage opens. Force breeds unrest; talk drains social goods.
  */
-function attemptAnnex(id) {
+function attemptIntegration(id, kind) {
   if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
-  const c = h.annex;
 
-  // The host must regroup between assaults — at most one push per turn.
-  if (GameState.turn - h.lastPush < CONFIG.ANNEX_COOLDOWN) {
-    logChronicle(`The warriors marching on ${h.name} must regroup — end the turn before pressing the assault again.`, "warning");
+  if (GameState.turn < h.cooldownUntil) {
+    logChronicle(`The people of ${h.name} are still weighing your last overture — give them time before the next.`, "warning");
     afterAction();
     return;
   }
-  if (GameState.stats.cattle < c.cattle || GameState.stats.grain < c.grain) {
-    logChronicle(`The muster against ${h.name} falters — not enough cattle and supplies.`, "warning");
-    afterAction();
+  const stage = INTEGRATION_STAGES[h.stage];
+  if (!stage) return;
+  const cost = integrationCost(stage, kind);
+  if (!canAfford(cost)) {
+    logChronicle(`The overture to ${h.name} (${stage.name}) cannot be mounted — ${costText(cost)} is needed.`, "warning");
+    renderAdmin();
     return;
   }
-  // Manpower and supplies are committed whether or not the push succeeds.
-  spend({ cattle: -c.cattle, grain: -c.grain });
-  h.lastPush = GameState.turn;
+  spendObj(cost);
 
-  if (Math.random() < Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus())) {
-    h.siege += 1;
-    if (h.siege >= h.resistance) {
-      logChronicle(`After a long campaign, the warriors of the Demos finally bring ${h.name} to heel by force.`, "event");
-      absorbHamlet(h);
-    } else {
-      logChronicle(
-        `Another stronghold of ${h.name} falls (${h.siege} / ${h.resistance}), but its people fight on.`,
-        "event"
-      );
-    }
+  if (kind === "force") {
+    const u = integrationUnrest(stage);
+    if (u > 0) { GameState.unrest = Math.max(GameState.unrest, u); GameState.unhappiness += 2; }
+    logChronicle(`A heavy-handed overture toward ${h.name} — “${stage.name}” — is pressed by force${u ? `; resentment stirs civil unrest for ${u} years.` : "."}`, "warning");
   } else {
-    // A repulsed assault costs ground already won, and breeds resentment.
-    if (h.siege > 0) h.siege -= 1;
-    GameState.unrest = CONFIG.UNREST_TURNS;
-    GameState.unhappiness += 4;   // a failed assault breeds discontent
-    logChronicle(
-      `The assault on ${h.name} is thrown back! Resentment spreads — ` +
-      `civil unrest will sap production for ${CONFIG.UNREST_TURNS} turns.`,
-      "warning"
-    );
+    logChronicle(`A patient, generous overture toward ${h.name} — “${stage.name}” — wins ground through negotiation.`, "event");
+  }
+
+  h.stage += 1;
+  h.cooldownUntil = GameState.turn + CONFIG.INTEGRATION_GAP;
+  if (h.stage >= INTEGRATION_STAGES.length) {
+    absorbHamlet(h);
+  } else {
+    logChronicle(`${h.name}: ${h.stage} of ${INTEGRATION_STAGES.length} stages of synoikismos complete. The people withdraw to consider what comes next.`, "system");
   }
   afterAction();
 }
@@ -2707,14 +2844,25 @@ function openReligion() { renderReligion(); openModal("religion-modal"); }
 function blessingLine(epithet, tier, harmonious, trait) {
   const mult = TIER_MULT[tier] * (harmonious ? 1 : 0.45);
   const R = (n) => Math.round(n * mult);
-  switch (epithet) {
-    case "georgos":    return `+${R(6 * (trait === "bounty" ? 1.6 : 1))} Grain / turn`;
-    case "agoraia":    return `+${R(3)} Timber, +${R(3)} Clay, +${R(2)} Olives / turn`;
-    case "xenios":     return `+${R(3)} Kleos / turn`;
-    case "soter":      return `−${R(2 * (trait === "slayer" ? 2 : 1))} Discontent / turn, steadies unrest`;
-    case "asphaleios": return `−${R(2)} Discontent / turn, and wards off earthquakes`;
-    default:           return "a standing blessing";
+  const eff = EPITHET_EFFECT[epithet] || {};
+  const parts = [];
+  if (eff.grain) parts.push(`+${R(eff.grain * (trait === "bounty" ? 1.6 : 1))} Grain`);
+  if (eff.timber || eff.clay || eff.olives) {
+    const seg = [];
+    if (eff.timber) seg.push(`+${R(eff.timber)} Timber`);
+    if (eff.clay)   seg.push(`+${R(eff.clay)} Clay`);
+    if (eff.olives) seg.push(`+${R(eff.olives)} Olives`);
+    parts.push(seg.join(", "));
   }
+  if (eff.cattle) parts.push(`+${R(eff.cattle)} Cattle`);
+  if (eff.kleos)  parts.push(`+${R(eff.kleos)} Kleos`);
+  if (eff.calm)   parts.push(`−${R(eff.calm * (trait === "slayer" ? 2 : 1))} Discontent, steadies unrest`);
+  const tail = [];
+  if (eff.martial) tail.push("eases conquest");
+  if (eff.ward)    tail.push(`wards ${eff.ward.map(w => WARD_NAME[w] || w).join(" & ")}`);
+  let s = parts.length ? parts.join(" · ") + " / turn" : "";
+  if (tail.length) s += (s ? " · " : "") + tail.join(" · ");
+  return s || "a standing blessing";
 }
 function traitLabel(trait) {
   return trait === "slayer" ? "⚔ Monster-Slayer"
@@ -2743,21 +2891,46 @@ function renderReligion() {
     html += `<div class="rel-banner jealous">⚡ Divine Jealousy (Phthonos): you nurture a new god while others are enthroned. ` +
             `${GameState.appeaseOldGods ? "Appeasement sacrifices are being paid each turn to keep them content." : "The old gods rage — their blessings are turning to curses!"}</div>`;
 
-  // The hand of unassigned cards.
-  html += `<div class="deck-label">The people's cards — ${hand.aspects.length} Aspects · ${hand.epithets.length} Epithets</div>`;
+  // The founding bench: select an Aspect and (optionally) an Epithet, PREVIEW
+  // whether they harmonise, then establish the cult — no more founding blind
+  // and disbanding an ill-matched pairing afterward.
+  const sel = GameState.relSelect || { aspect: null, epithet: null };
+  if (sel.aspect && hand.aspects.indexOf(sel.aspect) < 0) sel.aspect = null;     // card no longer held
+  if (sel.epithet && hand.epithets.indexOf(sel.epithet) < 0) sel.epithet = null;
+  html += `<div class="deck-label">The founding bench — ${hand.aspects.length} Aspects · ${hand.epithets.length} Epithets in hand</div>`;
   if (hand.aspects.length === 0 && hand.epithets.length === 0) {
     html += `<p class="rel-empty">No cards in hand. A Divine Epiphany will gift more in the years to come.</p>`;
   } else {
     html += `<div class="rel-hand">`;
-    hand.aspects.forEach(id =>
-      html += `<div class="rel-card aspect"><span class="rc-ic">${ASPECTS[id].icon}</span>` +
-              `<span class="rc-nm">${ASPECTS[id].name}</span>` +
-              `<button class="rc-btn" data-found="${id}">Raise a Cult</button></div>`);
-    hand.epithets.forEach((id, i) =>
-      html += `<div class="rel-card epithet"><span class="rc-ic">${EPITHETS[id].icon}</span>` +
-              `<span class="rc-nm">${EPITHETS[id].name}</span>` +
-              `<span class="rc-hint">bind to a cult below</span></div>`);
+    // de-duplicate by value but show counts, so picking is unambiguous
+    const aCounts = {}; hand.aspects.forEach(id => aCounts[id] = (aCounts[id] || 0) + 1);
+    const eCounts = {}; hand.epithets.forEach(id => eCounts[id] = (eCounts[id] || 0) + 1);
+    Object.keys(aCounts).forEach(id =>
+      html += `<button class="rel-card aspect${sel.aspect === id ? " sel" : ""}" data-pick-aspect="${id}">` +
+              `<span class="rc-ic">${ASPECTS[id].icon}</span><span class="rc-nm">${ASPECTS[id].name}${aCounts[id] > 1 ? ` ×${aCounts[id]}` : ""}</span></button>`);
+    Object.keys(eCounts).forEach(id =>
+      html += `<button class="rel-card epithet${sel.epithet === id ? " sel" : ""}" data-pick-epithet="${id}">` +
+              `<span class="rc-ic">${EPITHETS[id].icon}</span><span class="rc-nm">${EPITHETS[id].name}${eCounts[id] > 1 ? ` ×${eCounts[id]}` : ""}</span></button>`);
     html += `</div>`;
+    // Live preview of the chosen pairing.
+    let preview, cls = "";
+    if (!sel.aspect) {
+      preview = "Select an Aspect to begin a cult — add an Epithet to name a god.";
+    } else if (!sel.epithet) {
+      preview = `Unbound <b>Cult of ${ASPECTS[sel.aspect].name}</b> — establish it now and bind an Epithet later` +
+                (sel.aspect === "hearth" ? " (or risk the Stolen Fire through a Great Winter)" : "") + ".";
+    } else {
+      const harm = isHarmonious(sel.aspect, sel.epithet);
+      cls = harm ? "match" : "mismatch";
+      preview = `${ASPECTS[sel.aspect].god} ${EPITHETS[sel.epithet].name} — ` +
+        (harm ? `✦ <b>Harmonious</b>: a strong, steady god that swells quickly.`
+              : `≈ <b>Ill-matched</b>: a confused god of feeble blessings that grows slowly.`);
+    }
+    html += `<div class="bench-preview ${cls}">${preview}</div>`;
+    html += `<div class="cult-actions">` +
+      `<button class="mini-btn lock${sel.aspect ? "" : " off"}" id="rel-establish" ${sel.aspect ? "" : "disabled"}>⛩️ Establish Cult</button>` +
+      `<button class="mini-btn" id="rel-clearsel">Clear selection</button>` +
+    `</div>`;
   }
 
   // Local Cults (unlocked).
@@ -2786,8 +2959,11 @@ function renderReligion() {
     // Bind an epithet (if unpaired and cards available).
     if (!c.epithet) {
       const eps = [...new Set(hand.epithets)];
-      if (eps.length) eps.forEach(id =>
-        html += `<button class="mini-btn" data-pair="${c.id}" data-ep="${id}">Bind ${EPITHETS[id].name}</button>`);
+      if (eps.length) eps.forEach(id => {
+        const harm = isHarmonious(c.aspect, id);
+        html += `<button class="mini-btn" data-pair="${c.id}" data-ep="${id}" title="${harm ? "Harmonious" : "Ill-matched"}">` +
+                `Bind ${EPITHETS[id].name} ${harm ? "✦" : "≈"}</button>`;
+      });
       else html += `<span class="rc-hint">no Epithet cards in hand</span>`;
     } else {
       // Offerings.
@@ -2828,7 +3004,12 @@ function renderReligion() {
 
   body.innerHTML = html;
 
-  body.querySelectorAll("[data-found]").forEach(b => b.addEventListener("click", () => foundCult(b.dataset.found)));
+  body.querySelectorAll("[data-pick-aspect]").forEach(b => b.addEventListener("click", () => relPick("aspect", b.dataset.pickAspect)));
+  body.querySelectorAll("[data-pick-epithet]").forEach(b => b.addEventListener("click", () => relPick("epithet", b.dataset.pickEpithet)));
+  const estBtn = document.getElementById("rel-establish");
+  if (estBtn) estBtn.addEventListener("click", establishCult);
+  const clrBtn = document.getElementById("rel-clearsel");
+  if (clrBtn) clrBtn.addEventListener("click", () => { GameState.relSelect = { aspect: null, epithet: null }; renderReligion(); });
   body.querySelectorAll("[data-pair]").forEach(b => b.addEventListener("click", () => pairEpithet(+b.dataset.pair, b.dataset.ep)));
   body.querySelectorAll("[data-offer]").forEach(b => b.addEventListener("click", () => makeOffering(+b.dataset.offer, b.dataset.kind)));
   body.querySelectorAll("[data-lock]").forEach(b => b.addEventListener("click", () => lockCult(+b.dataset.lock)));
@@ -2947,51 +3128,70 @@ function renderAdmin() {
     return;
   }
 
+  const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.stolenFire;
+  const total = INTEGRATION_STAGES.length;
+
   let html =
-    `<p class="admin-intro">Unite the surrounding hamlets into the Polis. Win them over with a ` +
-    `long, lavish feast, or grind them down by force — a siege of many turns that breeds unrest with every repulse.</p>`;
+    `<p class="admin-intro">Each hamlet is drawn into the Polis through a long chain of overtures — ${total} stages, ` +
+    `with the people resting ${CONFIG.INTEGRATION_GAP} years between each. Every stage may be pressed by <b>force</b> ` +
+    `(cheap in goods, dear in cattle and grain, and it breeds <b>civil unrest</b>) or by <b>negotiation</b> (costly in wine, ` +
+    `oil, Kleos and Piety). Your gods tip the scales: <i>Xenios/Boulaios</i> ease talks, <i>Polemios</i> & monster-slayers ` +
+    `ease force, and a harmonious god makes the Sacred Bond cheap. A first union is the work of decades.</p>` +
+    (hasDiplomaticGod() || hasMartialGod()
+      ? `<div class="rel-banner jealous" style="background:rgba(91,122,44,.12);border-color:var(--good);color:var(--ink)">` +
+        `${hasDiplomaticGod() ? "✦ A god of hospitality eases your negotiations. " : ""}` +
+        `${hasMartialGod() ? "⚔ A martial god steels your warriors and softens the unrest of conquest." : ""}</div>`
+      : "");
 
   remaining.forEach(h => {
-    const f = h.feast, a = h.annex;
-    const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
-    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.stolenFire;
-    const regrouping = GameState.turn - h.lastPush < CONFIG.ANNEX_COOLDOWN;
-    const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain && !regrouping;
-    const pct = Math.round(Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus()) * 100);
-    const siegeNote = h.siege > 0
-      ? `<div class="hc-asset">Resistance broken: <b>${h.siege} / ${h.resistance}</b> — ${h.resistance - h.siege} more to subdue</div>`
-      : `<div class="hc-asset">By force: <b>${h.resistance} successful pushes</b> needed, one per turn</div>`;
+    const resting = GameState.turn < h.cooldownUntil;
+    const wait = h.cooldownUntil - GameState.turn;
+    const stage = INTEGRATION_STAGES[h.stage];
+
+    // progress track
+    let track = "";
+    for (let i = 0; i < total; i++)
+      track += `<span class="stage-pip ${i < h.stage ? "done" : i === h.stage ? "now" : ""}">${i < h.stage ? "●" : "○"}</span>`;
 
     html +=
       `<div class="hamlet-card">` +
         `<div class="hc-head">` +
           `<span class="hc-name">${h.icon} ${h.name}</span>` +
-          `<span class="hc-pop">${h.population} souls</span>` +
+          `<span class="hc-pop">${h.population} souls · stage ${h.stage} / ${total}</span>` +
         `</div>` +
         `<div class="hc-desc">${h.desc}</div>` +
         `<div class="hc-asset">Asset once absorbed: <b>${bonusText(h.asset.bonus)}</b></div>` +
-        siegeNote +
+        `<div class="stage-track">${track} <b>${stage.name}</b></div>` +
+        `<div class="cult-meta">${stage.desc.replace("{name}", h.name)}</div>`;
+
+    if (resting) {
+      html += `<div class="hc-asset" style="color:var(--ink-soft)">⏳ The people of ${h.name} consider your last overture — ${wait} ${wait === 1 ? "year" : "years"} until the next stage.</div>`;
+    } else {
+      const tCost = integrationCost(stage, "talk");
+      const fCost = integrationCost(stage, "force");
+      const fUnrest = integrationUnrest(stage);
+      const canT = canAfford(tCost), canF = canAfford(fCost);
+      html +=
         `<div class="hamlet-actions">` +
-          `<button class="action-btn diplomatic" data-feast="${h.id}" ${(!canFeast || ended) ? "disabled" : ""}>` +
-            `<span class="ab-title">🍷 Diplomatic Feast</span>` +
-            `<span class="ab-cost">🍇 ${f.grapes} wine · 🐄 ${f.cattle} cattle — certain success</span>` +
+          `<button class="action-btn diplomatic" data-talk="${h.id}" ${(!canT || ended) ? "disabled" : ""}>` +
+            `<span class="ab-title">🕊 ${stage.talk.label}</span>` +
+            `<span class="ab-cost">${costText(tCost)}${canT ? "" : " — not enough"}</span>` +
           `</button>` +
-          `<button class="action-btn" data-annex="${h.id}" ${(!canAnnex || ended) ? "disabled" : ""}>` +
-            `<span class="ab-title">⚔ Press the Siege</span>` +
-            `<span class="ab-cost">🐄 ${a.cattle} cattle · 🌾 ${a.grain} supplies — ${pct}% per push` +
-              `${regrouping ? " · regrouping, end the turn" : ""}</span>` +
+          `<button class="action-btn" data-force="${h.id}" ${(!canF || ended) ? "disabled" : ""}>` +
+            `<span class="ab-title">⚔ ${stage.force.label}</span>` +
+            `<span class="ab-cost">${costText(fCost)}${fUnrest ? ` · +${fUnrest} unrest` : ""}${canF ? "" : " — not enough"}</span>` +
           `</button>` +
-        `</div>` +
-      `</div>`;
+        `</div>`;
+    }
+    html += `</div>`;
   });
 
   body.innerHTML = html;
 
-  // Wire the action buttons.
-  body.querySelectorAll("[data-feast]").forEach(btn =>
-    btn.addEventListener("click", () => attemptFeast(btn.getAttribute("data-feast"))));
-  body.querySelectorAll("[data-annex]").forEach(btn =>
-    btn.addEventListener("click", () => attemptAnnex(btn.getAttribute("data-annex"))));
+  body.querySelectorAll("[data-talk]").forEach(btn =>
+    btn.addEventListener("click", () => attemptIntegration(btn.getAttribute("data-talk"), "talk")));
+  body.querySelectorAll("[data-force]").forEach(btn =>
+    btn.addEventListener("click", () => attemptIntegration(btn.getAttribute("data-force"), "force")));
 }
 
 /** Append a single chronicle entry to the log panel and scroll into view. */
@@ -3019,7 +3219,7 @@ function initGame() {
   GameState.jobs = assignJobs(GameState.stats.population);
 
   // Seed the runtime hamlets from config (deep copy so config stays pristine).
-  GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false, siege: 0, lastPush: -99 }));
+  GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false, stage: 0, cooldownUntil: -1 }));
   GameState.bonuses = {};
   GameState.priests = 0;
   GameState.unrest = 0;
@@ -3027,6 +3227,7 @@ function initGame() {
   GameState.hearthTurn = -1;
   GameState.pendingEpiphany = false;
   GameState.hand = { aspects: [], epithets: [] };
+  GameState.relSelect = { aspect: null, epithet: null };
   GameState.cults = [];
   GameState.cultSeq = 0;
   GameState.appeaseOldGods = true;
