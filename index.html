@@ -457,6 +457,82 @@
   .fest-confirm .action-btn { width: 100%; text-align: center; }
   .fest-confirm .action-btn .ab-title { font-size: 16px; }
 
+  /* ---------- Divine Epiphany (card minigame) ---------- */
+  .epiphany-panel { border-color: #6a4d8a; outline-color: #4b3563; }
+  .epiphany-panel .panel-header { color: #5a3f7a; }
+  .deck-label {
+    text-align: center; font-variant: small-caps; letter-spacing: 1px;
+    color: var(--ink-soft); font-size: 12px; margin: 12px 0 6px;
+  }
+  .deck { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .god-card {
+    width: 124px; padding: 9px 8px; text-align: center; cursor: grab;
+    background: linear-gradient(170deg, #efe6cf, #e3d3ad);
+    border: 2px solid var(--border-d); border-radius: 7px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    transition: transform .1s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .god-card:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0,0,0,.4); }
+  .god-card.dragging { opacity: .5; }
+  .god-card.picked { opacity: .35; cursor: default; }
+  .god-card.aspect  { border-color: #4f6a86; }
+  .god-card.epithet { border-color: #8a6a2a; }
+  .god-card .gc-icon { font-size: 24px; }
+  .god-card .gc-name { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); font-size: 14px; }
+  .god-card .gc-sub  { font-size: 11px; font-style: italic; color: var(--ink-soft); }
+  .god-card .gc-desc { font-size: 10px; color: var(--ink); margin-top: 3px; line-height: 1.3; }
+
+  .shrine {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin: 14px 0; padding: 14px 10px;
+    background: rgba(106,77,138,.08);
+    border: 1px solid #6a4d8a; border-radius: 8px;
+  }
+  .shrine-slot {
+    width: 124px; min-height: 96px; padding: 6px;
+    border: 2px dashed #6a4d8a; border-radius: 7px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: var(--ink-soft); cursor: pointer;
+  }
+  .shrine-slot.filled { border-style: solid; background: rgba(255,255,255,.35); }
+  .shrine-slot.over { background: rgba(106,77,138,.18); border-color: var(--terra); }
+  .shrine-slot .slot-hint { font-size: 12px; font-style: italic; }
+  .shrine-slot .gc-icon { font-size: 24px; }
+  .shrine-slot .gc-name { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); font-size: 14px; }
+  .shrine-slot .gc-sub  { font-size: 11px; font-style: italic; color: var(--ink-soft); }
+  .shrine-op { font-size: 22px; color: #5a3f7a; }
+  .deity-preview { min-width: 150px; text-align: center; }
+  .deity-name { font-size: 19px; font-weight: 700; font-variant: small-caps; color: var(--terra-dark); letter-spacing: 1px; }
+  .deity-tag { font-size: 12px; font-weight: 700; font-variant: small-caps; }
+  .deity-tag.harmonious { color: var(--good); }
+  .deity-tag.confused   { color: var(--bad); }
+  .deity-perk { font-size: 12px; color: var(--ink); margin-top: 4px; line-height: 1.35; }
+
+  .pantheon-slots { display: flex; gap: 10px; justify-content: center; }
+  .pan-slot {
+    flex: 1; min-height: 64px; padding: 8px 6px; text-align: center; cursor: pointer;
+    background: rgba(255,255,255,.16); border: 1px solid var(--border-d); border-radius: 6px;
+  }
+  .pan-slot.filled { background: rgba(111,117,54,.14); }
+  .pan-slot.target { border: 2px solid var(--terra); box-shadow: 0 0 0 2px rgba(168,73,44,.25); }
+  .pan-slot .pan-name { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); font-size: 13px; }
+  .pan-slot .pan-perk { font-size: 11px; color: var(--ink-soft); }
+  .pan-slot .pan-empty { font-size: 12px; color: var(--ink-soft); font-style: italic; padding-top: 14px; }
+  .epiphany-actions { display: flex; gap: 10px; margin-top: 14px; }
+
+  /* Pantheon list in the Civic modal */
+  .pantheon-list { display: flex; flex-direction: column; gap: 6px; }
+  .pan-row {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 7px 10px; border-radius: 5px; font-size: 13px;
+    background: rgba(255,255,255,.16); border: 1px solid var(--border-d);
+  }
+  .pan-row.empty { opacity: .7; font-style: italic; }
+  .pan-row.harmonious { border-color: var(--good); }
+  .pan-row.confused   { border-color: var(--bad); }
+  .pan-row .pan-god { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); }
+  .pan-row .pan-blessing { color: var(--ink-soft); text-align: right; }
+
   /* Scrollbars styled like worn leather */
   ::-webkit-scrollbar { width: 11px; }
   ::-webkit-scrollbar-track { background: rgba(0,0,0,.08); }
@@ -678,6 +754,31 @@
               <g fill="#5c6f34"><circle cx="404" cy="320" r="9"/><circle cx="590" cy="320" r="8"/><circle cx="560" cy="338" r="6"/></g>
             </g>
 
+            <!-- ===== Ancestral Hearth: a sacred fire ringed by cypress (shown once built) ===== -->
+            <g id="scene-hearth" style="display:none">
+              <!-- warm glow on the hilltop -->
+              <ellipse cx="500" cy="300" rx="60" ry="34" fill="#ffb648" opacity="0.16"/>
+              <!-- ring of cypress trees behind the fire -->
+              <g fill="#3f5226">
+                <g transform="translate(452,286)"><rect x="-2" y="0" width="4" height="9" fill="#5d4426"/><polygon points="0,-24 8,4 -8,4"/></g>
+                <g transform="translate(548,286)"><rect x="-2" y="0" width="4" height="9" fill="#5d4426"/><polygon points="0,-24 8,4 -8,4"/></g>
+                <g transform="translate(478,272)"><rect x="-2" y="0" width="4" height="8" fill="#5d4426"/><polygon points="0,-22 7,3 -7,3"/></g>
+                <g transform="translate(522,272)"><rect x="-2" y="0" width="4" height="8" fill="#5d4426"/><polygon points="0,-22 7,3 -7,3"/></g>
+              </g>
+              <!-- stone fire-ring -->
+              <ellipse cx="500" cy="306" rx="18" ry="8" fill="#7a6c52"/>
+              <ellipse cx="500" cy="304" rx="12" ry="5" fill="#3a2a1a"/>
+              <!-- the undying flame -->
+              <polygon points="500,278 510,304 490,304" fill="#e2531f"/>
+              <polygon points="500,285 506,304 494,304" fill="#f4a02a"/>
+              <polygon points="500,291 503,304 497,304" fill="#ffe07a"/>
+              <!-- ring of cypress trees in front of the fire -->
+              <g fill="#46582b">
+                <g transform="translate(470,318)"><rect x="-2" y="0" width="4" height="9" fill="#5d4426"/><polygon points="0,-22 8,4 -8,4"/></g>
+                <g transform="translate(530,318)"><rect x="-2" y="0" width="4" height="9" fill="#5d4426"/><polygon points="0,-22 8,4 -8,4"/></g>
+              </g>
+            </g>
+
             <!-- ===== Foothill Clan ===== -->
             <g id="scene-foothill" transform="translate(118,246)">
               <g fill="#46582b"><polygon points="6,62 24,62 15,28"/><polygon points="40,68 60,68 50,30"/></g>
@@ -790,6 +891,16 @@
     </div>
   </div>
 
+  <!-- ============ DIVINE EPIPHANY MODAL (must be answered) ============ -->
+  <div class="modal-backdrop" id="epiphany-modal" hidden>
+    <div class="modal panel epiphany-panel">
+      <div class="panel-header">Divine Epiphany</div>
+      <div id="epiphany-body" class="modal-body">
+        <!-- populated by renderEpiphany() -->
+      </div>
+    </div>
+  </div>
+
 <script>
 "use strict";
 
@@ -864,8 +975,9 @@ const YIELD = Object.freeze({
 
 /* Civic Investments — cultural & religious actions. */
 const CIVIC = Object.freeze({
-  bard:  { grain: 8, cattle: 2, kleos: 6 },   // Fund an Aoidos: +Kleos at once
-  altar: { timber: 25, clay: 20, piety: 2 },  // Open-Air Altar: +Piety/turn, built once
+  bard:   { grain: 8, cattle: 2, kleos: 6 },          // Fund an Aoidos: +Kleos at once
+  altar:  { timber: 25, clay: 20, piety: 2 },         // Open-Air Altar: +Piety/turn, built once
+  hearth: { timber: 45, clay: 35, cattle: 12 },       // Ancestral Hearth: unlocks the Divine Epiphany
 });
 
 /* The Hekatomb — a great sacrifice held every tenth turn. */
@@ -875,6 +987,42 @@ const HEKATOMB = Object.freeze({
   kleosPerGrape:  2,     // Feast Pool: wine -> Kleos
   kleosPerGrain:  0.4,   // Feast Pool: grain -> Kleos
 });
+
+/* ===================================================================
+   RELIGION — the Divine Epiphany, where a god is named into being
+   =================================================================== */
+
+const EPIPHANY = Object.freeze({
+  INTERVAL:  12,   // a Divine Epiphany every 12 turns, once the Hearth burns
+  HAND:      3,    // cards drawn from each deck
+  SLOTS:     3,    // pantheon slots in the early city
+  NEGLECT:   2,    // Piety lost per turn while a vision is left unanswered
+});
+
+/* The Aspect deck — the untamed forces the dark-age Greeks feared or relied on. */
+const ASPECTS = {
+  sky:    { name: "The Sky",    sub: "Cloud-Gatherer", god: "Zeus",     icon: "🌩️", desc: "Weather, lightning and rainfall." },
+  sea:    { name: "The Sea",    sub: "Earth-Shaker",   god: "Poseidon", icon: "🌊", desc: "Coastlines, fishing and seafaring." },
+  earth:  { name: "The Earth",  sub: "Grain-Bringer",  god: "Demeter",  icon: "🌾", desc: "Soil, crops and the turning of decay." },
+  hearth: { name: "The Hearth", sub: "Home-Keeper",    god: "Hestia",   icon: "🔥", desc: "The village flame, family and health." },
+};
+
+/* The Epithet deck — titles naming the god's work for this town. */
+const EPITHETS = {
+  soter:   { name: "Soter",   sub: "The Protector",        icon: "🛡️", desc: "Defensive favour; calms citizen panic." },
+  georgos: { name: "Georgos", sub: "The Farmer",           icon: "🌱", desc: "Directly boosts agricultural yields." },
+  agoraia: { name: "Agoraia", sub: "Overseer of Markets",  icon: "⚖️", desc: "Improves barter and resource generation." },
+  xenios:  { name: "Xenios",  sub: "The Host",             icon: "🤝", desc: "Aids diplomacy and attracts bards." },
+};
+
+/* Harmonious Aspect→Epithet pairings yield strong, steady gods. Any other
+   pairing produces a "confused" deity of feeble, erratic blessings. */
+const HARMONY = {
+  sky:    ["soter", "xenios"],
+  sea:    ["soter", "agoraia"],
+  earth:  ["georgos", "agoraia"],
+  hearth: ["soter", "xenios"],
+};
 
 /* ---------- The central Game State Object ---------- */
 const GameState = {
@@ -922,6 +1070,13 @@ const GameState = {
 
   // Whether the open-air altar has been raised (passive piety).
   altarBuilt: false,
+
+  // Religion: the Ancestral Hearth and the pantheon it makes possible.
+  hearthBuilt: false,
+  pendingEpiphany: false,
+  pantheon: [null, null, null],   // up to EPIPHANY.SLOTS manifested gods
+  divineNeglect: false,           // a vision left unanswered saps Piety
+  epiphany: null,                 // transient hand + selection during a vision
 
   // An unresolved crisis awaiting the player's response, if any.
   pendingCrisis: null,
@@ -1168,6 +1323,17 @@ function processTick() {
     GameState.macros.eusebeia += CIVIC.altar.piety;
   }
 
+  // --- Pantheon: each manifested god confers its standing blessing ---
+  applyPantheonPerks();
+
+  // --- Divine Neglect: a vision left unanswered erodes the people's piety ---
+  if (GameState.divineNeglect && GameState.macros.eusebeia > 0) {
+    GameState.macros.eusebeia = Math.max(0, GameState.macros.eusebeia - EPIPHANY.NEGLECT);
+    if (GameState.turn % 3 === 0) {
+      logChronicle("The unanswered vision weighs on the people — Divine Neglect saps their piety.", "warning");
+    }
+  }
+
   // --- Renown: high Kleos draws wandering migrants; glory then fades ---
   const kleos = GameState.macros.kleos;
   if (kleos > 0) {
@@ -1203,7 +1369,7 @@ function processTick() {
  */
 function nextTurn() {
   if (GameState.status !== GameStatus.PLAYING) return;
-  if (GameState.pendingCrisis || GameState.pendingFestival) return;   // must be answered first
+  if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;   // must be answered first
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
@@ -1215,6 +1381,13 @@ function nextTurn() {
   // --- 1b. Every tenth year: the Hekatomb Festival replaces the normal tick ---
   if (GameState.turn % HEKATOMB.INTERVAL === 0) {
     openFestival();
+    render();
+    return;
+  }
+
+  // --- 1c. Every twelfth year (Hearth built): a Divine Epiphany ---
+  if (GameState.hearthBuilt && GameState.turn % EPIPHANY.INTERVAL === 0) {
+    openEpiphany();
     render();
     return;
   }
@@ -1281,7 +1454,7 @@ function spend(changes) {
 
 /** Civic Investment: fund a travelling bard, raising Kleos at once. */
 function fundBard() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
   const c = CIVIC.bard;
   if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
     logChronicle("There is too little to provision a travelling bard.", "warning");
@@ -1300,7 +1473,7 @@ function fundBard() {
 
 /** Civic Investment: erect the open-air altar (one-time; yields piety/turn). */
 function buildAltar() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
   if (GameState.altarBuilt) return;
   const c = CIVIC.altar;
   if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay) {
@@ -1313,6 +1486,26 @@ function buildAltar() {
   logChronicle(
     `An open-air altar is raised upon the hill; its sacred smoke will rise each year ` +
     `(+${c.piety} Piety / turn).`,
+    "system"
+  );
+  afterAction();
+}
+
+/** Civic Investment: raise the Ancestral Hearth (one-time; unlocks the Epiphany). */
+function buildHearth() {
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
+  if (GameState.hearthBuilt) return;
+  const c = CIVIC.hearth;
+  if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay || GameState.stats.cattle < c.cattle) {
+    logChronicle("The people lack the timber, clay and cattle to raise the Ancestral Hearth.", "warning");
+    afterAction();
+    return;
+  }
+  spend({ timber: -c.timber, clay: -c.clay, cattle: -c.cattle });
+  GameState.hearthBuilt = true;
+  logChronicle(
+    `The Ancestral Hearth is kindled within a grove upon the hill. Its undying flame opens the people ` +
+    `to Divine Epiphany — every twelfth year, a god may be named into the pantheon.`,
     "system"
   );
   afterAction();
@@ -1549,6 +1742,149 @@ function closeModal(id) { document.getElementById(id).hidden = true; }
 function openLabor() { render(); openModal("labor-modal"); }
 function openCivic() { renderCivic(); openModal("civic-modal"); }
 function openAdmin() { renderAdmin(); openModal("admin-modal"); }
+function openEpiphany() {
+  GameState.pendingEpiphany = true;
+  const firstEmpty = GameState.pantheon.findIndex(s => !s);
+  GameState.epiphany = {
+    aspects:  shuffle(Object.keys(ASPECTS)).slice(0, EPIPHANY.HAND),
+    epithets: shuffle(Object.keys(EPITHETS)).slice(0, EPIPHANY.HAND),
+    pickAspect: null, pickEpithet: null,
+    target: firstEmpty >= 0 ? firstEmpty : 0,
+  };
+  logChronicle("A Divine Epiphany seizes the people at the Hearth — an Aspect and an Epithet may be bound into a god.", "system");
+  renderEpiphany();
+  openModal("epiphany-modal");
+}
+
+/* ---------- Pantheon helpers ---------- */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Is this Aspect+Epithet pairing harmonious (a true god) or confused? */
+function isHarmonious(aspect, epithet) {
+  return !!(HARMONY[aspect] && HARMONY[aspect].includes(epithet));
+}
+
+/** Human text for a deity's standing blessing. */
+function perkText(epithet, harmonious) {
+  if (!harmonious) return "Confused — feeble, erratic blessings.";
+  switch (epithet) {
+    case "georgos": return "+10 Grain each turn (rich harvests).";
+    case "soter":   return "−2 Discontent each turn; steadies unrest.";
+    case "agoraia": return "+3 Timber, +3 Clay, +2 Olives each turn.";
+    case "xenios":  return "+2 Kleos each turn; smoother diplomacy.";
+    default:        return "A standing blessing.";
+  }
+}
+
+/** Build a deity object from an Aspect + Epithet pairing. */
+function deityFor(aspect, epithet) {
+  const harmonious = isHarmonious(aspect, epithet);
+  return {
+    aspect, epithet, harmonious,
+    name: `${ASPECTS[aspect].god} ${EPITHETS[epithet].name}`,
+    perkText: perkText(epithet, harmonious),
+  };
+}
+
+/** Apply each manifested god's standing blessing for the turn. */
+function applyPantheonPerks() {
+  for (const d of GameState.pantheon) {
+    if (!d) continue;
+    const h = d.harmonious;
+    switch (d.epithet) {
+      case "georgos": {
+        const g = h ? 10 : (Math.random() < 0.45 ? Math.floor(Math.random() * 4) : 0);
+        if (g) applyStats({ grain: +g });
+        break;
+      }
+      case "soter": {
+        const u = h ? 2 : (Math.random() < 0.45 ? 1 : 0);
+        if (u && GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - u);
+        if (h && GameState.unrest > 0) GameState.unrest = Math.max(0, GameState.unrest - 1);
+        break;
+      }
+      case "agoraia": {
+        if (h) applyStats({ timber: +3, clay: +3, olives: +2 });
+        else if (Math.random() < 0.45) applyStats({ [pick(["timber", "clay", "olives", "grapes"])]: +Math.floor(Math.random() * 4) });
+        break;
+      }
+      case "xenios": {
+        const k = h ? 2 : (Math.random() < 0.45 ? 1 : 0);
+        if (k) GameState.macros.kleos += k;
+        break;
+      }
+    }
+  }
+}
+
+/** Bonus to annexation success granted by harmonious Xenios gods. */
+function pantheonAnnexBonus() {
+  let b = 0;
+  for (const d of GameState.pantheon) if (d && d.epithet === "xenios" && d.harmonious) b += 0.12;
+  return Math.min(0.3, b);
+}
+
+/** Consecrate the bound Aspect+Epithet into the chosen pantheon slot. */
+function consecrateDeity() {
+  const ep = GameState.epiphany;
+  if (!ep || !ep.pickAspect || !ep.pickEpithet) return;
+  const d = deityFor(ep.pickAspect, ep.pickEpithet);
+  const slot = (ep.target >= 0 && ep.target < EPIPHANY.SLOTS) ? ep.target : 0;
+  const replaced = GameState.pantheon[slot];
+  GameState.pantheon[slot] = d;
+
+  GameState.divineNeglect = false;
+  GameState.pendingEpiphany = false;
+  GameState.epiphany = null;
+  closeModal("epiphany-modal");
+
+  logChronicle(
+    `${d.name} is named into the pantheon${replaced ? `, displacing ${replaced.name}` : ""}. ` +
+    (d.harmonious
+      ? `The pairing is harmonious — ${d.perkText}`
+      : `The pairing is ill-matched — a confused god of fickle, feeble blessings.`),
+    d.harmonious ? "event" : "warning"
+  );
+
+  if (GameState.stats.population <= 0) collapse();
+  else if (GameState.year <= CONFIG.END_YEAR) endEra();
+  render();
+}
+
+/** Turn the vision away — no god is named, and Divine Neglect sets in. */
+function dismissEpiphany() {
+  GameState.pendingEpiphany = false;
+  GameState.epiphany = null;
+  GameState.divineNeglect = true;
+  closeModal("epiphany-modal");
+  logChronicle(
+    "The vision is turned away; no god is named. Divine Neglect begins to gnaw at the people's piety.",
+    "warning"
+  );
+  if (GameState.year <= CONFIG.END_YEAR) endEra();
+  render();
+}
+
+/* ---------- Epiphany card interactions ---------- */
+function epiphanyPick(kind, id) {
+  if (!GameState.epiphany) return;
+  if (kind === "aspect") GameState.epiphany.pickAspect = id;
+  else GameState.epiphany.pickEpithet = id;
+  renderEpiphany();
+}
+function epiphanyClearSlot(kind) {
+  if (!GameState.epiphany) return;
+  if (kind === "aspect") GameState.epiphany.pickAspect = null;
+  else GameState.epiphany.pickEpithet = null;
+  renderEpiphany();
+}
 
 /* ===================================================================
    SYNOIKISMOS — uniting neighbouring hamlets into the Polis
@@ -1585,7 +1921,7 @@ function absorbHamlet(h) {
 
 /** Diplomatic Feast: high wine + cattle cost, but certain success. */
 function attemptFeast(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.feast;
@@ -1603,7 +1939,7 @@ function attemptFeast(id) {
 
 /** Coercive Annexation: cattle + supplies cost, 60% success, unrest on failure. */
 function attemptAnnex(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.annex;
@@ -1616,7 +1952,7 @@ function attemptAnnex(id) {
   // Manpower and supplies are committed whether or not the attack succeeds.
   spend({ cattle: -c.cattle, grain: -c.grain });
 
-  if (Math.random() < CONFIG.ANNEX_SUCCESS) {
+  if (Math.random() < Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus())) {
     logChronicle(`The warriors of the Demos bring ${h.name} to heel by force.`, "event");
     absorbHamlet(h);
   } else {
@@ -1677,6 +2013,10 @@ function render() {
   // Labour allocation panel.
   renderLabor();
 
+  // Reveal the Ancestral Hearth on the hill once it has been kindled.
+  const hearth = document.getElementById("scene-hearth");
+  if (hearth) hearth.style.display = GameState.hearthBuilt ? "" : "none";
+
   // Map, civic and administration views.
   renderMap();
   renderCivic();
@@ -1691,11 +2031,11 @@ function render() {
     hint.textContent = GameState.stats.population <= 0
       ? "The Demos is no more. Refresh to begin anew."
       : "The Dawn Era has ended. A new age awaits in a future phase.";
-  } else if (GameState.pendingCrisis || GameState.pendingFestival) {
+  } else if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) {
     btn.disabled = true;
     btn.textContent = "End Turn";
-    hint.textContent = GameState.pendingFestival
-      ? "The Hekatomb Festival awaits your offerings."
+    hint.textContent = GameState.pendingFestival ? "The Hekatomb Festival awaits your offerings."
+      : GameState.pendingEpiphany ? "A Divine Epiphany awaits — name a god, or turn the vision away."
       : "A crisis demands your answer before the year may turn.";
   } else {
     btn.disabled = false;
@@ -1833,10 +2173,12 @@ function renderCivic() {
   const body = document.getElementById("civic-body");
   if (!body) return;
 
-  const b = CIVIC.bard, a = CIVIC.altar;
-  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival;
+  const b = CIVIC.bard, a = CIVIC.altar, hc = CIVIC.hearth;
+  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
   const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
   const canAltar = !GameState.altarBuilt && GameState.stats.timber >= a.timber && GameState.stats.clay >= a.clay;
+  const canHearth = !GameState.hearthBuilt &&
+    GameState.stats.timber >= hc.timber && GameState.stats.clay >= hc.clay && GameState.stats.cattle >= hc.cattle;
 
   body.innerHTML =
     `<p class="admin-intro">Before written law binds them, your people are held together by shared ` +
@@ -1868,12 +2210,128 @@ function renderCivic() {
               `<span class="ab-cost">🪵 ${a.timber} timber · 🧱 ${a.clay} clay — built once</span>` +
             `</button>`) +
       `</div>` +
+    `</div>` +
+
+    `<div class="hamlet-card">` +
+      `<div class="hc-head"><span class="hc-name">🪵 Ancestral Hearth</span><span class="hc-pop">Religion · Pantheon</span></div>` +
+      `<div class="hc-desc">An undying flame in a sacred grove upon the hill. It opens your people to the ` +
+        `<b>Divine Epiphany</b> — every twelfth year you may bind an Aspect to an Epithet and name a god.</div>` +
+      `<div class="hc-asset">Effect: <b>unlocks the Divine Epiphany</b> and a pantheon of ${EPIPHANY.SLOTS} gods</div>` +
+      `<div class="hamlet-actions">` +
+        (GameState.hearthBuilt
+          ? `<div class="civic-built">✓ The Ancestral Hearth burns — a Divine Epiphany comes every ${EPIPHANY.INTERVAL} turns.</div>`
+          : `<button class="action-btn" id="civic-hearth" ${(!canHearth || ended) ? "disabled" : ""}>` +
+              `<span class="ab-title">🪵 Kindle the Hearth</span>` +
+              `<span class="ab-cost">🪵 ${hc.timber} timber · 🧱 ${hc.clay} clay · 🐄 ${hc.cattle} cattle — built once</span>` +
+            `</button>`) +
+      `</div>` +
+    `</div>` +
+
+    `<div class="hamlet-card">` +
+      `<div class="hc-head"><span class="hc-name">⛩️ The Pantheon</span>` +
+        `<span class="hc-pop">${GameState.pantheon.filter(Boolean).length} / ${EPIPHANY.SLOTS} gods</span></div>` +
+      `<div class="hc-desc">Gods named at the Divine Epiphany and the standing blessings they grant.</div>` +
+      `<div class="pantheon-list">` +
+        GameState.pantheon.map((d, i) =>
+          `<div class="pan-row ${d ? (d.harmonious ? "harmonious" : "confused") : "empty"}">` +
+            (d
+              ? `<span class="pan-god">${ASPECTS[d.aspect].icon} ${d.name}</span><span class="pan-blessing">${d.perkText}</span>`
+              : `<span class="pan-god">Slot ${i + 1}</span><span class="pan-blessing">${GameState.hearthBuilt ? "awaits a Divine Epiphany" : "kindle the Ancestral Hearth first"}</span>`) +
+          `</div>`).join("") +
+      `</div>` +
     `</div>`;
 
   const bardBtn = document.getElementById("civic-bard");
   if (bardBtn) bardBtn.addEventListener("click", fundBard);
   const altarBtn = document.getElementById("civic-altar");
   if (altarBtn) altarBtn.addEventListener("click", buildAltar);
+  const hearthBtn = document.getElementById("civic-hearth");
+  if (hearthBtn) hearthBtn.addEventListener("click", buildHearth);
+}
+
+/** Render the Divine Epiphany modal: draw the hand and wire the shrine. */
+function renderEpiphany() {
+  const body = document.getElementById("epiphany-body");
+  const ep = GameState.epiphany;
+  if (!body || !ep) return;
+
+  const card = (kind, id) => {
+    const data = kind === "aspect" ? ASPECTS[id] : EPITHETS[id];
+    const picked = (kind === "aspect" ? ep.pickAspect : ep.pickEpithet) === id;
+    return `<div class="god-card ${kind}${picked ? " picked" : ""}" draggable="true" data-kind="${kind}" data-id="${id}">` +
+      `<div class="gc-icon">${data.icon}</div><div class="gc-name">${data.name}</div>` +
+      `<div class="gc-sub">${data.sub}</div><div class="gc-desc">${data.desc}</div></div>`;
+  };
+  const aspectCards  = ep.aspects.map(id => card("aspect", id)).join("");
+  const epithetCards = ep.epithets.map(id => card("epithet", id)).join("");
+
+  const filled = (kind) => {
+    const id = kind === "aspect" ? ep.pickAspect : ep.pickEpithet;
+    if (!id) return `<span class="slot-hint">drag an<br>${kind === "aspect" ? "Aspect" : "Epithet"}<br>here</span>`;
+    const data = kind === "aspect" ? ASPECTS[id] : EPITHETS[id];
+    return `<div class="gc-icon">${data.icon}</div><div class="gc-name">${data.name}</div><div class="gc-sub">${data.sub}</div>`;
+  };
+
+  let preview = `<div class="deity-name">— · —</div><div class="deity-tag">awaiting both cards</div>`;
+  let canConsecrate = false;
+  if (ep.pickAspect && ep.pickEpithet) {
+    const d = deityFor(ep.pickAspect, ep.pickEpithet);
+    preview = `<div class="deity-name">${d.name}</div>` +
+      `<div class="deity-tag ${d.harmonious ? "harmonious" : "confused"}">${d.harmonious ? "✦ Harmonious" : "≈ Confused pairing"}</div>` +
+      `<div class="deity-perk">${d.perkText}</div>`;
+    canConsecrate = true;
+  }
+
+  let slots = "";
+  for (let i = 0; i < EPIPHANY.SLOTS; i++) {
+    const d = GameState.pantheon[i];
+    slots += `<div class="pan-slot${i === ep.target ? " target" : ""}${d ? " filled" : ""}" data-slot="${i}">` +
+      (d ? `<div class="pan-name">${d.name}</div><div class="pan-perk">${d.harmonious ? "✦ " + EPITHETS[d.epithet].sub : "≈ confused"}</div>`
+         : `<div class="pan-empty">empty slot ${i + 1}</div>`) + `</div>`;
+  }
+
+  body.innerHTML =
+    `<p class="admin-intro">A god stirs at the Hearth. Bind one <b>Aspect</b> (a force of nature) to one <b>Epithet</b> ` +
+    `(its work for your town), then consecrate it into a pantheon slot. Harmonious pairings give strong, steady ` +
+    `blessings; ill-matched ones yield a confused, fickle god. Turn the vision away and Divine Neglect will gnaw at your Piety.</p>` +
+    `<div class="deck-label">Aspects — the untamed forces</div><div class="deck">${aspectCards}</div>` +
+    `<div class="shrine">` +
+      `<div class="shrine-slot ${ep.pickAspect ? "filled" : ""}" data-drop="aspect">${filled("aspect")}</div>` +
+      `<span class="shrine-op">✛</span>` +
+      `<div class="shrine-slot ${ep.pickEpithet ? "filled" : ""}" data-drop="epithet">${filled("epithet")}</div>` +
+      `<span class="shrine-op">➜</span>` +
+      `<div class="deity-preview">${preview}</div>` +
+    `</div>` +
+    `<div class="deck-label">Epithets — the divine titles</div><div class="deck">${epithetCards}</div>` +
+    `<div class="deck-label">Your pantheon — choose a slot to receive the god</div>` +
+    `<div class="pantheon-slots">${slots}</div>` +
+    `<div class="epiphany-actions">` +
+      `<button class="action-btn diplomatic" id="ep-consecrate" ${canConsecrate ? "" : "disabled"}>` +
+        `<span class="ab-title">⛩️ Consecrate into the Pantheon</span><span class="ab-cost">Locks this god into the chosen slot</span></button>` +
+      `<button class="action-btn" id="ep-dismiss">` +
+        `<span class="ab-title">🌫️ Turn Away the Vision</span><span class="ab-cost">No god is named — risks Divine Neglect</span></button>` +
+    `</div>`;
+
+  // Cards: click to place, or drag to a shrine slot.
+  body.querySelectorAll(".god-card").forEach(c => {
+    c.addEventListener("click", () => epiphanyPick(c.dataset.kind, c.dataset.id));
+    c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", c.dataset.kind + ":" + c.dataset.id); c.classList.add("dragging"); });
+    c.addEventListener("dragend", () => c.classList.remove("dragging"));
+  });
+  body.querySelectorAll(".shrine-slot").forEach(slot => {
+    slot.addEventListener("dragover", e => { e.preventDefault(); slot.classList.add("over"); });
+    slot.addEventListener("dragleave", () => slot.classList.remove("over"));
+    slot.addEventListener("drop", e => {
+      e.preventDefault(); slot.classList.remove("over");
+      const [kind, id] = (e.dataTransfer.getData("text/plain") || "").split(":");
+      if (kind === slot.dataset.drop && id) epiphanyPick(kind, id);
+    });
+    slot.addEventListener("click", () => epiphanyClearSlot(slot.dataset.drop));
+  });
+  body.querySelectorAll(".pan-slot").forEach(s =>
+    s.addEventListener("click", () => { GameState.epiphany.target = +s.dataset.slot; renderEpiphany(); }));
+  document.getElementById("ep-consecrate").addEventListener("click", consecrateDeity);
+  document.getElementById("ep-dismiss").addEventListener("click", dismissEpiphany);
 }
 
 /** Render the pending crisis into the (non-dismissable) crisis modal. */
@@ -1929,7 +2387,7 @@ function renderAdmin() {
     const f = h.feast, a = h.annex;
     const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
     const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain;
-    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival;
+    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
 
     html +=
       `<div class="hamlet-card">` +
@@ -1990,6 +2448,11 @@ function initGame() {
   GameState.bonuses = {};
   GameState.unrest = 0;
   GameState.altarBuilt = false;
+  GameState.hearthBuilt = false;
+  GameState.pendingEpiphany = false;
+  GameState.pantheon = [null, null, null];
+  GameState.divineNeglect = false;
+  GameState.epiphany = null;
   GameState.pendingCrisis = null;
   GameState.pendingFestival = false;
   GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
@@ -2009,6 +2472,7 @@ function initGame() {
     "system"
   );
   logChronicle("Every tenth year the people hold the Hekatomb, a great sacrifice to renew the Polis.", "system");
+  logChronicle("In time, raise an Ancestral Hearth to open your people to Divine Epiphany and name your first gods.", "system");
   logChronicle("The Dawn Era begins. Press “End Turn” to let the years unfold.", "system");
 
   // End Turn.
@@ -2033,7 +2497,7 @@ function initGame() {
 
   // Backdrop clicks dismiss modals — except the crisis and festival modals,
   // which must be resolved before play resumes.
-  const blocking = ["crisis-modal", "festival-modal"];
+  const blocking = ["crisis-modal", "festival-modal", "epiphany-modal"];
   document.querySelectorAll(".modal-backdrop").forEach(back =>
     back.addEventListener("click", e => {
       if (e.target === back && !blocking.includes(back.id)) back.hidden = true;
