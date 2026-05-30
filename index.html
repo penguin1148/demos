@@ -520,6 +520,58 @@
   .pan-slot .pan-empty { font-size: 12px; color: var(--ink-soft); font-style: italic; padding-top: 14px; }
   .epiphany-actions { display: flex; gap: 10px; margin-top: 14px; }
 
+  /* ---------- Cults & Temenos panel ---------- */
+  .rel-banner {
+    padding: 8px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 10px; line-height: 1.45;
+    border: 1px solid var(--border-d);
+  }
+  .rel-banner.cold    { background: rgba(120,160,190,.16); border-color: #6f97b3; color: #355a72; }
+  .rel-banner.jealous { background: rgba(157,51,32,.12); border-color: var(--bad); color: var(--terra-dark); }
+  .rel-empty { font-size: 12.5px; font-style: italic; color: var(--ink-soft); margin: 4px 0 8px; }
+  .rel-hand { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .rel-card {
+    display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 6px;
+    background: linear-gradient(170deg, #efe6cf, #e3d3ad); border: 2px solid var(--border-d);
+  }
+  .rel-card.aspect  { border-color: #4f6a86; }
+  .rel-card.epithet { border-color: #8a6a2a; }
+  .rel-card .rc-ic { font-size: 18px; }
+  .rel-card .rc-nm { font-weight: 700; font-variant: small-caps; color: var(--terra-dark); font-size: 13px; }
+  .rel-card .rc-btn {
+    font-family: inherit; font-size: 11px; cursor: pointer; padding: 3px 8px; border-radius: 5px;
+    border: 1px solid var(--border-d); background: var(--olive); color: #f3eeda; font-weight: 700;
+  }
+  .rel-card .rc-btn:hover { filter: brightness(1.08); }
+  .rc-hint { font-size: 11px; font-style: italic; color: var(--ink-soft); }
+
+  .cult-card {
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 10px;
+    background: rgba(106,77,138,.06); border: 1px solid #6a4d8a;
+  }
+  .cult-card.locked { background: rgba(111,117,54,.12); border-color: var(--border-d); }
+  .cult-card.locked.tier3 { background: rgba(176,125,43,.16); border-color: var(--ochre); box-shadow: 0 0 0 1px rgba(176,125,43,.3) inset; }
+  .cult-card .hc-name { font-size: 15px; font-weight: 700; color: var(--terra-dark); font-variant: small-caps; letter-spacing: .5px; }
+  .cult-card .hc-pop  { font-size: 11.5px; font-style: italic; color: var(--ink-soft); }
+  .cult-meta { font-size: 12px; color: var(--ink-soft); margin: 4px 0; }
+  .cult-card .hc-asset { font-size: 12.5px; color: var(--olive); margin: 4px 0 8px; }
+  .cult-card .hc-asset b { color: var(--terra-dark); }
+  .cult-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mini-btn {
+    font-family: inherit; font-size: 11.5px; cursor: pointer; padding: 5px 9px; border-radius: 5px;
+    border: 1px solid var(--border-d); background: var(--parch); color: var(--ink); font-weight: 600;
+  }
+  .mini-btn:hover { filter: brightness(1.04); border-color: var(--terra); }
+  .mini-btn.lock   { background: var(--olive); color: #f3eeda; border-color: var(--border-d); }
+  .mini-btn.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+  .mini-btn.off, .mini-btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+  .rel-toggle { margin-top: 12px; font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+  .rel-toggle input { margin-right: 6px; }
+
+  .sf-clue { font-size: 13.5px; margin: 10px 0; padding: 8px 12px; background: rgba(120,160,190,.14);
+             border-left: 3px solid #6f97b3; border-radius: 4px; }
+  .sf-log { font-size: 12px; color: var(--ink-soft); margin: 8px 0; line-height: 1.5; }
+  .sf-places { flex-direction: column; }
+
   /* Pantheon list in the Civic modal */
   .pantheon-list { display: flex; flex-direction: column; gap: 6px; }
   .pan-row {
@@ -593,6 +645,7 @@
         <span class="map-tools">
           <button class="map-btn" id="open-labor">⚒ Labor of the Demos</button>
           <button class="map-btn" id="open-civic">🔥 Civic Investments</button>
+          <button class="map-btn" id="open-religion" style="display:none">⛩ Cults &amp; Temenos<span class="badge" id="religion-badge">0</span></button>
           <button class="map-btn" id="open-admin">⚖ Administration<span class="badge" id="admin-badge">0</span></button>
         </span>
       </div>
@@ -897,12 +950,45 @@
     </div>
   </div>
 
-  <!-- ============ DIVINE EPIPHANY MODAL (must be answered) ============ -->
+  <!-- ============ DIVINE EPIPHANY MODAL (a gift of cards) ============ -->
   <div class="modal-backdrop" id="epiphany-modal" hidden>
     <div class="modal panel epiphany-panel">
       <div class="panel-header">Divine Epiphany</div>
       <div id="epiphany-body" class="modal-body">
         <!-- populated by renderEpiphany() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CULTS & TEMENOS MODAL (cult management) ============ -->
+  <div class="modal-backdrop" id="religion-modal" hidden>
+    <div class="modal panel epiphany-panel">
+      <div class="panel-header">
+        <span>The Temenos — Cults &amp; Pantheon</span>
+        <button class="modal-close" data-close="religion-modal" aria-label="Close">×</button>
+      </div>
+      <div id="religion-body" class="modal-body">
+        <!-- populated by renderReligion() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MYTHIC CYCLE MODAL (must be answered) ============ -->
+  <div class="modal-backdrop" id="myth-modal" hidden>
+    <div class="modal panel crisis-panel">
+      <div class="panel-header">A Mythic Cycle</div>
+      <div id="myth-body" class="modal-body">
+        <!-- populated by renderMyth() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STOLEN FIRE MODAL (must be answered) ============ -->
+  <div class="modal-backdrop" id="stolenfire-modal" hidden>
+    <div class="modal panel crisis-panel">
+      <div class="panel-header">The Stolen Fire</div>
+      <div id="stolenfire-body" class="modal-body">
+        <!-- populated by renderStolenFire() -->
       </div>
     </div>
   </div>
@@ -1001,11 +1087,100 @@ const HEKATOMB = Object.freeze({
    RELIGION — the Divine Epiphany, where a god is named into being
    =================================================================== */
 
-const EPIPHANY = Object.freeze({
-  INTERVAL:  12,   // a Divine Epiphany every 12 turns, once the Hearth burns
-  HAND:      3,    // cards drawn from each deck
-  SLOTS:     3,    // pantheon slots in the early city
-  NEGLECT:   2,    // Piety lost per turn while a vision is left unanswered
+/*
+ * The slow-burn religion engine. Once the Ancestral Hearth burns, a Divine
+ * Epiphany every few years hands the people ONE Aspect and ONE Epithet card.
+ * Cards are not named into gods at once: they sit in a fluid, unaligned
+ * "Local Cult" that grows in Devotion the longer it is kept and fed. Only
+ * when a cult is consecrated (locked) is its power frozen — the tier it has
+ * reached by then is the tier it keeps for the rest of the era.
+ */
+const RELIGION = Object.freeze({
+  EPIPHANY_INTERVAL: 9,   // years between Divine Epiphanies once the Hearth burns
+  SLOTS:             3,   // consecrated-god (pantheon) capacity
+  MYTH_AGE:          15,  // turns a paired, unlocked cult must persist to stir a Mythic Cycle
+  STOLEN_FIRE_AGE:   5,   // winters an unaligned Hearth cult must endure to wake the Stolen Fire
+  DEV_HARMONIOUS:    3,   // devotion gained per turn by a paired, harmonious cult
+  DEV_CONFUSED:      1,   // devotion gained per turn by a paired, ill-matched cult
+  // Devotion a cult must reach for each tier it can be consecrated at.
+  TIER2: 60,              // Heros — the legendary cult (nurtured ~20-40 turns)
+  TIER3: 160,             // Olympian — a pan-Hellenic deity (nurtured 50+ turns)
+  MYTH_DEVOTION: 55,      // devotion granted by surviving a Mythic Cycle (the god "proves" itself)
+});
+
+/* The Temenos — the sacred precinct that must be dedicated to LOCK a cult,
+   priced by the tier the cult has reached. Higher tiers demand a historic
+   investment, and an Olympian permanently withdraws citizens into priesthood. */
+const TEMENOS = Object.freeze({
+  1: { timber: 8 },                                       // Daimon — a roadside shrine
+  2: { timber: 30, clay: 25, cattle: 10 },                // Heros — a walled hero-shrine
+  3: { timber: 80, clay: 120, cattle: 60, priests: 12 },  // Olympian — a great precinct & full-time priesthood
+});
+
+/* Per-turn upkeep an unlocked, paired cult demands as its ambitions swell.
+   A Daimon-scale cult is free to sit on; a Heros drips cattle and wine; an
+   Olympian-in-the-making demands massive standing sacrifices. */
+function cultUpkeep(devotion) {
+  if (devotion >= RELIGION.TIER3) return { cattle: 2, grapes: 2, grain: 4 };
+  if (devotion >= RELIGION.TIER2) return { cattle: 1, grapes: 1 };
+  return {};
+}
+
+/* A consecrated god's standing blessing is its Epithet's effect (Georgos →
+   grain, Agoraia → timber/clay/olives, Xenios → Kleos, Soter/Asphaleios →
+   calm) scaled by the tier multiplier below and modulated by harmony and any
+   myth-won trait. See blessingLine() and applyOnePerk() for the magnitudes. */
+const TIER_MULT  = Object.freeze({ 1: 0.34, 2: 1, 3: 2.6 });
+const TIER_NAME  = Object.freeze({ 1: "Daimon", 2: "Heros", 3: "Olympian" });
+const TIER_SUB   = Object.freeze({ 1: "Local Spirit", 2: "Legendary Cult", 3: "Pan-Hellenic Deity" });
+
+/* Mythic Cycles — when a paired cult is held unlocked too long, the god must
+   prove itself to the people before it may ascend. Keyed by Aspect, with a
+   special case for the Sea·Soter "Wrath of the Earth-Shaker". Each offers a
+   Heroic path (spend Kleos, win a martial trait) and a Pious path (spend
+   Cattle, win a protective epithet). Surviving either swells the cult's
+   Devotion toward Olympus. */
+const MYTHS = Object.freeze({
+  "sea:soter": {
+    title: "The Wrath of the Earth-Shaker",
+    desc: "A monstrous serpent, a minion of the Sea, rises from the deep to terrorise your coastal fishers. The people look to the half-formed god for deliverance.",
+    heroic: { label: "Send a legendary hero to slay it", cost: { kleos: 30 }, trait: "slayer",
+              result: "The hero returns bearing the serpent's head — your cult is hailed as a Monster-Slayer." },
+    pious:  { label: "Sacrifice cattle to appease the Sea", cost: { cattle: 5 }, epithet: "asphaleios",
+              result: "The Sea is calmed. The Securer of Foundations will hold the very earth steady." },
+  },
+  sea: {
+    title: "The Tide That Would Not Turn",
+    desc: "Strange tides swallow the fishing boats. The unaligned god demands the people choose how it shall be known.",
+    heroic: { label: "Dare the waters with a hero's boat", cost: { kleos: 24 }, trait: "slayer",
+              result: "Your folk master the tide — a martial, Monster-Slayer cult takes shape." },
+    pious:  { label: "Pour libations to still the waters", cost: { cattle: 4 }, epithet: "asphaleios",
+              result: "The waters still — the cult becomes a Securer against earthquake and flood." },
+  },
+  sky: {
+    title: "The Storm Upon the Peak",
+    desc: "Lightning splits the sacred oak and fire walks the ridge. The half-formed god must show whether it brings ruin or guard.",
+    heroic: { label: "Climb the peak to claim the storm's favour", cost: { kleos: 26 }, trait: "slayer",
+              result: "Your champion returns crowned in stormlight — a Monster-Slayer cult is born." },
+    pious:  { label: "Raise an offering against the tempest", cost: { cattle: 4 }, epithet: "soter",
+              result: "The storm passes you by — the cult is named a Protector of the people." },
+  },
+  earth: {
+    title: "The Barren Season",
+    desc: "The furrows yield only dust and the cattle grow thin. The unripe god must be proven against famine itself.",
+    heroic: { label: "Quest for the lost seed-grain", cost: { kleos: 22 }, trait: "bounty",
+              result: "The seed is recovered — the cult swells with the promise of harvests to come." },
+    pious:  { label: "Bury a sacrifice in the first furrow", cost: { cattle: 4 }, epithet: "georgos",
+              result: "The soil drinks deep — the cult is named the Farmer, ward of the harvest." },
+  },
+  hearth: {
+    title: "The Vigil of the Flame",
+    desc: "Sickness creeps hut to hut and the home-fires gutter low. The household god must prove it can keep the people whole.",
+    heroic: { label: "Keep an all-night vigil at the flame", cost: { kleos: 20 }, trait: "warden",
+              result: "Dawn finds the sick recovering — a vigilant Warden cult is forged." },
+    pious:  { label: "Feast the hearth-spirits with cattle", cost: { cattle: 4 }, epithet: "soter",
+              result: "Health returns to the hearths — the cult becomes a Protector of the home." },
+  },
 });
 
 /* The Aspect deck — the untamed forces the dark-age Greeks feared or relied on. */
@@ -1018,19 +1193,21 @@ const ASPECTS = {
 
 /* The Epithet deck — titles naming the god's work for this town. */
 const EPITHETS = {
-  soter:   { name: "Soter",   sub: "The Protector",        icon: "🛡️", desc: "Defensive favour; calms citizen panic." },
-  georgos: { name: "Georgos", sub: "The Farmer",           icon: "🌱", desc: "Directly boosts agricultural yields." },
-  agoraia: { name: "Agoraia", sub: "Overseer of Markets",  icon: "⚖️", desc: "Improves barter and resource generation." },
-  xenios:  { name: "Xenios",  sub: "The Host",             icon: "🤝", desc: "Aids diplomacy and attracts bards." },
+  soter:      { name: "Soter",      sub: "The Protector",        icon: "🛡️", desc: "Defensive favour; calms citizen panic." },
+  georgos:    { name: "Georgos",    sub: "The Farmer",           icon: "🌱", desc: "Directly boosts agricultural yields." },
+  agoraia:    { name: "Agoraia",    sub: "Overseer of Markets",  icon: "⚖️", desc: "Improves barter and resource generation." },
+  xenios:     { name: "Xenios",     sub: "The Host",             icon: "🤝", desc: "Aids diplomacy and attracts bards." },
+  // Rare — never drawn; only forged through a Mythic Cycle.
+  asphaleios: { name: "Asphaleios", sub: "Securer of Foundations", icon: "🪨", desc: "Calms the people and stays the earth — earthquakes never strike." },
 };
 
 /* Harmonious Aspect→Epithet pairings yield strong, steady gods. Any other
    pairing produces a "confused" deity of feeble, erratic blessings. */
 const HARMONY = {
   sky:    ["soter", "xenios"],
-  sea:    ["soter", "agoraia"],
+  sea:    ["soter", "agoraia", "asphaleios"],
   earth:  ["georgos", "agoraia"],
-  hearth: ["soter", "xenios"],
+  hearth: ["soter", "xenios", "asphaleios"],
 };
 
 /* ---------- The central Game State Object ---------- */
@@ -1077,12 +1254,21 @@ const GameState = {
   // Permanent per-turn resource bonuses gained from absorbed hamlets.
   bonuses: {},
 
-  // Religion: the Ancestral Hearth and the pantheon it makes possible.
+  // Citizens permanently withdrawn into full-time priesthood (Olympian temene).
+  priests: 0,
+
+  // Religion: the Ancestral Hearth and the slow-burn cult engine it opens.
   hearthBuilt: false,
-  pendingEpiphany: false,
-  pantheon: [null, null, null],   // up to EPIPHANY.SLOTS manifested gods
-  divineNeglect: false,           // a vision left unanswered saps Piety
-  epiphany: null,                 // transient hand + selection during a vision
+  hearthTurn:  -1,                // turn the Hearth was kindled (schedules Epiphanies)
+  pendingEpiphany: false,         // a fresh card-grant notice awaits acknowledgement
+  hand: { aspects: [], epithets: [] },  // unassigned Aspect/Epithet cards in the people's keeping
+  cults: [],                      // Local Cults (unlocked) and consecrated gods (locked)
+  cultSeq: 0,                     // id sequence for cults
+  appeaseOldGods: true,           // pay Phthonos appeasement to established gods each turn?
+  jealousyActive: false,          // is Divine Jealousy gripping the pantheon this turn?
+  winter: 0,                      // turns of the current Great Winter remaining (0 = not winter)
+  pendingMyth: null,              // an unresolved Mythic Cycle (blocks the turn)
+  stolenFire: null,               // an unresolved Stolen Fire text-adventure (blocks the turn)
 
   // An unresolved crisis awaiting the player's response, if any.
   pendingCrisis: null,
@@ -1240,8 +1426,10 @@ function assignJobs(population) {
   let total = 0;
   for (const key in JOBS) total += (w[key] || 0);
   if (total <= 0) total = 1;
+  // Citizens given over to full-time priesthood no longer work the land.
+  const workforce = Math.max(0, population - (GameState.priests || 0));
   const counts = {};
-  for (const key in JOBS) counts[key] = Math.round(population * (w[key] || 0) / total);
+  for (const key in JOBS) counts[key] = Math.round(workforce * (w[key] || 0) / total);
   return counts;
 }
 
@@ -1289,8 +1477,9 @@ function processTick() {
     GameState.unrest -= 1;
   }
 
-  // --- Consumption: every citizen eats grain ---
-  const needed = Math.ceil(s.population * CONFIG.GRAIN_PER_CITIZEN);
+  // --- Consumption: every citizen eats grain (more so in a Great Winter) ---
+  const coldMult = GameState.winter > 0 ? 1.25 : 1;
+  const needed = Math.ceil(s.population * CONFIG.GRAIN_PER_CITIZEN * coldMult);
 
   if (s.grain >= needed) {
     // The settlement is fed; a sustainable per-turn surplus supports growth.
@@ -1327,16 +1516,10 @@ function processTick() {
     applyStats({ grain: -(GameState.stats.grain - grainCap) });
   }
 
-  // --- Pantheon: each manifested god confers its standing blessing ---
-  applyPantheonPerks();
-
-  // --- Divine Neglect: a vision left unanswered erodes the people's piety ---
-  if (GameState.divineNeglect && GameState.macros.eusebeia > 0) {
-    GameState.macros.eusebeia = Math.max(0, GameState.macros.eusebeia - EPIPHANY.NEGLECT);
-    if (GameState.turn % 3 === 0) {
-      logChronicle("The unanswered vision weighs on the people — Divine Neglect saps their piety.", "warning");
-    }
-  }
+  // --- Religion: Local Cults age & feed; consecrated gods bless the city ---
+  //     (tickCults may also wake a blocking Mythic Cycle or the Stolen Fire.)
+  tickCults();
+  applyCultPerks();
 
   // --- Renown: high Kleos draws wandering migrants; glory then fades ---
   const kleos = GameState.macros.kleos;
@@ -1373,7 +1556,7 @@ function processTick() {
  */
 function nextTurn() {
   if (GameState.status !== GameStatus.PLAYING) return;
-  if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;   // must be answered first
+  if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;   // must be answered first
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
@@ -1382,6 +1565,13 @@ function nextTurn() {
 
   logChronicle(`Turn ${GameState.turn} begins. The year is ${formatYear(GameState.year)}.`, "turn");
 
+  // --- 1a. The seasons: a five-year Great Winter recurs across the era ---
+  const w = GameState.turn % 30;
+  const wasWinter = GameState.winter > 0;
+  GameState.winter = (w >= 1 && w <= 5) ? (6 - w) : 0;
+  if (GameState.winter > 0 && !wasWinter)
+    logChronicle("A Great Winter closes upon the hills; the cold deepens and grain is eaten faster.", "warning");
+
   // --- 1b. Every tenth year: the Hekatomb Festival replaces the normal tick ---
   if (GameState.turn % HEKATOMB.INTERVAL === 0) {
     openFestival();
@@ -1389,29 +1579,28 @@ function nextTurn() {
     return;
   }
 
-  // --- 1c. Every twelfth year (Hearth built): a Divine Epiphany ---
-  if (GameState.hearthBuilt && GameState.turn % EPIPHANY.INTERVAL === 0) {
-    openEpiphany();
-    render();
-    return;
-  }
-
-  // --- 2. Deterministic production / consumption tick ---
+  // --- 2. Deterministic production / consumption tick (may wake a blocking
+  //     Mythic Cycle or the Stolen Fire from within tickCults) ---
   processTick();
+  const religiousBlock = GameState.pendingMyth || GameState.stolenFire;
 
   // --- 3. Stochastic historical event (~50% chance) ---
-  if (Math.random() < 0.50) {
+  if (!religiousBlock && Math.random() < 0.50) {
     const ev = pick(DAWN_EVENTS);
     applyStats(ev.stats);
     logChronicle(ev.text, "event");
   }
 
-  // --- 4. Random structural crisis (15% chance) ---
-  //     The crisis opens a modal; its damage is applied on the player's choice.
-  let crisisTriggered = false;
-  if (Math.random() < CONFIG.CRISIS_CHANCE) {
+  // --- 4. Random structural crisis (some crises are warded off by the gods) ---
+  if (!religiousBlock && Math.random() < CONFIG.CRISIS_CHANCE) {
     triggerCrisis();
-    crisisTriggered = true;
+  }
+
+  // --- 4b. A Divine Epiphany every few years once the Hearth burns ---
+  if (!religiousBlock && !GameState.pendingCrisis && GameState.hearthBuilt &&
+      GameState.turn > GameState.hearthTurn &&
+      (GameState.turn - GameState.hearthTurn) % RELIGION.EPIPHANY_INTERVAL === 0) {
+    grantEpiphany();
   }
 
   // --- 5. FSM transitions: collapse or era completion ---
@@ -1433,6 +1622,19 @@ function endEra() {
     `${GameState.cityName} stands ready for the age to come.`,
     "system"
   );
+  const gods = lockedCults();
+  if (gods.length) {
+    const olympians = gods.filter(c => c.tier === 3);
+    logChronicle(
+      `The pantheon passes into the Archaic Era: ${gods.map(c => `${godName(c)} (${TIER_NAME[c.tier]})`).join(", ")}.` +
+      (olympians.length
+        ? ` ${olympians.map(c => godName(c)).join(" and ")} ascend as true Olympian${olympians.length > 1 ? "s" : ""}, whose era-defining cults and great temene will shape the age to come.`
+        : ` No cult was nurtured to Olympian heights — the gods of Demos remain local powers.`),
+      olympians.length ? "event" : "system"
+    );
+  } else {
+    logChronicle("No gods were ever consecrated; Demos enters the Archaic Era without a pantheon of its own.", "warning");
+  }
 }
 
 /** FSM transition: PLAYING -> ENDED (the settlement has died out). */
@@ -1458,7 +1660,7 @@ function spend(changes) {
 
 /** Civic Investment: fund a travelling bard, raising Kleos at once. */
 function fundBard() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
   const c = CIVIC.bard;
   if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
     logChronicle("There is too little to provision a travelling bard.", "warning");
@@ -1477,7 +1679,7 @@ function fundBard() {
 
 /** Civic Investment: raise the Ancestral Hearth (one-time; unlocks the Epiphany). */
 function buildHearth() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
   if (GameState.hearthBuilt) return;
   const c = CIVIC.hearth;
   if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay || GameState.stats.cattle < c.cattle) {
@@ -1487,17 +1689,23 @@ function buildHearth() {
   }
   spend({ timber: -c.timber, clay: -c.clay, cattle: -c.cattle });
   GameState.hearthBuilt = true;
+  GameState.hearthTurn = GameState.turn;
   logChronicle(
     `The Ancestral Hearth is kindled within a grove upon the hill. Its undying flame opens the people ` +
-    `to Divine Epiphany — every twelfth year, a god may be named into the pantheon.`,
+    `to Divine Epiphany — every ${RELIGION.EPIPHANY_INTERVAL} years a vision grants an Aspect and an Epithet, ` +
+    `from which Local Cults may be raised and, in time, gods named.`,
     "system"
   );
-  afterAction();
+  // The first vision comes at once, so the people may raise their first Daimon.
+  grantEpiphany();
 }
 
-/** Roll a random crisis and present it for the player's decision. */
+/** Roll a random crisis and present it for the player's decision (skipping any the gods ward off). */
 function triggerCrisis() {
-  const crisis = pick(CRISES);
+  const warded = wardedCrises();
+  const open = CRISES.filter(c => !warded.has(c.id));
+  if (open.length === 0) return;
+  const crisis = pick(open);
   GameState.pendingCrisis = crisis;
   logChronicle(`A crisis befalls the Polis: ${crisis.name}!`, "warning");
   renderCrisis();
@@ -1726,148 +1934,355 @@ function closeModal(id) { document.getElementById(id).hidden = true; }
 function openLabor() { render(); openModal("labor-modal"); }
 function openCivic() { renderCivic(); openModal("civic-modal"); }
 function openAdmin() { renderAdmin(); openModal("admin-modal"); }
-function openEpiphany() {
+/* ===================================================================
+   RELIGION ENGINE — Local Cults, Cultivation, Tiers, Jealousy & Myths
+   =================================================================== */
+
+/* ---------- small resource helpers (stats + macros) ---------- */
+function resAvail(key) {
+  if (key === "piety")  return GameState.macros.eusebeia;
+  if (key === "kleos")  return GameState.macros.kleos;
+  return GameState.stats[key] || 0;
+}
+function canAfford(cost) {
+  for (const k in cost) {
+    if (k === "priests") continue;            // labour, not a stockpile
+    if (resAvail(k) < cost[k]) return false;
+  }
+  return true;
+}
+function spendObj(cost) {
+  for (const k in cost) {
+    if (k === "priests") { GameState.priests += cost[k]; continue; }
+    if (k === "piety") { GameState.macros.eusebeia = Math.max(0, GameState.macros.eusebeia - cost[k]); continue; }
+    if (k === "kleos") { GameState.macros.kleos = Math.max(0, GameState.macros.kleos - cost[k]); continue; }
+    applyStats({ [k]: -cost[k] });
+  }
+}
+function costText(cost) {
+  const ic = { grain: "🌾", cattle: "🐄", grapes: "🍇", olives: "🫒", timber: "🪵", clay: "🧱", piety: "🔥", kleos: "✦", priests: "🧑‍🌾→⛪" };
+  return Object.keys(cost).map(k => `${ic[k] || ""} ${cost[k]} ${k === "priests" ? "priests" : k}`).join(" · ");
+}
+
+/* ---------- cult identity & maths ---------- */
+function isHarmonious(aspect, epithet) {
+  return !!(epithet && HARMONY[aspect] && HARMONY[aspect].includes(epithet));
+}
+function tierForDevotion(dev) {
+  if (dev >= RELIGION.TIER3) return 3;
+  if (dev >= RELIGION.TIER2) return 2;
+  return 1;
+}
+function lockedCults() { return GameState.cults.filter(c => c.locked); }
+function openCults()   { return GameState.cults.filter(c => !c.locked); }
+function getCult(id)   { return GameState.cults.find(c => c.id === id); }
+function godName(c) {
+  if (!c.epithet) return `Cult of ${ASPECTS[c.aspect].name}`;
+  return `${ASPECTS[c.aspect].god} ${EPITHETS[c.epithet].name}`;
+}
+/** Crisis ids warded off by the established pantheon's traits & epithets. */
+function wardedCrises() {
+  const set = new Set();
+  for (const c of lockedCults()) {
+    if (c.epithet === "asphaleios") set.add("quake");
+    if (c.trait === "warden" || c.stolenFire) set.add("plague");
+    if (c.trait === "bounty") set.add("blight");
+    if (c.trait === "slayer") set.add("wolves");
+  }
+  return set;
+}
+
+/* ---------- the Divine Epiphany: a gift of cards ---------- */
+function grantEpiphany() {
+  const a = pick(Object.keys(ASPECTS));
+  const e = pick(["soter", "georgos", "agoraia", "xenios"]);   // asphaleios is myth-only
+  GameState.hand.aspects.push(a);
+  GameState.hand.epithets.push(e);
   GameState.pendingEpiphany = true;
-  const firstEmpty = GameState.pantheon.findIndex(s => !s);
-  GameState.epiphany = {
-    aspects:  shuffle(Object.keys(ASPECTS)).slice(0, EPIPHANY.HAND),
-    epithets: shuffle(Object.keys(EPITHETS)).slice(0, EPIPHANY.HAND),
-    pickAspect: null, pickEpithet: null,
-    target: firstEmpty >= 0 ? firstEmpty : 0,
-  };
-  logChronicle("A Divine Epiphany seizes the people at the Hearth — an Aspect and an Epithet may be bound into a god.", "system");
+  GameState.lastGift = { aspect: a, epithet: e };
+  logChronicle(
+    `A Divine Epiphany seizes the people at the Hearth — they receive the Aspect of ${ASPECTS[a].name} ` +
+    `and the Epithet ${EPITHETS[e].name}. What is made of them is yours to decide.`,
+    "system"
+  );
   renderEpiphany();
   openModal("epiphany-modal");
 }
+function ackEpiphany() {
+  GameState.pendingEpiphany = false;
+  closeModal("epiphany-modal");
+  render();
+}
 
-/* ---------- Pantheon helpers ---------- */
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+/* ---------- founding & tending Local Cults ---------- */
+function foundCult(aspect) {
+  const i = GameState.hand.aspects.indexOf(aspect);
+  if (i < 0) return;
+  GameState.hand.aspects.splice(i, 1);
+  GameState.cults.push({
+    id: ++GameState.cultSeq, aspect, epithet: null,
+    devotion: 0, age: 0, pairedAge: 0, winterAge: 0,
+    locked: false, tier: 0, trait: null, mythDone: false, stolenFire: false,
+  });
+  logChronicle(`The people gather to a new Local Cult of ${ASPECTS[aspect].name}.`, "event");
+  renderReligion(); render();
+}
+function pairEpithet(cultId, epithet) {
+  const c = getCult(cultId); if (!c || c.locked || c.epithet) return;
+  const i = GameState.hand.epithets.indexOf(epithet);
+  if (i < 0) return;
+  GameState.hand.epithets.splice(i, 1);
+  c.epithet = epithet;
+  c.harmonious = isHarmonious(c.aspect, epithet);
+  c.pairedAge = 0;
+  logChronicle(
+    `${ASPECTS[c.aspect].name} is bound to ${EPITHETS[epithet].name} — the cult takes the shape of ${godName(c)}` +
+    (c.harmonious ? ", a harmonious pairing that will swell quickly." : ", an ill-matched pairing that will grow but slowly."),
+    c.harmonious ? "event" : "warning"
+  );
+  renderReligion(); render();
+}
+const OFFERINGS = {
+  grain:  { cost: { grain: 10 },             dev: 6,  label: "Barley offering" },
+  cattle: { cost: { cattle: 1, grapes: 1 },  dev: 14, label: "Cattle & wine" },
+  piety:  { cost: { piety: 4 },              dev: 10, label: "Pour out Piety" },
+};
+function makeOffering(cultId, kind) {
+  const c = getCult(cultId); if (!c || c.locked || !c.epithet) return;
+  const o = OFFERINGS[kind]; if (!o || !canAfford(o.cost)) return;
+  spendObj(o.cost);
+  c.devotion += o.dev;
+  logChronicle(`An offering swells the devotion of ${godName(c)} (+${o.dev} Devotion).`, "event");
+  renderReligion(); render();
+}
+function disbandCult(cultId) {
+  const c = getCult(cultId); if (!c) return;
+  GameState.cults = GameState.cults.filter(x => x.id !== cultId);
+  logChronicle(`The ${c.locked ? "rites of " : "unaligned "}${godName(c)} are let go; the cult disperses.`, "warning");
+  renderReligion(); render();
+}
+
+/* ---------- consecration: locking a cult, freezing its tier ---------- */
+function lockCult(cultId) {
+  const c = getCult(cultId); if (!c || c.locked || !c.epithet) return;
+  if (lockedCults().length >= RELIGION.SLOTS) {
+    logChronicle("The pantheon is full — no further god may be consecrated.", "warning");
+    return;
   }
-  return a;
-}
-
-/** Is this Aspect+Epithet pairing harmonious (a true god) or confused? */
-function isHarmonious(aspect, epithet) {
-  return !!(HARMONY[aspect] && HARMONY[aspect].includes(epithet));
-}
-
-/** Human text for a deity's standing blessing. */
-function perkText(epithet, harmonious) {
-  if (!harmonious) return "Confused — feeble, erratic blessings.";
-  switch (epithet) {
-    case "georgos": return "+10 Grain each turn (rich harvests).";
-    case "soter":   return "−2 Discontent each turn; steadies unrest.";
-    case "agoraia": return "+3 Timber, +3 Clay, +2 Olives each turn.";
-    case "xenios":  return "+2 Kleos each turn; smoother diplomacy.";
-    default:        return "A standing blessing.";
+  const tier = tierForDevotion(c.devotion);
+  const cost = TEMENOS[tier];
+  if (!canAfford(cost)) {
+    logChronicle(`The Temenos for a ${TIER_NAME[tier]} cannot be raised — ${costText(cost)} is needed.`, "warning");
+    renderReligion();
+    return;
   }
+  spendObj(cost);
+  c.locked = true;
+  c.tier = tier;
+  logChronicle(
+    `${godName(c)} is consecrated as a ${TIER_NAME[tier]} (${TIER_SUB[tier]}) within a dedicated Temenos` +
+    (tier === 3 ? ` — ${cost.priests} citizens take up the priesthood for ever, and an Olympian legacy will carry into the Archaic Era.` : ".") +
+    ` Its power is now frozen for the rest of the era.`,
+    tier === 3 ? "system" : "event"
+  );
+  renderReligion(); render();
+  // An Olympian raised in a lean year can tip the city into famine — that is the gamble.
+  if (GameState.stats.population <= 0) collapse();
 }
 
-/** Build a deity object from an Aspect + Epithet pairing. */
-function deityFor(aspect, epithet) {
-  const harmonious = isHarmonious(aspect, epithet);
-  return {
-    aspect, epithet, harmonious,
-    name: `${ASPECTS[aspect].god} ${EPITHETS[epithet].name}`,
-    perkText: perkText(epithet, harmonious),
-  };
-}
-
-/** Apply each manifested god's standing blessing for the turn. */
-function applyPantheonPerks() {
-  for (const d of GameState.pantheon) {
-    if (!d) continue;
-    const h = d.harmonious;
-    switch (d.epithet) {
-      case "georgos": {
-        const g = h ? 10 : (Math.random() < 0.45 ? Math.floor(Math.random() * 4) : 0);
-        if (g) applyStats({ grain: +g });
-        break;
+/* ---------- per-turn cult life: ageing, upkeep, devotion, triggers ---------- */
+function tickCults() {
+  for (const c of openCults()) {
+    c.age++;
+    if (c.epithet) {
+      c.pairedAge++;
+      const up = cultUpkeep(c.devotion);
+      if (Object.keys(up).length && !canAfford(up)) {
+        c.devotion = Math.max(0, c.devotion - 4);
+        GameState.unhappiness += 1;
+        if (GameState.turn % 2 === 0)
+          logChronicle(`The cult of ${godName(c)} starves for offerings — its devotion slips.`, "warning");
+      } else {
+        if (Object.keys(up).length) spendObj(up);
+        c.devotion += c.harmonious ? RELIGION.DEV_HARMONIOUS : RELIGION.DEV_CONFUSED;
       }
-      case "soter": {
-        const u = h ? 2 : (Math.random() < 0.45 ? 1 : 0);
-        if (u && GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - u);
-        if (h && GameState.unrest > 0) GameState.unrest = Math.max(0, GameState.unrest - 1);
-        break;
-      }
-      case "agoraia": {
-        if (h) applyStats({ timber: +3, clay: +3, olives: +2 });
-        else if (Math.random() < 0.45) applyStats({ [pick(["timber", "clay", "olives", "grapes"])]: +Math.floor(Math.random() * 4) });
-        break;
-      }
-      case "xenios": {
-        const k = h ? 2 : (Math.random() < 0.45 ? 1 : 0);
-        if (k) GameState.macros.kleos += k;
-        break;
-      }
+      c.winterAge = 0;
+    } else if (c.aspect === "hearth" && GameState.winter > 0) {
+      c.winterAge = (c.winterAge || 0) + 1;
+    } else {
+      c.winterAge = 0;
     }
   }
+  // Trigger at most one blocking religious event per turn.
+  if (GameState.pendingMyth || GameState.stolenFire || GameState.pendingCrisis) return;
+  const fire = openCults().find(c => !c.epithet && c.aspect === "hearth" && (c.winterAge || 0) >= RELIGION.STOLEN_FIRE_AGE && !c.stolenFireTried);
+  if (fire) { triggerStolenFire(fire); return; }
+  const myth = openCults().find(c => c.epithet && !c.mythDone && c.pairedAge >= RELIGION.MYTH_AGE);
+  if (myth) { triggerMyth(myth); }
 }
 
-/** Bonus to annexation success granted by harmonious Xenios gods. */
+/* ---------- per-turn blessings & Divine Jealousy (Phthonos) ---------- */
+function applyCultPerks() {
+  const locked = lockedCults();
+  const nurturing = openCults().some(c => c.epithet);   // a new god being raised behind the gods' backs
+  const jealousy = locked.length > 0 && nurturing;
+  GameState.jealousyActive = jealousy;
+
+  for (const c of locked) {
+    if (jealousy) {
+      const appCost = { grain: 4 * c.tier, cattle: c.tier >= 2 ? 1 : 0 };
+      if (GameState.appeaseOldGods && canAfford(appCost)) {
+        spendObj(appCost);                                // appeasement keeps the old god content
+      } else {
+        applyJealousyPenalty(c);
+        continue;
+      }
+    }
+    applyOnePerk(c);
+  }
+}
+function applyOnePerk(c) {
+  const mult = TIER_MULT[c.tier] * (c.harmonious ? 1 : 0.45);
+  const R = (n) => Math.round(n * mult);
+  switch (c.epithet) {
+    case "georgos":
+      applyStats({ grain: R(6 * (c.trait === "bounty" ? 1.6 : 1)) });
+      break;
+    case "agoraia":
+      applyStats({ timber: R(3), clay: R(3), olives: R(2) });
+      break;
+    case "xenios":
+      GameState.macros.kleos += R(3);
+      break;
+    case "soter":
+    case "asphaleios": {
+      const calm = R(2 * (c.trait === "slayer" ? 2 : 1));
+      if (GameState.unhappiness > 0) GameState.unhappiness = Math.max(0, GameState.unhappiness - calm);
+      if (GameState.unrest > 0) GameState.unrest = Math.max(0, GameState.unrest - 1);
+      break;
+    }
+  }
+  if (c.stolenFire && GameState.macros.eusebeia >= 0) GameState.macros.eusebeia += R(2);   // Hestia rekindled
+}
+function applyJealousyPenalty(c) {
+  switch (c.epithet) {
+    case "georgos":    applyStats({ grain: -4 }); break;
+    case "agoraia":    applyStats({ timber: -2, clay: -2 }); break;
+    case "xenios":     GameState.macros.kleos = Math.max(0, GameState.macros.kleos - 2); break;
+    case "soter":
+    case "asphaleios": GameState.unhappiness += 2; break;
+  }
+  if (GameState.turn % 3 === 0)
+    logChronicle(`Phthonos — ${godName(c)} feels neglected and withholds its blessing.`, "warning");
+}
+/** Harmonious, consecrated Xenios gods smooth annexation (scaled by tier & slayer). */
 function pantheonAnnexBonus() {
   let b = 0;
-  for (const d of GameState.pantheon) if (d && d.epithet === "xenios" && d.harmonious) b += 0.12;
-  return Math.min(0.3, b);
+  for (const c of lockedCults()) {
+    if (c.epithet === "xenios" && c.harmonious) b += 0.06 * c.tier;
+    if (c.trait === "slayer") b += 0.05 * c.tier;
+  }
+  return Math.min(0.35, b);
 }
 
-/** Consecrate the bound Aspect+Epithet into the chosen pantheon slot. */
-function consecrateDeity() {
-  const ep = GameState.epiphany;
-  if (!ep || !ep.pickAspect || !ep.pickEpithet) return;
-  const d = deityFor(ep.pickAspect, ep.pickEpithet);
-  const slot = (ep.target >= 0 && ep.target < EPIPHANY.SLOTS) ? ep.target : 0;
-  const replaced = GameState.pantheon[slot];
-  GameState.pantheon[slot] = d;
+/* ---------- Mythic Cycle (blocking) ---------- */
+function triggerMyth(c) {
+  const key = `${c.aspect}:${c.epithet}`;
+  const myth = MYTHS[key] || MYTHS[c.aspect];
+  GameState.pendingMyth = { cultId: c.id, key: MYTHS[key] ? key : c.aspect };
+  logChronicle(`A Mythic Cycle stirs around ${godName(c)}: ${myth.title}.`, "system");
+  renderMyth();
+  openModal("myth-modal");
+}
+function resolveMyth(path) {
+  const pm = GameState.pendingMyth; if (!pm) return;
+  const c = getCult(pm.cultId);
+  const myth = MYTHS[pm.key];
+  if (!c) { GameState.pendingMyth = null; closeModal("myth-modal"); render(); return; }
 
-  GameState.divineNeglect = false;
-  GameState.pendingEpiphany = false;
-  GameState.epiphany = null;
-  closeModal("epiphany-modal");
+  if (path === "pass") {
+    // The god fails to prove itself; the moment passes, devotion ebbs, but the
+    // cycle will not haunt this cult again. (Always available — no soft-lock.)
+    c.mythDone = true;
+    c.pairedAge = 0;
+    c.devotion = Math.max(0, c.devotion - 12);
+    GameState.unhappiness += 2;
+    GameState.pendingMyth = null;
+    closeModal("myth-modal");
+    logChronicle(`The Mythic Cycle of ${godName(c)} passes unanswered; the god fails to prove itself and some devotion is lost.`, "warning");
+    render();
+    return;
+  }
 
-  logChronicle(
-    `${d.name} is named into the pantheon${replaced ? `, displacing ${replaced.name}` : ""}. ` +
-    (d.harmonious
-      ? `The pairing is harmonious — ${d.perkText}`
-      : `The pairing is ill-matched — a confused god of fickle, feeble blessings.`),
-    d.harmonious ? "event" : "warning"
-  );
+  const branch = myth[path];
+  if (!branch) return;
+  if (!canAfford(branch.cost)) { renderMyth(); return; }   // can't pay this path — choose another
+  spendObj(branch.cost);
+  if (branch.trait)   c.trait = branch.trait;
+  if (branch.epithet) { c.epithet = branch.epithet; c.harmonious = isHarmonious(c.aspect, c.epithet); }
+  c.devotion += RELIGION.MYTH_DEVOTION;
+  c.mythDone = true;
+  c.pairedAge = 0;
+  GameState.pendingMyth = null;
+  closeModal("myth-modal");
+  logChronicle(`${branch.result} (${godName(c)} gains +${RELIGION.MYTH_DEVOTION} Devotion toward Olympus.)`, "event");
+  render();
+}
 
+/* ---------- The Stolen Fire (blocking text-adventure) ---------- */
+const FIRE_PLACES = [
+  { id: "hollow", name: "The Pine Hollow", icon: "🌲", clue: "Wet reeds and pine-needles cling to the cold tracks — they lead down toward sheltered, watered ground." },
+  { id: "pass",   name: "The Frost Pass",  icon: "❄️", clue: "The trail climbs into thin, biting air; ice glitters where the thief brushed the high rocks." },
+  { id: "cave",   name: "The Cave of Echoes", icon: "🕳️", clue: "Soot-black smears and a faint echo of crackling fire drift up from somewhere hollow and deep." },
+];
+function triggerStolenFire(c) {
+  c.stolenFireTried = true;
+  const hidden = pick(FIRE_PLACES).id;
+  GameState.stolenFire = { cultId: c.id, hidden, tries: 0, max: 3, found: false, log: [] };
+  logChronicle("The Stolen Fire! A rogue spirit has carried off the sacred hearth-flame — Piety fails and the cold gnaws threefold. The people must track the thief through the mountains.", "warning");
+  renderStolenFire();
+  openModal("stolenfire-modal");
+}
+function searchForFire(placeId) {
+  const sf = GameState.stolenFire; if (!sf || sf.found) return;
+  sf.tries++;
+  if (placeId === sf.hidden) {
+    sf.found = true;
+    const c = getCult(sf.cultId);
+    if (c) {
+      c.epithet = "soter";
+      c.harmonious = isHarmonious(c.aspect, "soter");
+      c.stolenFire = true;
+      c.locked = true;
+      c.tier = 3;
+      c.trait = "warden";
+      c.mythDone = true;
+      logChronicle(`The sacred fire is found and carried home! Hestia is forged anew as a unique Olympian, bypassing the long road of cult and Temenos.`, "system");
+    }
+    renderStolenFire();
+    return;
+  }
+  // a wrong path: souls lost to the cold, and a narrowing clue
+  const lost = Math.min(GameState.stats.population, 5);
+  applyStats({ population: -lost });
+  GameState.unhappiness += 1;
+  sf.log.push(`The ${FIRE_PLACES.find(p => p.id === placeId).name} held only cold ashes — ${lost} souls are lost to the freeze.`);
+  if (sf.tries >= sf.max && !sf.found) {
+    // the trail goes cold for good
+    const c = getCult(sf.cultId);
+    GameState.macros.eusebeia = 0;
+    const die = Math.min(GameState.stats.population, 8);
+    applyStats({ population: -die });
+    if (c) GameState.cults = GameState.cults.filter(x => x.id !== c.id);
+    logChronicle(`The trail goes cold. The hearth-fire is lost, the Hearth cult disperses, and the long winter claims ${die} more souls.`, "warning");
+  }
+  renderStolenFire();
+}
+function closeStolenFire() {
+  GameState.stolenFire = null;
+  closeModal("stolenfire-modal");
   if (GameState.stats.population <= 0) collapse();
-  else if (GameState.year <= CONFIG.END_YEAR) endEra();
   render();
-}
-
-/** Turn the vision away — no god is named, and Divine Neglect sets in. */
-function dismissEpiphany() {
-  GameState.pendingEpiphany = false;
-  GameState.epiphany = null;
-  GameState.divineNeglect = true;
-  closeModal("epiphany-modal");
-  logChronicle(
-    "The vision is turned away; no god is named. Divine Neglect begins to gnaw at the people's piety.",
-    "warning"
-  );
-  if (GameState.year <= CONFIG.END_YEAR) endEra();
-  render();
-}
-
-/* ---------- Epiphany card interactions ---------- */
-function epiphanyPick(kind, id) {
-  if (!GameState.epiphany) return;
-  if (kind === "aspect") GameState.epiphany.pickAspect = id;
-  else GameState.epiphany.pickEpithet = id;
-  renderEpiphany();
-}
-function epiphanyClearSlot(kind) {
-  if (!GameState.epiphany) return;
-  if (kind === "aspect") GameState.epiphany.pickAspect = null;
-  else GameState.epiphany.pickEpithet = null;
-  renderEpiphany();
 }
 
 /* ===================================================================
@@ -1905,7 +2320,7 @@ function absorbHamlet(h) {
 
 /** Diplomatic Feast: high wine + cattle cost, but certain success. */
 function attemptFeast(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.feast;
@@ -1929,7 +2344,7 @@ function attemptFeast(id) {
  * one by force is the work of many turns, never a couple.
  */
 function attemptAnnex(id) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
   const c = h.annex;
@@ -2029,7 +2444,18 @@ function render() {
   renderCivic();
   renderAdmin();
 
-  // Control panel reflects the FSM and any pending crisis.
+  // Religion tools: the map button appears once the Hearth burns; refresh the
+  // panel live whenever it is open.
+  const relBtn = document.getElementById("open-religion");
+  if (relBtn) {
+    relBtn.style.display = GameState.hearthBuilt ? "" : "none";
+    const handCount = GameState.hand.aspects.length + GameState.hand.epithets.length;
+    const relBadge = document.getElementById("religion-badge");
+    if (relBadge) relBadge.textContent = handCount;
+  }
+  if (!document.getElementById("religion-modal").hidden) renderReligion();
+
+  // Control panel reflects the FSM and any pending demand.
   const btn = document.getElementById("end-turn-btn");
   const hint = document.getElementById("control-hint");
   if (GameState.status === GameStatus.ENDED) {
@@ -2038,16 +2464,20 @@ function render() {
     hint.textContent = GameState.stats.population <= 0
       ? "The Demos is no more. Refresh to begin anew."
       : "The Dawn Era has ended. A new age awaits in a future phase.";
-  } else if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany) {
+  } else if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.stolenFire) {
     btn.disabled = true;
     btn.textContent = "End Turn";
     hint.textContent = GameState.pendingFestival ? "The Hekatomb Festival awaits your offerings."
-      : GameState.pendingEpiphany ? "A Divine Epiphany awaits — name a god, or turn the vision away."
+      : GameState.stolenFire   ? "The Stolen Fire must be recovered before the year may turn."
+      : GameState.pendingMyth  ? "A Mythic Cycle demands your choice before the year may turn."
+      : GameState.pendingEpiphany ? "A Divine Epiphany has gifted new cards — acknowledge the vision to continue."
       : "A crisis demands your answer before the year may turn.";
   } else {
     btn.disabled = false;
     btn.textContent = "End Turn";
-    hint.textContent = "Advance the chronicle one year at a time.";
+    hint.textContent = GameState.winter > 0
+      ? `A Great Winter grips the hills (${GameState.winter} ${GameState.winter === 1 ? "year" : "years"} left) — grain is eaten faster.`
+      : "Advance the chronicle one year at a time.";
   }
 }
 
@@ -2181,10 +2611,11 @@ function renderCivic() {
   if (!body) return;
 
   const b = CIVIC.bard, hc = CIVIC.hearth;
-  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
+  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.stolenFire;
   const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
   const canHearth = !GameState.hearthBuilt &&
     GameState.stats.timber >= hc.timber && GameState.stats.clay >= hc.clay && GameState.stats.cattle >= hc.cattle;
+  const locked = lockedCults();
 
   body.innerHTML =
     `<p class="admin-intro">Before written law binds them, your people are held together by shared ` +
@@ -2204,13 +2635,14 @@ function renderCivic() {
     `</div>` +
 
     `<div class="hamlet-card">` +
-      `<div class="hc-head"><span class="hc-name">🪵 Ancestral Hearth</span><span class="hc-pop">Religion · Pantheon</span></div>` +
+      `<div class="hc-head"><span class="hc-name">🪵 Ancestral Hearth</span><span class="hc-pop">Religion · Cults</span></div>` +
       `<div class="hc-desc">An undying flame in a sacred grove upon the hill. It opens your people to the ` +
-        `<b>Divine Epiphany</b> — every twelfth year you may bind an Aspect to an Epithet and name a god.</div>` +
-      `<div class="hc-asset">Effect: <b>unlocks the Divine Epiphany</b> and a pantheon of ${EPIPHANY.SLOTS} gods</div>` +
+        `<b>Divine Epiphany</b> — every ${RELIGION.EPIPHANY_INTERVAL} years a vision gifts an Aspect and an Epithet, ` +
+        `from which Local Cults are raised and, in time, gods named.</div>` +
+      `<div class="hc-asset">Effect: <b>begins the cult engine</b> — manage it in the ⛩ Cults &amp; Temenos panel</div>` +
       `<div class="hamlet-actions">` +
         (GameState.hearthBuilt
-          ? `<div class="civic-built">✓ The Ancestral Hearth burns — a Divine Epiphany comes every ${EPIPHANY.INTERVAL} turns.</div>`
+          ? `<div class="civic-built">✓ The Ancestral Hearth burns — open ⛩ Cults &amp; Temenos to tend your gods.</div>`
           : `<button class="action-btn" id="civic-hearth" ${(!canHearth || ended) ? "disabled" : ""}>` +
               `<span class="ab-title">🪵 Kindle the Hearth</span>` +
               `<span class="ab-cost">🪵 ${hc.timber} timber · 🧱 ${hc.clay} clay · 🐄 ${hc.cattle} cattle — built once</span>` +
@@ -2220,15 +2652,18 @@ function renderCivic() {
 
     `<div class="hamlet-card">` +
       `<div class="hc-head"><span class="hc-name">⛩️ The Pantheon</span>` +
-        `<span class="hc-pop">${GameState.pantheon.filter(Boolean).length} / ${EPIPHANY.SLOTS} gods</span></div>` +
-      `<div class="hc-desc">Gods named at the Divine Epiphany and the standing blessings they grant.</div>` +
+        `<span class="hc-pop">${locked.length} / ${RELIGION.SLOTS} gods</span></div>` +
+      `<div class="hc-desc">Gods consecrated from your Local Cults and the standing blessings they grant. ` +
+        `Raise and cultivate cults in the ⛩ Cults &amp; Temenos panel.</div>` +
       `<div class="pantheon-list">` +
-        GameState.pantheon.map((d, i) =>
-          `<div class="pan-row ${d ? (d.harmonious ? "harmonious" : "confused") : "empty"}">` +
-            (d
-              ? `<span class="pan-god">${ASPECTS[d.aspect].icon} ${d.name}</span><span class="pan-blessing">${d.perkText}</span>`
-              : `<span class="pan-god">Slot ${i + 1}</span><span class="pan-blessing">${GameState.hearthBuilt ? "awaits a Divine Epiphany" : "kindle the Ancestral Hearth first"}</span>`) +
-          `</div>`).join("") +
+        (locked.length
+          ? locked.map(c =>
+              `<div class="pan-row ${c.harmonious ? "harmonious" : "confused"}">` +
+                `<span class="pan-god">${ASPECTS[c.aspect].icon} ${godName(c)} <i>· ${TIER_NAME[c.tier]}</i></span>` +
+                `<span class="pan-blessing">${blessingLine(c.epithet, c.tier, c.harmonious, c.trait)}</span>` +
+              `</div>`).join("")
+          : `<div class="pan-row empty"><span class="pan-god">No gods enthroned</span>` +
+            `<span class="pan-blessing">${GameState.hearthBuilt ? "raise a cult to begin" : "kindle the Ancestral Hearth first"}</span></div>`) +
       `</div>` +
     `</div>`;
 
@@ -2239,88 +2674,232 @@ function renderCivic() {
 }
 
 /** Render the Divine Epiphany modal: draw the hand and wire the shrine. */
+/* ---------- Divine Epiphany: the card-grant notice ---------- */
 function renderEpiphany() {
   const body = document.getElementById("epiphany-body");
-  const ep = GameState.epiphany;
-  if (!body || !ep) return;
-
-  const card = (kind, id) => {
-    const data = kind === "aspect" ? ASPECTS[id] : EPITHETS[id];
-    const picked = (kind === "aspect" ? ep.pickAspect : ep.pickEpithet) === id;
-    return `<div class="god-card ${kind}${picked ? " picked" : ""}" draggable="true" data-kind="${kind}" data-id="${id}">` +
-      `<div class="gc-icon">${data.icon}</div><div class="gc-name">${data.name}</div>` +
-      `<div class="gc-sub">${data.sub}</div><div class="gc-desc">${data.desc}</div></div>`;
-  };
-  const aspectCards  = ep.aspects.map(id => card("aspect", id)).join("");
-  const epithetCards = ep.epithets.map(id => card("epithet", id)).join("");
-
-  const filled = (kind) => {
-    const id = kind === "aspect" ? ep.pickAspect : ep.pickEpithet;
-    if (!id) return `<span class="slot-hint">drag an<br>${kind === "aspect" ? "Aspect" : "Epithet"}<br>here</span>`;
-    const data = kind === "aspect" ? ASPECTS[id] : EPITHETS[id];
-    return `<div class="gc-icon">${data.icon}</div><div class="gc-name">${data.name}</div><div class="gc-sub">${data.sub}</div>`;
-  };
-
-  let preview = `<div class="deity-name">— · —</div><div class="deity-tag">awaiting both cards</div>`;
-  let canConsecrate = false;
-  if (ep.pickAspect && ep.pickEpithet) {
-    const d = deityFor(ep.pickAspect, ep.pickEpithet);
-    preview = `<div class="deity-name">${d.name}</div>` +
-      `<div class="deity-tag ${d.harmonious ? "harmonious" : "confused"}">${d.harmonious ? "✦ Harmonious" : "≈ Confused pairing"}</div>` +
-      `<div class="deity-perk">${d.perkText}</div>`;
-    canConsecrate = true;
-  }
-
-  let slots = "";
-  for (let i = 0; i < EPIPHANY.SLOTS; i++) {
-    const d = GameState.pantheon[i];
-    slots += `<div class="pan-slot${i === ep.target ? " target" : ""}${d ? " filled" : ""}" data-slot="${i}">` +
-      (d ? `<div class="pan-name">${d.name}</div><div class="pan-perk">${d.harmonious ? "✦ " + EPITHETS[d.epithet].sub : "≈ confused"}</div>`
-         : `<div class="pan-empty">empty slot ${i + 1}</div>`) + `</div>`;
-  }
-
+  const g = GameState.lastGift;
+  if (!body || !g) return;
+  const a = ASPECTS[g.aspect], e = EPITHETS[g.epithet];
   body.innerHTML =
-    `<p class="admin-intro">A god stirs at the Hearth. Bind one <b>Aspect</b> (a force of nature) to one <b>Epithet</b> ` +
-    `(its work for your town), then consecrate it into a pantheon slot. Harmonious pairings give strong, steady ` +
-    `blessings; ill-matched ones yield a confused, fickle god. Turn the vision away and Divine Neglect will gnaw at your Piety.</p>` +
-    `<div class="deck-label">Aspects — the untamed forces</div><div class="deck">${aspectCards}</div>` +
-    `<div class="shrine">` +
-      `<div class="shrine-slot ${ep.pickAspect ? "filled" : ""}" data-drop="aspect">${filled("aspect")}</div>` +
-      `<span class="shrine-op">✛</span>` +
-      `<div class="shrine-slot ${ep.pickEpithet ? "filled" : ""}" data-drop="epithet">${filled("epithet")}</div>` +
-      `<span class="shrine-op">➜</span>` +
-      `<div class="deity-preview">${preview}</div>` +
+    `<p class="admin-intro">A vision seizes the people at the Hearth. They are gifted one <b>Aspect</b> and one ` +
+    `<b>Epithet</b>. Nothing is named yet — raise them into a Local Cult and cultivate it over the years, or keep ` +
+    `the cards for later. The longer a cult is nurtured before you consecrate it, the mightier the god it becomes.</p>` +
+    `<div class="deck">` +
+      `<div class="god-card aspect"><div class="gc-icon">${a.icon}</div><div class="gc-name">${a.name}</div>` +
+        `<div class="gc-sub">Aspect · ${a.sub}</div><div class="gc-desc">${a.desc}</div></div>` +
+      `<div class="god-card epithet"><div class="gc-icon">${e.icon}</div><div class="gc-name">${e.name}</div>` +
+        `<div class="gc-sub">Epithet · ${e.sub}</div><div class="gc-desc">${e.desc}</div></div>` +
     `</div>` +
-    `<div class="deck-label">Epithets — the divine titles</div><div class="deck">${epithetCards}</div>` +
-    `<div class="deck-label">Your pantheon — choose a slot to receive the god</div>` +
-    `<div class="pantheon-slots">${slots}</div>` +
     `<div class="epiphany-actions">` +
-      `<button class="action-btn diplomatic" id="ep-consecrate" ${canConsecrate ? "" : "disabled"}>` +
-        `<span class="ab-title">⛩️ Consecrate into the Pantheon</span><span class="ab-cost">Locks this god into the chosen slot</span></button>` +
-      `<button class="action-btn" id="ep-dismiss">` +
-        `<span class="ab-title">🌫️ Turn Away the Vision</span><span class="ab-cost">No god is named — risks Divine Neglect</span></button>` +
+      `<button class="action-btn diplomatic" id="ep-tend"><span class="ab-title">⛩️ Tend the Cults</span>` +
+        `<span class="ab-cost">Open the Temenos to raise or feed a cult</span></button>` +
+      `<button class="action-btn" id="ep-ack"><span class="ab-title">📜 Keep the Cards</span>` +
+        `<span class="ab-cost">Set them aside for now</span></button>` +
     `</div>`;
+  document.getElementById("ep-tend").addEventListener("click", () => { ackEpiphany(); openReligion(); });
+  document.getElementById("ep-ack").addEventListener("click", ackEpiphany);
+}
 
-  // Cards: click to place, or drag to a shrine slot.
-  body.querySelectorAll(".god-card").forEach(c => {
-    c.addEventListener("click", () => epiphanyPick(c.dataset.kind, c.dataset.id));
-    c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", c.dataset.kind + ":" + c.dataset.id); c.classList.add("dragging"); });
-    c.addEventListener("dragend", () => c.classList.remove("dragging"));
+/* ---------- The Temenos: cult cultivation & the pantheon ---------- */
+function openReligion() { renderReligion(); openModal("religion-modal"); }
+
+/** Per-turn blessing description for a cult at a given tier. */
+function blessingLine(epithet, tier, harmonious, trait) {
+  const mult = TIER_MULT[tier] * (harmonious ? 1 : 0.45);
+  const R = (n) => Math.round(n * mult);
+  switch (epithet) {
+    case "georgos":    return `+${R(6 * (trait === "bounty" ? 1.6 : 1))} Grain / turn`;
+    case "agoraia":    return `+${R(3)} Timber, +${R(3)} Clay, +${R(2)} Olives / turn`;
+    case "xenios":     return `+${R(3)} Kleos / turn`;
+    case "soter":      return `−${R(2 * (trait === "slayer" ? 2 : 1))} Discontent / turn, steadies unrest`;
+    case "asphaleios": return `−${R(2)} Discontent / turn, and wards off earthquakes`;
+    default:           return "a standing blessing";
+  }
+}
+function traitLabel(trait) {
+  return trait === "slayer" ? "⚔ Monster-Slayer"
+       : trait === "bounty" ? "🌿 Bringer of Bounty"
+       : trait === "warden" ? "🕯 Warden of Health" : "";
+}
+
+function renderReligion() {
+  const body = document.getElementById("religion-body");
+  if (!body) return;
+  const hand = GameState.hand;
+  const open = openCults();
+  const locked = lockedCults();
+  const slotsLeft = RELIGION.SLOTS - locked.length;
+
+  let html =
+    `<p class="admin-intro">Cards gifted by the Epiphany sit unaligned until you raise them into a <b>Local Cult</b>. ` +
+    `Feed a cult and let the years pass to swell its <b>Devotion</b> — a <b>Daimon</b> may be locked at once, a <b>Heros</b> ` +
+    `after long nurture, an <b>Olympian</b> only after decades. Consecrating a cult freezes its power forever, and costs ` +
+    `a <b>Temenos</b> of timber, clay, cattle and (for an Olympian) citizens given to the priesthood.</p>`;
+
+  // Status banners.
+  if (GameState.winter > 0)
+    html += `<div class="rel-banner cold">❄ A Great Winter grips the hills — hold an unaligned Hearth cult through it at your peril.</div>`;
+  if (GameState.jealousyActive)
+    html += `<div class="rel-banner jealous">⚡ Divine Jealousy (Phthonos): you nurture a new god while others are enthroned. ` +
+            `${GameState.appeaseOldGods ? "Appeasement sacrifices are being paid each turn to keep them content." : "The old gods rage — their blessings are turning to curses!"}</div>`;
+
+  // The hand of unassigned cards.
+  html += `<div class="deck-label">The people's cards — ${hand.aspects.length} Aspects · ${hand.epithets.length} Epithets</div>`;
+  if (hand.aspects.length === 0 && hand.epithets.length === 0) {
+    html += `<p class="rel-empty">No cards in hand. A Divine Epiphany will gift more in the years to come.</p>`;
+  } else {
+    html += `<div class="rel-hand">`;
+    hand.aspects.forEach(id =>
+      html += `<div class="rel-card aspect"><span class="rc-ic">${ASPECTS[id].icon}</span>` +
+              `<span class="rc-nm">${ASPECTS[id].name}</span>` +
+              `<button class="rc-btn" data-found="${id}">Raise a Cult</button></div>`);
+    hand.epithets.forEach((id, i) =>
+      html += `<div class="rel-card epithet"><span class="rc-ic">${EPITHETS[id].icon}</span>` +
+              `<span class="rc-nm">${EPITHETS[id].name}</span>` +
+              `<span class="rc-hint">bind to a cult below</span></div>`);
+    html += `</div>`;
+  }
+
+  // Local Cults (unlocked).
+  html += `<div class="deck-label">Local Cults — unaligned & growing</div>`;
+  if (open.length === 0) {
+    html += `<p class="rel-empty">No living cults. Raise one from an Aspect card above.</p>`;
+  }
+  open.forEach(c => {
+    const tier = c.epithet ? tierForDevotion(c.devotion) : 1;
+    const up = c.epithet ? cultUpkeep(c.devotion) : {};
+    const nextThresh = c.devotion >= RELIGION.TIER3 ? null : c.devotion >= RELIGION.TIER2 ? RELIGION.TIER3 : RELIGION.TIER2;
+    html += `<div class="cult-card">`;
+    html += `<div class="hc-head"><span class="hc-name">${ASPECTS[c.aspect].icon} ${godName(c)}</span>` +
+            `<span class="hc-pop">${c.epithet ? (c.harmonious ? "✦ harmonious" : "≈ ill-matched") : "unbound aspect"}</span></div>`;
+    if (c.epithet) {
+      const pctTxt = nextThresh ? ` · ${nextThresh - c.devotion} to ${TIER_NAME[nextThresh === RELIGION.TIER3 ? 3 : 2]}` : " · at Olympian devotion";
+      html += `<div class="cult-meta">Devotion <b>${c.devotion}</b>${pctTxt} · age ${c.pairedAge}y` +
+              (Object.keys(up).length ? ` · upkeep ${costText(up)}/yr` : ` · no upkeep`) + `</div>`;
+      html += `<div class="hc-asset">If consecrated now: <b>${TIER_NAME[tier]}</b> — ${blessingLine(c.epithet, tier, c.harmonious, c.trait)}` +
+              (c.trait ? ` · ${traitLabel(c.trait)}` : "") + `</div>`;
+    } else {
+      html += `<div class="cult-meta">An unbound Aspect — bind an Epithet to begin its cult` +
+              (c.aspect === "hearth" ? `, or leave it through a Great Winter to risk the Stolen Fire.` : `.`) + `</div>`;
+    }
+    html += `<div class="cult-actions">`;
+    // Bind an epithet (if unpaired and cards available).
+    if (!c.epithet) {
+      const eps = [...new Set(hand.epithets)];
+      if (eps.length) eps.forEach(id =>
+        html += `<button class="mini-btn" data-pair="${c.id}" data-ep="${id}">Bind ${EPITHETS[id].name}</button>`);
+      else html += `<span class="rc-hint">no Epithet cards in hand</span>`;
+    } else {
+      // Offerings.
+      for (const k in OFFERINGS) {
+        const o = OFFERINGS[k];
+        const ok = canAfford(o.cost);
+        html += `<button class="mini-btn${ok ? "" : " off"}" data-offer="${c.id}" data-kind="${k}" ${ok ? "" : "disabled"}>` +
+                `${o.label} (${costText(o.cost)} → +${o.dev})</button>`;
+      }
+      // Consecrate.
+      const cost = TEMENOS[tier];
+      const canLock = slotsLeft > 0 && canAfford(cost);
+      html += `<button class="mini-btn lock${canLock ? "" : " off"}" data-lock="${c.id}" ${canLock ? "" : "disabled"}>` +
+              `⛩️ Consecrate ${TIER_NAME[tier]} — ${costText(cost)}${slotsLeft > 0 ? "" : " · pantheon full"}</button>`;
+    }
+    html += `<button class="mini-btn danger" data-disband="${c.id}">Disband</button>`;
+    html += `</div></div>`;
   });
-  body.querySelectorAll(".shrine-slot").forEach(slot => {
-    slot.addEventListener("dragover", e => { e.preventDefault(); slot.classList.add("over"); });
-    slot.addEventListener("dragleave", () => slot.classList.remove("over"));
-    slot.addEventListener("drop", e => {
-      e.preventDefault(); slot.classList.remove("over");
-      const [kind, id] = (e.dataTransfer.getData("text/plain") || "").split(":");
-      if (kind === slot.dataset.drop && id) epiphanyPick(kind, id);
-    });
-    slot.addEventListener("click", () => epiphanyClearSlot(slot.dataset.drop));
+
+  // The Pantheon (locked gods).
+  html += `<div class="deck-label">The Pantheon — ${locked.length} / ${RELIGION.SLOTS} consecrated gods</div>`;
+  if (locked.length === 0) {
+    html += `<p class="rel-empty">No gods yet enthroned.</p>`;
+  }
+  locked.forEach(c => {
+    html += `<div class="cult-card locked tier${c.tier}">` +
+      `<div class="hc-head"><span class="hc-name">${ASPECTS[c.aspect].icon} ${godName(c)}</span>` +
+        `<span class="hc-pop">${TIER_NAME[c.tier]} · ${TIER_SUB[c.tier]}</span></div>` +
+      `<div class="hc-asset">${blessingLine(c.epithet, c.tier, c.harmonious, c.trait)}` +
+        (c.trait ? ` · ${traitLabel(c.trait)}` : "") + (c.stolenFire ? " · 🔥 rekindled Hestia" : "") + `</div>` +
+      `</div>`;
   });
-  body.querySelectorAll(".pan-slot").forEach(s =>
-    s.addEventListener("click", () => { GameState.epiphany.target = +s.dataset.slot; renderEpiphany(); }));
-  document.getElementById("ep-consecrate").addEventListener("click", consecrateDeity);
-  document.getElementById("ep-dismiss").addEventListener("click", dismissEpiphany);
+
+  // Appeasement toggle.
+  html += `<div class="rel-toggle"><label><input type="checkbox" id="rel-appease" ${GameState.appeaseOldGods ? "checked" : ""}> ` +
+          `Pay appeasement sacrifices to enthroned gods during Divine Jealousy ` +
+          `(spends grain & cattle each turn to keep their blessings; unchecked, they curse you instead).</label></div>`;
+
+  body.innerHTML = html;
+
+  body.querySelectorAll("[data-found]").forEach(b => b.addEventListener("click", () => foundCult(b.dataset.found)));
+  body.querySelectorAll("[data-pair]").forEach(b => b.addEventListener("click", () => pairEpithet(+b.dataset.pair, b.dataset.ep)));
+  body.querySelectorAll("[data-offer]").forEach(b => b.addEventListener("click", () => makeOffering(+b.dataset.offer, b.dataset.kind)));
+  body.querySelectorAll("[data-lock]").forEach(b => b.addEventListener("click", () => lockCult(+b.dataset.lock)));
+  body.querySelectorAll("[data-disband]").forEach(b => b.addEventListener("click", () => disbandCult(+b.dataset.disband)));
+  const ap = document.getElementById("rel-appease");
+  if (ap) ap.addEventListener("change", () => { GameState.appeaseOldGods = ap.checked; renderReligion(); });
+}
+
+/* ---------- Mythic Cycle modal ---------- */
+function renderMyth() {
+  const body = document.getElementById("myth-body");
+  const pm = GameState.pendingMyth;
+  if (!body || !pm) return;
+  const c = getCult(pm.cultId);
+  const myth = MYTHS[pm.key];
+  const h = myth.heroic, p = myth.pious;
+  const canH = canAfford(h.cost), canP = canAfford(p.cost);
+  body.innerHTML =
+    `<div class="crisis-head"><span class="crisis-icon">🐉</span><span class="crisis-name">${myth.title}</span></div>` +
+    `<p class="crisis-desc">${myth.desc} The half-formed <b>${c ? godName(c) : "god"}</b> must prove itself before it may ascend toward Olympus.</p>` +
+    `<div class="crisis-actions">` +
+      `<button class="action-btn diplomatic" id="myth-heroic" ${canH ? "" : "disabled"}>` +
+        `<span class="ab-title">🗡 ${h.label}</span><span class="ab-cost">Cost: ${costText(h.cost)}${canH ? "" : " — not enough"}</span></button>` +
+      `<button class="action-btn" id="myth-pious" ${canP ? "" : "disabled"}>` +
+        `<span class="ab-title">🕯 ${p.label}</span><span class="ab-cost">Cost: ${costText(p.cost)}${canP ? "" : " — not enough"}</span></button>` +
+      `<button class="action-btn" id="myth-pass">` +
+        `<span class="ab-title">🌫 Let the moment pass</span><span class="ab-cost">The god fails to prove itself — lose some Devotion</span></button>` +
+    `</div>` +
+    `<p class="rc-hint" style="text-align:center;margin-top:10px">A chosen path proves the god and grants +${RELIGION.MYTH_DEVOTION} Devotion toward Olympus.</p>`;
+  document.getElementById("myth-heroic").addEventListener("click", () => resolveMyth("heroic"));
+  document.getElementById("myth-pious").addEventListener("click", () => resolveMyth("pious"));
+  document.getElementById("myth-pass").addEventListener("click", () => resolveMyth("pass"));
+}
+
+/* ---------- Stolen Fire text-adventure modal ---------- */
+function renderStolenFire() {
+  const body = document.getElementById("stolenfire-body");
+  const sf = GameState.stolenFire;
+  if (!body || !sf) return;
+  let html =
+    `<div class="crisis-head"><span class="crisis-icon">🔥</span><span class="crisis-name">The Stolen Fire</span></div>`;
+  if (sf.found) {
+    html += `<p class="crisis-desc">The sacred flame is found and carried home through the snow! From its embers your ` +
+      `people forge a unique <b>Hestia</b> — an Olympian-tier goddess of the hearth, won without the long road of cult and Temenos.</p>` +
+      `<div class="crisis-actions"><button class="action-btn diplomatic" id="sf-done">` +
+      `<span class="ab-title">🏛 Carry the Fire Home</span><span class="ab-cost">Hestia takes her place among the gods</span></button></div>`;
+  } else if (sf.tries >= sf.max) {
+    html += `<p class="crisis-desc">The trail has gone cold for good. The hearth-fire is lost to the mountains, the Hearth cult ` +
+      `disperses, and the long winter bites deep.</p>` +
+      (sf.log.length ? `<div class="sf-log">${sf.log.map(l => `<div>• ${l}</div>`).join("")}</div>` : "") +
+      `<div class="crisis-actions"><button class="action-btn" id="sf-done">` +
+      `<span class="ab-title">🌨 Endure the Darkness</span><span class="ab-cost">Return to the chronicle</span></button></div>`;
+  } else {
+    const clue = FIRE_PLACES.find(p => p.id === sf.hidden).clue;
+    const searched = sf.log.length;
+    html += `<p class="crisis-desc">A rogue spirit has stolen the sacred hearth-fire into the mountains. Piety has failed and the ` +
+      `cold gnaws threefold. Read the tracks and choose where to search — a wrong path costs souls to the freeze. ` +
+      `(${sf.max - sf.tries} ${sf.max - sf.tries === 1 ? "attempt" : "attempts"} left.)</p>` +
+      `<p class="sf-clue">🐾 The trail: <i>${clue}</i></p>`;
+    if (sf.log.length) html += `<div class="sf-log">${sf.log.map(l => `<div>• ${l}</div>`).join("")}</div>`;
+    html += `<div class="crisis-actions sf-places">` +
+      FIRE_PLACES.map(pl => `<button class="action-btn" data-search="${pl.id}">` +
+        `<span class="ab-title">${pl.icon} Search ${pl.name}</span></button>`).join("") +
+      `</div>`;
+  }
+  body.innerHTML = html;
+  if (sf.found || sf.tries >= sf.max) {
+    document.getElementById("sf-done").addEventListener("click", closeStolenFire);
+  } else {
+    body.querySelectorAll("[data-search]").forEach(b => b.addEventListener("click", () => searchForFire(b.dataset.search)));
+  }
 }
 
 /** Render the pending crisis into the (non-dismissable) crisis modal. */
@@ -2375,7 +2954,7 @@ function renderAdmin() {
   remaining.forEach(h => {
     const f = h.feast, a = h.annex;
     const canFeast = GameState.stats.grapes >= f.grapes && GameState.stats.cattle >= f.cattle;
-    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany;
+    const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.stolenFire;
     const regrouping = GameState.turn - h.lastPush < CONFIG.ANNEX_COOLDOWN;
     const canAnnex = GameState.stats.cattle >= a.cattle && GameState.stats.grain >= a.grain && !regrouping;
     const pct = Math.round(Math.min(0.95, CONFIG.ANNEX_SUCCESS + pantheonAnnexBonus()) * 100);
@@ -2442,12 +3021,19 @@ function initGame() {
   // Seed the runtime hamlets from config (deep copy so config stays pristine).
   GameState.hamlets = HAMLETS.map(h => ({ ...h, absorbed: false, siege: 0, lastPush: -99 }));
   GameState.bonuses = {};
+  GameState.priests = 0;
   GameState.unrest = 0;
   GameState.hearthBuilt = false;
+  GameState.hearthTurn = -1;
   GameState.pendingEpiphany = false;
-  GameState.pantheon = [null, null, null];
-  GameState.divineNeglect = false;
-  GameState.epiphany = null;
+  GameState.hand = { aspects: [], epithets: [] };
+  GameState.cults = [];
+  GameState.cultSeq = 0;
+  GameState.appeaseOldGods = true;
+  GameState.jealousyActive = false;
+  GameState.winter = 0;
+  GameState.pendingMyth = null;
+  GameState.stolenFire = null;
   GameState.pendingCrisis = null;
   GameState.pendingFestival = false;
   GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
@@ -2462,20 +3048,25 @@ function initGame() {
   );
   logChronicle("Farmers sow grain, herders tend cattle, and the kilns are lit.", "system");
   logChronicle(
-    "Bards may spread your renown and an altar may court the gods — open Civic Investments. " +
+    "Bards may spread your renown — open Civic Investments. " +
     "Three independent hamlets dwell nearby; through synoikismos they may join the Polis.",
     "system"
   );
   logChronicle("Every tenth year the people hold the Hekatomb, a great sacrifice to renew the Polis.", "system");
-  logChronicle("In time, raise an Ancestral Hearth to open your people to Divine Epiphany and name your first gods.", "system");
+  logChronicle(
+    "Raise an Ancestral Hearth to open your people to Divine Epiphany. Its visions gift Aspects and Epithets, " +
+    "from which Local Cults are raised — cultivate them across the years to breed Daimones, Heroes and, in time, Olympians.",
+    "system"
+  );
   logChronicle("The Dawn Era begins. Press “End Turn” to let the years unfold.", "system");
 
   // End Turn.
   document.getElementById("end-turn-btn").addEventListener("click", nextTurn);
 
-  // Map tools: open the Labor, Civic and Administration modals.
+  // Map tools: open the Labor, Civic, Cults and Administration modals.
   document.getElementById("open-labor").addEventListener("click", openLabor);
   document.getElementById("open-civic").addEventListener("click", openCivic);
+  document.getElementById("open-religion").addEventListener("click", openReligion);
   document.getElementById("open-admin").addEventListener("click", openAdmin);
 
   // Chronicle enlarge / shrink toggle.
@@ -2492,7 +3083,7 @@ function initGame() {
 
   // Backdrop clicks dismiss modals — except the crisis and festival modals,
   // which must be resolved before play resumes.
-  const blocking = ["crisis-modal", "festival-modal", "epiphany-modal"];
+  const blocking = ["crisis-modal", "festival-modal", "epiphany-modal", "myth-modal", "stolenfire-modal"];
   document.querySelectorAll(".modal-backdrop").forEach(back =>
     back.addEventListener("click", e => {
       if (e.target === back && !blocking.includes(back.id)) back.hidden = true;
