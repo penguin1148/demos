@@ -327,7 +327,8 @@
       var(--stone);
     border-top: 3px solid var(--terra-dark);
   }
-  #control-hint { font-size: 13px; color: #b6a079; font-style: italic; }
+  #control-hint { font-size: 13px; color: #b6a079; font-style: italic; flex: 1; text-align: center; }
+  .cp-tools { display: flex; gap: 8px; flex-shrink: 0; }
 
   /* End Turn: a fired-clay tablet */
   #end-turn-btn {
@@ -580,13 +581,16 @@
   .value.macro-ergon  { color: #c8a86a; }
   .value.macro-muthos { color: #b48fc4; }
 
-  /* God happiness bar & ascension */
-  .happy-bar { position: relative; height: 16px; border-radius: 8px; background: rgba(0,0,0,.12);
-    border: 1px solid var(--border-d); margin: 5px 0; overflow: hidden; }
-  .happy-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg,#7fa84a,#9bbf5a); }
+  /* God happiness — labelled line above a thin bar */
+  .happy-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+    font-size: 12px; color: var(--ink); margin: 5px 0 3px; }
+  .happy-line b { color: var(--terra-dark); }
+  .happy-line .happy-up { font-size: 11px; color: var(--ink-soft); }
+  .happy-bar { position: relative; height: 9px; border-radius: 5px; background: rgba(0,0,0,.14);
+    border: 1px solid var(--border-d); margin: 0 0 6px; overflow: hidden; }
+  .happy-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg,#7fa84a,#9bbf5a); transition: width .2s ease; }
   .happy-fill.sad { background: linear-gradient(90deg,#b06a3a,#cf8a4a); }
-  .happy-txt { position: relative; z-index: 1; font-size: 10.5px; line-height: 16px; padding-left: 8px;
-    color: #2e2114; font-weight: 600; text-shadow: 0 1px 0 rgba(255,255,255,.3); white-space: nowrap; }
+  .happy-mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(60,45,25,.55); }
   .ascend-ready { font-size: 12.5px; font-weight: 700; color: var(--good); margin: 4px 0;
     background: rgba(91,122,44,.12); border: 1px solid var(--good); border-radius: 5px; padding: 5px 9px; }
 
@@ -604,8 +608,9 @@
   .tech-bank .tb-lbl { font-size: 11px; color: var(--ink-soft); font-variant: small-caps; letter-spacing: 1px; }
   .tech-bank.ergon  { border-color: #c8a86a; }
   .tech-bank.muthos { border-color: #b48fc4; }
-  .tech-tree { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto;
-    gap: 14px 30px; align-items: center; position: relative; margin-top: 6px; }
+  .tech-tree { display: grid; position: relative; margin: 6px auto 0; }
+  .tech-tree.vertical { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto;
+    gap: 26px 26px; max-width: 560px; }
   .tech-node { border: 2px solid var(--border-d); border-radius: 9px; padding: 10px 12px;
     background: linear-gradient(170deg,#eee4cb,#e2d2ac); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
   .tech-node.st-done   { border-color: var(--good); background: linear-gradient(170deg,#e2ecd0,#cfe0b6); }
@@ -620,10 +625,11 @@
   .tech-node .tn-state.done   { color: var(--good); }
   .tech-node .tn-state.locked { color: var(--ink-soft); font-weight: 600; }
   .tech-arrow { position: absolute; font-size: 22px; color: var(--border-d); font-weight: 700; pointer-events: none; }
-  .tech-arrow.a1 { left: 31%;  top: 21%; }
-  .tech-arrow.a2 { left: 31%;  top: 67%; }
-  .tech-arrow.a3 { left: 64%;  top: 21%; }
-  .tech-arrow.a4 { left: 64%;  top: 67%; }
+  /* downward connectors between the three rows */
+  .tech-arrow.d1 { left: 26%; top: 30%; }
+  .tech-arrow.d2 { left: 74%; top: 30%; }
+  .tech-arrow.d3 { left: 26%; top: 64%; }
+  .tech-arrow.d4 { left: 74%; top: 64%; }
 
   /* Hamlet integration progress track */
   .stage-track { font-size: 13px; margin: 6px 0 2px; color: var(--terra-dark); }
@@ -712,9 +718,7 @@
         <span>The Lands of Demos</span>
         <span class="map-tools">
           <button class="map-btn" id="open-labor">⚒ Labor of the Demos</button>
-          <button class="map-btn" id="open-tech">🔬 Knowledge</button>
-          <button class="map-btn" id="open-civic">🔥 Civic Investments</button>
-          <button class="map-btn" id="open-religion" style="display:none">⛩ Gods &amp; Temple<span class="badge" id="religion-badge">0</span></button>
+          <button class="map-btn" id="open-religion" style="display:none">🏛 Gods &amp; Temple<span class="badge" id="religion-badge">0</span></button>
           <button class="map-btn" id="open-admin">⚖ Administration<span class="badge" id="admin-badge">0</span></button>
         </span>
       </div>
@@ -783,6 +787,23 @@
             <path d="M-20 352 L120 214 L240 322 L330 240 L430 342 Z" fill="url(#mnear)"/>
             <path d="M120 214 L150 250 L100 256 Z" fill="#f4f2eb" opacity="0.92"/>
             <path d="M330 240 L356 278 L304 280 Z" fill="#f4f2eb" opacity="0.85"/>
+
+            <!-- ===== The Mines: a timbered tunnel-mouth in the mountainside ===== -->
+            <g id="scene-mines" style="display:none">
+              <!-- spoil heap of tailings -->
+              <ellipse cx="300" cy="333" rx="36" ry="8" fill="#7a7163"/>
+              <path d="M266 332 Q300 316 334 332 L334 336 Q300 322 266 336 Z" fill="#6b6356"/>
+              <!-- tunnel arch (dark) into the rock -->
+              <path d="M288 330 L288 312 Q300 298 312 312 L312 330 Z" fill="#241f18"/>
+              <!-- timber frame -->
+              <rect x="284" y="310" width="5" height="21" fill="#6b4f2a"/>
+              <rect x="311" y="310" width="5" height="21" fill="#6b4f2a"/>
+              <rect x="282" y="305" width="36" height="6" fill="#7a5a30"/>
+              <!-- a cart-rail, a cut-stone block and a pick by the mouth -->
+              <rect x="320" y="323" width="12" height="9" fill="#9a958a" stroke="#6b6356" stroke-width="1"/>
+              <line x1="278" y1="331" x2="270" y2="320" stroke="#6b4f2a" stroke-width="2"/>
+              <line x1="270" y1="320" x2="276" y2="318" stroke="#6b4f2a" stroke-width="1.5"/>
+            </g>
 
             <!-- layered rolling hills (the land) -->
             <path d="M0 360 Q250 322 500 348 Q740 300 1000 312 L1000 600 L0 600 Z" fill="url(#hillFar)"/>
@@ -941,6 +962,30 @@
             </g>
 
             <!-- ===== Coastal Fishermen — huts on the shore, boat afloat ===== -->
+            <!-- ===== The Docks: wooden piers running into the bay ===== -->
+            <g id="scene-docks" style="display:none">
+              <!-- two plank jetties out over the water -->
+              <g fill="#7a4a26">
+                <polygon points="724,512 806,476 814,484 732,520"/>
+                <polygon points="742,540 838,500 845,508 749,548"/>
+              </g>
+              <!-- pier posts -->
+              <g stroke="#5d3a1e" stroke-width="2.5">
+                <line x1="744" y1="500" x2="744" y2="512"/><line x1="772" y1="488" x2="772" y2="500"/>
+                <line x1="800" y1="476" x2="800" y2="488"/>
+                <line x1="762" y1="528" x2="762" y2="540"/><line x1="800" y1="512" x2="800" y2="524"/>
+              </g>
+              <!-- a moored trading ship with a square sail -->
+              <g transform="translate(820,486)">
+                <path d="M0 8 Q16 22 38 8 Q34 4 0 8 Z" fill="#6b4527"/>
+                <line x1="19" y1="8" x2="19" y2="-16" stroke="#5d3a1e" stroke-width="2.5"/>
+                <polygon points="19,-15 19,3 39,-6" fill="#d9c9a3"/>
+                <polygon points="19,-15 19,3 1,-6" fill="#cbb98e"/>
+              </g>
+              <!-- stacked amphorae of trade-goods on the pier -->
+              <g fill="#b07d4a"><ellipse cx="730" cy="516" rx="3" ry="5"/><ellipse cx="737" cy="519" rx="3" ry="5"/></g>
+            </g>
+
             <g id="scene-coastal" transform="translate(640,452)">
               <!-- fishing boat, afloat just off the coastline -->
               <g transform="translate(172,18)">
@@ -973,6 +1018,10 @@
 
   <!-- ============ CONTROL PANEL ============ -->
   <div id="control-panel">
+    <span class="cp-tools">
+      <button class="map-btn" id="open-tech">🔬 Knowledge</button>
+      <button class="map-btn" id="open-civic">🔥 Civic Investments</button>
+    </span>
     <span id="control-hint">Advance the chronicle one year at a time.</span>
     <button id="end-turn-btn">End Turn</button>
   </div>
@@ -1092,6 +1141,16 @@
     </div>
   </div>
 
+  <!-- ============ PHOENICIAN NEGOTIATION MODAL (must be answered) ============ -->
+  <div class="modal-backdrop" id="phoenician-modal" hidden>
+    <div class="modal panel epiphany-panel">
+      <div class="panel-header">The Phoenician</div>
+      <div id="phoenician-body" class="modal-body">
+        <!-- populated by renderPhoenician() -->
+      </div>
+    </div>
+  </div>
+
 <script>
 "use strict";
 
@@ -1124,8 +1183,10 @@ const CONFIG = Object.freeze({
   // Hazards. Ordinary crises are common and bite harder when no god of their
   // domain shields the people; rarer CATASTROPHES can gut an unshielded city.
   CRISIS_CHANCE:       0.20,   // chance per turn of an ordinary domain crisis
-  CHOICE_EVENT_CHANCE: 0.16,   // chance per turn of a respond-able flavour event
+  CHOICE_EVENT_CHANCE: 0.14,   // chance per turn of a respond-able flavour event
   CATASTROPHE_CHANCE:  0.07,   // chance per turn of a catastrophe (needs a domain god)
+  GOD_EVENT_CHANCE:    0.16,   // chance per turn of a happiness fork upon one god
+  MERCHANT_CHANCE:     0.22,   // chance per turn a foreign merchant visits (once Docks are built)
 });
 
 /* The FSM states the game can occupy. */
@@ -1209,24 +1270,32 @@ const RELIGION = Object.freeze({
   HAPPY:             60,  // happiness at/above which a god counts as "happy" this year
   HAPPY_START:       72,  // happiness a freshly-named Daimon begins with
   HAPPY_GAIN:        5,   // happiness regained per year when upkeep is met
-  HAPPY_LOSS:        16,  // happiness lost per year when upkeep is unmet
-  ASCEND_TURNS: { 2: 20, 3: 30 },   // consecutive happy years needed before a Mythic Cycle to Heros / Olympian
+  HAPPY_LOSS:        18,  // happiness lost per year when upkeep is unmet
+  // Phthonos — the jealousy of advancing gods. Each OTHER god of Heros rank or
+  // above drags this god's happiness down every year, so keeping two great gods
+  // content is a strain and three is all but impossible. This is the chief brake
+  // on a runaway pantheon: realistically one Olympian, maybe two, by 750 BC.
+  JEALOUSY_DRAG:     4,
+  ASCEND_TURNS: { 2: 22, 3: 40 },   // consecutive happy years needed before a Mythic Cycle to Heros / Olympian
 });
 
 /* The Temenos — the sacred precinct dedicated when a god is named or ascends.
    A Daimon's shrine is cheap so the people may shield themselves early; a Heros
-   demands a walled precinct; an Olympian a great temple and a standing priesthood. */
+   demands a walled precinct; an Olympian a great temple of cut stone and a
+   standing priesthood — a historic undertaking. */
 const TEMENOS = Object.freeze({
-  1: { timber: 6, clay: 4 },                              // Daimon — a roadside shrine (early & cheap)
-  2: { timber: 28, clay: 22, cattle: 8 },                 // Heros — a walled hero-shrine
-  3: { timber: 70, clay: 90, cattle: 40, priests: 10 },   // Olympian — a great precinct & full-time priesthood
+  1: { timber: 6, clay: 4 },                                        // Daimon — a roadside shrine (early & cheap)
+  2: { timber: 30, clay: 26, cattle: 10 },                          // Heros — a walled hero-shrine
+  3: { timber: 80, clay: 110, cattle: 50, stone: 40, priests: 12 }, // Olympian — a great stone temple & priesthood
 });
 
-/* Per-year upkeep a consecrated god demands to be kept happy, by tier. */
+/* Per-year upkeep a consecrated god demands to be kept happy, by tier. The cost
+   of greatness climbs steeply — a single Olympian eats a real share of the city's
+   grain and herds, and a second pushes the granaries to the brink. */
 function godUpkeep(tier) {
-  if (tier >= 3) return { grain: 6, cattle: 2, grapes: 1 };
-  if (tier >= 2) return { grain: 3, cattle: 1 };
-  return { grain: 1 };                                     // a Daimon is content with little
+  if (tier >= 3) return { grain: 12, cattle: 3, grapes: 2 };
+  if (tier >= 2) return { grain: 5, cattle: 1, grapes: 1 };
+  return { grain: 1 };                                              // a Daimon is content with little
 }
 
 const TIER_MULT  = Object.freeze({ 1: 0.45, 2: 1.1, 3: 2.6 });
@@ -1282,10 +1351,10 @@ const MYTH_STORY = [
       { label: "Arm them with the city's finest bronze", cost: { timber: 10, cattle: 3 }, to: 4 },
       { label: "Let them go with only their courage", cost: {}, to: 5 },
     ] },
-  { id: 4, title: "The Reckoning", final: true, odds: 0.92,
-    text: "Prepared, resolute and well-led, the people of {city} close upon {foe} for the final reckoning. The god watches." },
-  { id: 5, title: "The Reckoning", final: true, odds: 0.5,
-    text: "Half-ready and short of supply, the people must still face {foe}. It will be a near and bloody thing." },
+  { id: 4, title: "The Reckoning", final: true, odds: 0.78,
+    text: "Prepared, resolute and well-led, the people of {city} close upon {foe} for the final reckoning. Even so, the outcome rests with the god — and the god is not yet sure of them." },
+  { id: 5, title: "The Reckoning", final: true, odds: 0.38,
+    text: "Half-ready and short of supply, the people must still face {foe}. It will be a desperate, bloody thing, and many may not return." },
 ];
 
 /* The Aspect deck — the untamed forces the dark-age Greeks feared or relied on. */
@@ -1366,6 +1435,7 @@ const GameState = {
     grapes:     0,     // social catalyst / ritual drink — earned by labour
     timber:     0,     // structural material — earned by labour
     clay:       0,     // structural material — earned by labour
+    stone:      0,     // masonry — only once the Mines are dug; essential to later building
   },
 
   // Macro-variables: the cultural & religious standing of the Polis.
@@ -1415,7 +1485,12 @@ const GameState = {
   techs:  {},                     // researched technologies (id -> true)
   research: { halted: false, reason: "" },  // last tick's research state (for the panel)
   fieldRevealed: false,           // terraced field shown on the map (Terraced Farming)
-  techBonus: { grain: 0, grapes: 0, clay: 0, timber: 0 },  // per-turn production added by tech
+  techBonus: { grain: 0, grapes: 0, clay: 0, timber: 0, stone: 0 },  // per-turn production added by tech/buildings
+  buildings: { mines: false, docks: false },   // built structures
+  minesTurn: -1, docksTurn: -1,                // turns they were raised
+  alphabetUnlocked: false,                     // the Phoenician negotiation has been won
+  pendingPhoenician: null,                     // an unresolved Phoenician minigame (blocks the turn)
+  merchantSeq: 0,                              // count of foreign-merchant visits
   ergonMult: 1, muthosMult: 1,    // generation multipliers raised by tech
 
   // An unresolved crisis awaiting the player's response, if any.
@@ -1440,6 +1515,7 @@ const STAT_META = {
   grapes:     { icon: "🍇", label: "Grapes",     sub: "wine & ritual" },
   timber:     { icon: "🪵", label: "Timber",     sub: "building" },
   clay:       { icon: "🧱", label: "Clay",       sub: "building" },
+  stone:      { icon: "🪨", label: "Stone",      sub: "masonry · from the Mines" },
 };
 
 /* ---------- Flavor: era-appropriate random events ---------- */
@@ -1554,6 +1630,31 @@ const CHOICE_EVENTS = [
 ];
 
 /*
+ * GOD EVENTS — forks that fall upon ONE consecrated god, swinging its happiness
+ * hard. They make keeping a god content an active, high-stakes affair: a refused
+ * demand or a poached congregation can wipe out a long happy streak in a year.
+ * `happy` is the happiness delta applied to the targeted god.
+ */
+const GOD_EVENTS = [
+  { id: "demand", icon: "🔥", name: "A God's Demand",
+    desc: g => `The priests of ${godName(g)} proclaim that the god demands a great offering — meat and grain upon the altar — or it will turn its face from the people.`,
+    a: { label: "Lay the great offering (−4 cattle, −8 grain)", cost: { cattle: 4, grain: 8 }, happy: 14, log: g => `The altar of ${godName(g)} runs red; the god is well pleased.` },
+    b: { label: "Refuse — the city cannot spare it", happy: -28, log: g => `The demand of ${godName(g)} is refused; the god sulks and its favour collapses.` } },
+  { id: "rival", icon: "🌀", name: "A Rival Cult",
+    desc: g => `A charismatic foreign mystagogue draws crowds away from ${godName(g)}, whispering that older gods are stronger.`,
+    a: { label: "Outshine them with festival (−8 grapes, −6 piety)", cost: { grapes: 8, piety: 6 }, happy: 10, log: g => `A dazzling festival wins the people back to ${godName(g)}.` },
+    b: { label: "Ignore the upstart", happy: -22, log: g => `The rival cult swells; ${godName(g)} feels the loss of its worshippers.` } },
+  { id: "quarrel", icon: "🗣️", name: "A Quarrel in the Priesthood",
+    desc: g => `The priests of ${godName(g)} fall to bitter feuding over precedence, and the rites grow slovenly.`,
+    a: { label: "Buy peace with gifts (−10 grain, −2 cattle)", cost: { grain: 10, cattle: 2 }, happy: 8, log: g => `The priests of ${godName(g)} are reconciled, and the rites restored.` },
+    b: { label: "Let them sort it out", happy: -16, unrest: 1, log: g => `The feud festers; the worship of ${godName(g)} suffers and the people mutter.` } },
+  { id: "miracle", icon: "✨", name: "A Miracle Witnessed", good: true,
+    desc: g => `Shepherds swear they saw ${godName(g)} walk the hills at dusk, and a sick child rose up healed. The whole city is aglow.`,
+    a: { label: "Proclaim the miracle far and wide", happy: 16, gain: { muthos: 10, kleos: 4 }, log: g => `The miracle of ${godName(g)} is sung in every hall; the god's favour blazes.` },
+    b: { label: "Keep it a quiet wonder", happy: 8, gain: { piety: 6 }, log: g => `The wonder is kept close, but the faithful of ${godName(g)} are heartened.` } },
+];
+
+/*
  * THE TECH TREE — an independent research economy. Each year, labour generates
  * ⚒ ERGON (practical know-how) and cultural life generates 📜 MUTHOS (lore &
  * story). A technology is researched once both are stockpiled to its cost and
@@ -1586,13 +1687,71 @@ const TECHS = {
     apply() { GameState.techBonus.grain += 4; GameState.muthosMult += 0.34; },
   },
   alphabet: {
-    name: "The Phoenician Alphabet", icon: "📜", req: ["mining", "naval"], cost: { ergon: 130, muthos: 170 },
-    col: 2, row: 1, endsEra: true,
-    desc: "Traders out of Tyre bring twenty-two letters; the Polis learns to write its laws, its debts and its gods.",
+    name: "The Phoenician Alphabet", icon: "📜", req: ["mining", "naval"], cost: { ergon: 170, muthos: 260, stone: 30 },
+    endsEra: true, needsPhoenician: true,
+    desc: "The twenty-two letters won from the Phoenician trader; the Polis learns to write its laws, its debts and its gods.",
     effect: "The Dawn Era closes in a blaze of memory — the Polis enters history. (Completes the era.)",
     apply() { /* handled specially: ends the era */ },
   },
 };
+
+/*
+ * BUILDINGS — raised in the Civic panel once their technology is known AND the
+ * matching hamlet has joined the Polis. They appear on the map.
+ */
+const BUILDINGS = {
+  mines: {
+    name: "The Mines", icon: "⛏️", tech: "mining", hamlet: "foothill",
+    cost: { timber: 32, clay: 26 },
+    desc: "Timbered shafts driven deep into the mountain after the Foothill Clan's good grey stone.",
+    effect: "Opens the quarrying of <b>Stone</b> (+4 / year) — masonry essential to great temples and lasting works.",
+  },
+  docks: {
+    name: "The Docks", icon: "⚓", tech: "naval", hamlet: "coastal",
+    cost: { timber: 38, clay: 18 },
+    desc: "Wooden piers run out into the bay, where the Coastal folk moor deep-keeled ships.",
+    effect: "<b>Foreign merchants</b> begin to call — trade with them, and in time a Phoenician may bring the alphabet.",
+  },
+};
+
+/* Wares a passing foreign merchant will barter (once the Docks are built). */
+const MERCHANT_TRADES = [
+  { who: "a Cretan oil-merchant",       give: { olives: 10 }, get: { grain: 26 } },
+  { who: "a Thessalian cattle-drover",  give: { grain: 22 },  get: { cattle: 5 } },
+  { who: "an Egyptian scribe",          give: { stone: 8 },   get: { muthos: 20 } },
+  { who: "a Cypriot copper-smith",      give: { grapes: 12 }, get: { ergon: 22 } },
+  { who: "an island wine-trader",       give: { cattle: 4 },  get: { olives: 16, grapes: 8 } },
+  { who: "a Rhodian potter",            give: { clay: 16 },   get: { stone: 10 } },
+];
+
+/* The Phoenician — a lengthy negotiation. Good, generous and honest choices
+   build RAPPORT; reach the threshold and Hiram stays the winter to teach the
+   alphabet (unlocking the tech). Substitution: {city}. */
+const PHOENICIAN_STORY = [
+  { id: 0, title: "The Stranger from Tyre",
+    text: "A deep-keeled ship of cedar moors at the new docks of {city}. From it steps Hiram, a Phoenician trader robed in sea-purple, bearing strange marks scratched on clay — not pictures, but the very sounds of speech caught in signs. He asks leave to trade, and marks well how a stranger is received.",
+    options: [
+      { label: "Receive him with a lavish feast", cost: { grapes: 10, cattle: 4 }, rapport: 3, to: 1 },
+      { label: "Offer fine stone and oil as guest-gifts", cost: { stone: 10, olives: 10 }, rapport: 3, to: 1 },
+      { label: "Give a plain but honest welcome", cost: {}, rapport: 1, to: 1 },
+    ] },
+  { id: 1, title: "The Bargain",
+    text: "Hiram spreads his wares — tin, glass beads, the precious purple dye — and drives a shrewd bargain. He is weighing whether your people are worth a long friendship, or merely a single season's easy profit.",
+    options: [
+      { label: "Trade generously, to his advantage", cost: { grain: 18, olives: 8 }, rapport: 3, to: 2 },
+      { label: "Drive a hard but fair bargain", cost: {}, rapport: 1, to: 2 },
+      { label: "Cheat him with light measures", cost: {}, rapport: -3, to: 2 },
+    ] },
+  { id: 2, title: "The Test of Trust",
+    text: "A winter storm strands Hiram's ship for the season. Worse, a sailor of his is accused of theft in your market — wrongly, you suspect. Hiram says nothing, but watches to learn what justice a foreigner may hope for in {city}.",
+    options: [
+      { label: "Judge fairly and clear his man", cost: {}, rapport: 3, to: 3 },
+      { label: "Quietly pay the accuser to drop it", cost: { cattle: 6 }, rapport: 2, to: 3 },
+      { label: "Side with your own, guilt or no", cost: {}, rapport: -4, to: 3 },
+    ] },
+  { id: 3, title: "The Letters", final: true, need: 7,
+    text: "His ship repaired and the winter deep, Hiram must decide. If he has come to trust the people of {city}, he will sit through the long dark teaching your scribes the twenty-two letters — the gift that lets a city write. If not, he sails with the first fair wind, and the secret sails with him." },
+];
 
 /*
  * SYNOIKISMOS — the surrounding independent hamlets that may be unified
@@ -1866,7 +2025,7 @@ function processTick() {
  */
 function nextTurn() {
   if (GameState.status !== GameStatus.PLAYING) return;
-  if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice) return;   // must be answered first
+  if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;   // must be answered first
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
@@ -1917,6 +2076,24 @@ function nextTurn() {
   if (!blocked && Math.random() < CONFIG.CHOICE_EVENT_CHANCE) {
     triggerChoiceEvent();
     blocked = true;
+  }
+
+  // --- 4b-ii. A happiness fork upon one of the gods ---
+  if (!blocked && GameState.gods.length > 0 && Math.random() < CONFIG.GOD_EVENT_CHANCE) {
+    triggerGodEvent();
+    blocked = true;
+  }
+
+  // --- 4b-iii. The Phoenician negotiation, or a passing foreign merchant (Docks) ---
+  if (!blocked && GameState.buildings.docks) {
+    if (!GameState.techs.alphabet && !GameState.alphabetUnlocked && GameState.turn - GameState.docksTurn >= 12 &&
+        Math.random() < 0.10) {
+      beginPhoenician();
+      blocked = true;
+    } else if (Math.random() < CONFIG.MERCHANT_CHANCE) {
+      triggerMerchant();
+      blocked = true;
+    }
   }
 
   // --- 4c. A Divine Epiphany every few years once the Hearth burns ---
@@ -1991,7 +2168,7 @@ function spend(changes) {
 
 /** Civic Investment: fund a travelling bard, raising Kleos at once. */
 function fundBard() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;
   const c = CIVIC.bard;
   if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
     logChronicle("There is too little to provision a travelling bard.", "warning");
@@ -2010,7 +2187,7 @@ function fundBard() {
 
 /** Civic Investment: raise the Ancestral Hearth (one-time; unlocks the Epiphany). */
 function buildHearth() {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;
   if (GameState.hearthBuilt) return;
   const c = CIVIC.hearth;
   if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay || GameState.stats.cattle < c.cattle) {
@@ -2139,12 +2316,41 @@ function resolveChoice(which) {
   render();
 }
 
+/* ---------- god-targeted happiness events ---------- */
+function triggerGodEvent() {
+  if (GameState.gods.length === 0) return;
+  const g = pick(GameState.gods);
+  const ev = pick(GOD_EVENTS);
+  GameState.pendingChoice = { kind: "godevent", ev, godId: g.id };
+  logChronicle(`A matter touches the worship of ${godName(g)}: ${ev.name}.`, "system");
+  renderChoice();
+  openModal("choice-modal");
+}
+function resolveGodEvent(which) {
+  const pc = GameState.pendingChoice; if (!pc || pc.kind !== "godevent") return;
+  const ev = pc.ev, g = getGod(pc.godId);
+  if (!g) { GameState.pendingChoice = null; closeModal("choice-modal"); render(); return; }
+  const opt = ev[which];
+  if (opt.cost && !canAfford(opt.cost)) return;
+  if (opt.cost) spendObj(opt.cost);
+  if (opt.gain) gainObj(opt.gain);
+  if (opt.unrest) GameState.unrest = Math.max(GameState.unrest, opt.unrest);
+  g.happiness = Math.max(0, Math.min(100, g.happiness + (opt.happy || 0)));
+  if (g.happiness < RELIGION.HAPPY) g.turnsHappy = 0;   // a sour year breaks the ascension streak
+  logChronicle(typeof opt.log === "function" ? opt.log(g) : opt.log, opt.happy < 0 ? "warning" : "event");
+  GameState.pendingChoice = null;
+  closeModal("choice-modal");
+  render();
+}
+
 /* ===================================================================
    THE TECH TREE — Ergon + Muthos research
    =================================================================== */
 function techAvailable(id) {
   if (GameState.techs[id]) return false;
-  return TECHS[id].req.every(r => GameState.techs[r]);
+  const t = TECHS[id];
+  if (t.needsPhoenician && !GameState.alphabetUnlocked) return false;   // won only by the Phoenician negotiation
+  return t.req.every(r => GameState.techs[r]);
 }
 function researchTech(id) {
   const t = TECHS[id];
@@ -2163,6 +2369,88 @@ function researchTech(id) {
     return;
   }
   renderTech(); render();
+}
+
+/* ===================================================================
+   BUILDINGS — the Mines and the Docks
+   =================================================================== */
+function canBuild(id) {
+  const b = BUILDINGS[id];
+  if (!b || GameState.buildings[id]) return false;
+  if (!GameState.techs[b.tech]) return false;
+  const h = getHamlet(b.hamlet);
+  return !!(h && h.absorbed);
+}
+function buildStructure(id) {
+  const b = BUILDINGS[id];
+  if (!b || GameState.status !== GameStatus.PLAYING) return;
+  if (!canBuild(id)) return;
+  if (!canAfford(b.cost)) { logChronicle(`${b.name} cannot yet be raised — ${costText(b.cost)} is needed.`, "warning"); renderCivic(); return; }
+  spendObj(b.cost);
+  GameState.buildings[id] = true;
+  if (id === "mines") { GameState.techBonus.stone += 4; GameState.minesTurn = GameState.turn; }
+  if (id === "docks") { GameState.docksTurn = GameState.turn; }
+  logChronicle(`The Polis raises ${b.name}. ${b.effect.replace(/<\/?b>/g, "")}`, "system");
+  afterAction();
+}
+
+/* ===================================================================
+   FOREIGN MERCHANTS & THE PHOENICIAN (Docks)
+   =================================================================== */
+function triggerMerchant() {
+  const t = pick(MERCHANT_TRADES);
+  GameState.merchantSeq += 1;
+  GameState.pendingChoice = { kind: "merchant", trade: t };
+  logChronicle(`A foreign ship puts in at the docks — ${t.who} comes to barter.`, "event");
+  renderChoice();
+  openModal("choice-modal");
+}
+function resolveMerchant(accept) {
+  const pc = GameState.pendingChoice; if (!pc || pc.kind !== "merchant") return;
+  const t = pc.trade;
+  if (accept) {
+    if (!canAfford(t.give)) return;
+    spendObj(t.give); gainObj(t.get);
+    logChronicle(`A bargain is struck with ${t.who}: ${costText(t.give)} for ${costText(t.get)}.`, "event");
+  } else {
+    logChronicle(`${t.who.replace(/^a |^an /i, "The ")} is sent on their way without a deal.`, "system");
+  }
+  GameState.pendingChoice = null;
+  closeModal("choice-modal");
+  render();
+}
+
+function beginPhoenician() {
+  GameState.pendingPhoenician = { scene: 0, rapport: 0 };
+  logChronicle("A Phoenician trader of Tyre, Hiram, steps ashore bearing the secret of letters. A long courtship of trust begins.", "system");
+  renderPhoenician();
+  openModal("phoenician-modal");
+}
+function phoenicianText(str) { return str.replace(/{city}/g, GameState.cityName); }
+function phoenicianChoose(i) {
+  const pp = GameState.pendingPhoenician; if (!pp) return;
+  const scene = PHOENICIAN_STORY[pp.scene];
+  const opt = scene.options[i]; if (!opt) return;
+  if (opt.cost && Object.keys(opt.cost).length && !canAfford(opt.cost)) return;
+  if (opt.cost) spendObj(opt.cost);
+  pp.rapport += opt.rapport;
+  pp.scene = opt.to;
+  renderPhoenician();
+}
+function phoenicianResolve() {
+  const pp = GameState.pendingPhoenician; if (!pp) return;
+  const scene = PHOENICIAN_STORY[pp.scene];
+  if (!scene.final) return;
+  const won = pp.rapport >= scene.need;
+  GameState.pendingPhoenician = null;
+  closeModal("phoenician-modal");
+  if (won) {
+    GameState.alphabetUnlocked = true;
+    logChronicle("Hiram stays the winter and teaches your scribes the twenty-two letters. The Phoenician Alphabet may now be researched at last — though mastering it will be the work of a generation.", "event");
+  } else {
+    logChronicle("Hiram judges the friendship too thin; he sails with the first fair wind, the secret of letters with him. Another may yet come, in years to come.", "warning");
+  }
+  render();
 }
 
 /** Repaint everything after an administrative / civic action. */
@@ -2512,18 +2800,27 @@ function makeOffering(godId, kind) {
 }
 
 /* ---------- per-year life of the gods: upkeep, happiness, ascent-readiness ---------- */
+/** Phthonos: yearly happiness drag on a god from OTHER great (tier>=2) gods. */
+function jealousyDrag(g) {
+  const rivals = GameState.gods.filter(o => o !== g && o.tier >= 2).length;
+  return rivals * RELIGION.JEALOUSY_DRAG;
+}
 function tickGods() {
   for (const g of GameState.gods) {
     const up = godUpkeep(g.tier);
+    const drag = jealousyDrag(g);
     if (canAfford(up)) {
       spendObj(up);
-      g.happiness = Math.min(100, g.happiness + RELIGION.HAPPY_GAIN);
+      g.happiness = Math.min(100, g.happiness + RELIGION.HAPPY_GAIN - drag);
+      if (drag > 0 && g.happiness < RELIGION.HAPPY && GameState.turn % 4 === 0)
+        logChronicle(`${godName(g)} grows jealous of the other great gods — even well fed, its favour slips (Phthonos).`, "warning");
     } else {
-      g.happiness = Math.max(0, g.happiness - RELIGION.HAPPY_LOSS);
+      g.happiness = Math.max(0, g.happiness - RELIGION.HAPPY_LOSS - drag);
       GameState.unhappiness += 1;
       if (GameState.turn % 3 === 0)
         logChronicle(`${godName(g)} goes unfed; its favour wanes and the people grow uneasy.`, "warning");
     }
+    g.happiness = Math.max(0, Math.min(100, g.happiness));
     if (isGodHappy(g)) g.turnsHappy += 1; else g.turnsHappy = 0;
     if (g.tier < 3 && g.turnsHappy === ascendNeed(g))
       logChronicle(`${godName(g)} has been honoured ${g.turnsHappy} years unbroken — it is ready to face a Mythic Cycle and ascend to ${TIER_NAME[g.tier + 1]}.`, "system");
@@ -2594,36 +2891,50 @@ function mythWithdraw() {
   render();
 }
 /** Resolve a final scene — the god lives or the foe ravages the city. */
+/** Effective odds of a final scene, harder for the Olympian bid. */
+function mythFinalOdds(scene, target) {
+  return scene.odds * (target === 3 ? 0.82 : 1);
+}
 function mythResolve() {
   const pm = GameState.pendingMyth; if (!pm) return;
   const scene = MYTH_STORY[pm.scene];
   const g = getGod(pm.godId);
   if (!g || !scene || !scene.final) return;
-  const won = Math.random() < scene.odds;
+  const won = Math.random() < mythFinalOdds(scene, pm.target);
   GameState.pendingMyth = null;
   closeModal("myth-modal");
   const fl = MYTH_FLAVOR[g.aspect];
   if (won) {
     g.tier = pm.target;
-    g.happiness = Math.max(g.happiness, 82);
+    g.happiness = Math.max(g.happiness, 80);
     g.turnsHappy = 0;
     if (!g.trait) g.trait = "slayer";                       // the god that slew the foe
-    if (g.tier === 3) { GameState.priests += 8; }           // an Olympian's standing priesthood
+    if (g.tier === 3) { GameState.priests += 10; }          // an Olympian's standing priesthood
     logChronicle(
       `${fl.foe.replace(/^a |^an |^the /i, "The ")} is overcome! ${godName(g)} ascends to ${TIER_NAME[g.tier]} — ${TIER_SUB[g.tier]}` +
       (g.tier === 3 ? `, and an Olympian legacy is sealed that will carry into the Archaic Era.` : `.`),
       "event"
     );
   } else {
-    // The foe is not overcome: it ravages the domain and the god is shamed.
-    const toll = g.aspect === "earth" ? { grain: -24, population: -6 }
-               : g.aspect === "sea"   ? { cattle: -6, grain: -16, population: -5 }
-               : g.aspect === "hearth"? { population: -10 }
-               : { population: -8, grain: -12 };
+    // The foe is not overcome: it ravages the domain. A failed bid for OLYMPUS is
+    // catastrophic — the god is cast down to a Daimon, all its Heros-standing lost.
+    const heavy = pm.target === 3;
+    const toll = heavy
+      ? (g.aspect === "sea" ? { population: -16, grain: -30, cattle: -8 }
+                            : { population: -18, grain: -28 })
+      : (g.aspect === "earth" ? { grain: -24, population: -6 }
+         : g.aspect === "sea" ? { cattle: -6, grain: -16, population: -5 }
+         : g.aspect === "hearth" ? { population: -10 }
+         : { population: -8, grain: -12 });
     gainObj(toll);
-    g.happiness = Math.max(0, g.happiness - 24);
     g.turnsHappy = 0;
-    logChronicle(`The reckoning fails — ${fl.foe} is not overcome. ${formatChanges(toll)}. ${godName(g)} is shamed, but may try again in years to come.`, "warning");
+    g.happiness = Math.max(0, g.happiness - (heavy ? 40 : 24));
+    if (heavy) {
+      g.tier = 1;                                           // cast down from Heros to Daimon
+      logChronicle(`Disaster — the bid for Olympus FAILS. ${fl.foe} ravages the land (${formatChanges(toll)}) and ${godName(g)} is cast down from Heros to a humble Daimon, decades of devotion undone.`, "warning");
+    } else {
+      logChronicle(`The reckoning fails — ${fl.foe} is not overcome. ${formatChanges(toll)}. ${godName(g)} is shamed, but may try again in years to come.`, "warning");
+    }
   }
   if (GameState.stats.population <= 0) collapse();
   render();
@@ -2690,7 +3001,7 @@ function integrationUnrest(stage) {
  * before the next stage opens. Force breeds unrest; talk drains social goods.
  */
 function attemptIntegration(id, kind) {
-  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice) return;
+  if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;
   const h = getHamlet(id);
   if (!h || h.absorbed) return;
 
@@ -2781,6 +3092,10 @@ function render() {
   if (hearth) hearth.style.display = GameState.hearthBuilt ? "" : "none";
   const terr = document.getElementById("scene-terraces");
   if (terr) terr.style.display = GameState.fieldRevealed ? "" : "none";
+  const mines = document.getElementById("scene-mines");
+  if (mines) mines.style.display = GameState.buildings.mines ? "" : "none";
+  const docks = document.getElementById("scene-docks");
+  if (docks) docks.style.display = GameState.buildings.docks ? "" : "none";
 
   // Map, civic and administration views.
   renderMap();
@@ -2808,11 +3123,12 @@ function render() {
     hint.textContent = GameState.stats.population <= 0
       ? "The Demos is no more. Refresh to begin anew."
       : "The Dawn Era has ended. A new age awaits in a future phase.";
-  } else if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice) {
+  } else if (GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) {
     btn.disabled = true;
     btn.textContent = "End Turn";
     hint.textContent = GameState.pendingFestival ? "The Hekatomb Festival awaits your offerings."
       : GameState.pendingMyth  ? "A Mythic Cycle plays out — see it through before the year may turn."
+      : GameState.pendingPhoenician ? "The Phoenician trader awaits your hospitality and judgement."
       : GameState.pendingChoice ? "An event demands your answer before the year may turn."
       : GameState.pendingEpiphany ? "A Divine Epiphany has gifted new cards — acknowledge the vision to continue."
       : "A crisis demands your answer before the year may turn.";
@@ -2955,7 +3271,7 @@ function renderCivic() {
   if (!body) return;
 
   const b = CIVIC.bard, hc = CIVIC.hearth;
-  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.pendingChoice;
+  const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.pendingChoice || !!GameState.pendingPhoenician;
   const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
   const canHearth = !GameState.hearthBuilt &&
     GameState.stats.timber >= hc.timber && GameState.stats.clay >= hc.clay && GameState.stats.cattle >= hc.cattle;
@@ -2994,6 +3310,9 @@ function renderCivic() {
       `</div>` +
     `</div>` +
 
+    civicBuildingCard("mines", ended) +
+    civicBuildingCard("docks", ended) +
+
     `<div class="hamlet-card">` +
       `<div class="hc-head"><span class="hc-name">⛩️ The Pantheon</span>` +
         `<span class="hc-pop">${locked.length} / ${RELIGION.SLOTS} gods</span></div>` +
@@ -3015,6 +3334,29 @@ function renderCivic() {
   if (bardBtn) bardBtn.addEventListener("click", fundBard);
   const hearthBtn = document.getElementById("civic-hearth");
   if (hearthBtn) hearthBtn.addEventListener("click", buildHearth);
+  body.querySelectorAll("[data-build]").forEach(b => b.addEventListener("click", () => buildStructure(b.dataset.build)));
+}
+
+/** A Civic card for a building, shown once its technology is known. */
+function civicBuildingCard(id, ended) {
+  const b = BUILDINGS[id];
+  if (!GameState.techs[b.tech] && !GameState.buildings[id]) return "";   // hidden until the tech is learned
+  const h = getHamlet(b.hamlet);
+  const hamletIn = !!(h && h.absorbed);
+  const built = GameState.buildings[id];
+  const afford = canAfford(b.cost);
+  let action;
+  if (built) action = `<div class="civic-built">✓ ${b.name} stand${id === "docks" ? "" : "s"} — ${b.effect}</div>`;
+  else if (!hamletIn) action = `<div class="rc-hint">🔒 Requires absorbing <b>${h ? h.name : b.hamlet}</b> through synoikismos.</div>`;
+  else action = `<button class="action-btn" data-build="${id}" ${(!afford || ended) ? "disabled" : ""}>` +
+                  `<span class="ab-title">${b.icon} Raise ${b.name}</span>` +
+                  `<span class="ab-cost">${costText(b.cost)}${afford ? "" : " — not enough"}</span></button>`;
+  return `<div class="hamlet-card">` +
+    `<div class="hc-head"><span class="hc-name">${b.icon} ${b.name}</span><span class="hc-pop">Building</span></div>` +
+    `<div class="hc-desc">${b.desc}</div>` +
+    `<div class="hc-asset">Effect: ${b.effect}</div>` +
+    `<div class="hamlet-actions">${action}</div>` +
+  `</div>`;
 }
 
 /** Render the Divine Epiphany modal: draw the hand and wire the shrine. */
@@ -3141,9 +3483,12 @@ function renderReligion() {
             `<span class="hc-pop">${TIER_NAME[g.tier]} · ${TIER_SUB[g.tier]}</span></div>`;
     html += `<div class="cult-meta">Domain: <b>${DOMAIN_LABEL[g.aspect]}</b> — shields against catastrophe here` +
             (g.harmonious ? " · ✦ harmonious" : " · ≈ ill-matched") + (g.trait ? ` · ${traitLabel(g.trait)}` : "") + `</div>`;
-    // happiness bar
+    // happiness — a clean labelled line above a thin bar (with the "happy" mark)
+    const drag = jealousyDrag(g);
+    html += `<div class="happy-line"><span>${happy ? "😊" : "😟"} Happiness <b>${Math.round(g.happiness)}</b>/100</span>` +
+            `<span class="happy-up">upkeep ${costText(up)}/yr${drag ? ` · ⚡Phthonos −${drag}/yr` : ""}</span></div>`;
     html += `<div class="happy-bar"><div class="happy-fill${happy ? "" : " sad"}" style="width:${pct}%"></div>` +
-            `<span class="happy-txt">${happy ? "😊 happy" : "😟 unfed"} ${Math.round(g.happiness)} · upkeep ${costText(up)}/yr</span></div>`;
+            `<span class="happy-mark" style="left:${RELIGION.HAPPY}%" title="happy threshold"></span></div>`;
     html += `<div class="hc-asset">Blessing: ${blessingLine(g.epithet, g.tier, g.harmonious, g.trait)}${happy ? "" : " <i>(withheld while unhappy)</i>"}</div>`;
     // ascension progress / button
     if (g.tier < 3) {
@@ -3194,10 +3539,14 @@ function renderMyth() {
     `<p class="crisis-desc myth-story">${mythText(scene.text, g)}</p>`;
 
   if (scene.final) {
-    html += `<div class="crisis-threat">The reckoning is at hand — the odds of victory are <b>${Math.round(scene.odds * 100)}%</b>.</div>` +
+    const odds = Math.round(mythFinalOdds(scene, pm.target) * 100);
+    const stakes = pm.target === 3
+      ? "Win, and an OLYMPIAN is born; fail, and the foe ravages the land and the god is CAST DOWN to a Daimon — all its progress lost."
+      : "Win and the god ascends to Heros; fail and the foe ravages the land.";
+    html += `<div class="crisis-threat">The reckoning is at hand — the odds of victory are <b>${odds}%</b>. ${pm.target === 3 ? "<b>An Olympian bid is perilous.</b>" : ""}</div>` +
       `<div class="crisis-actions">` +
         `<button class="action-btn diplomatic" id="myth-face"><span class="ab-title">⚔ Face ${fl.foe}</span>` +
-        `<span class="ab-cost">Win and the god ascends; fail and the foe ravages the land</span></button>` +
+        `<span class="ab-cost">${stakes}</span></button>` +
       `</div>`;
   } else {
     html += `<div class="crisis-actions">`;
@@ -3222,6 +3571,46 @@ function renderMyth() {
   }
 }
 
+/* ---------- The Phoenician negotiation (multi-scene) ---------- */
+function renderPhoenician() {
+  const body = document.getElementById("phoenician-body");
+  const pp = GameState.pendingPhoenician;
+  if (!body || !pp) return;
+  const scene = PHOENICIAN_STORY[pp.scene];
+  const rapTag = pp.rapport >= 4 ? "warm" : pp.rapport <= 0 ? "cold" : "guarded";
+
+  let html =
+    `<div class="crisis-head"><span class="crisis-icon">⚓</span><span class="crisis-name">${scene.title}</span></div>` +
+    `<div class="myth-sub">Hiram the Phoenician — rapport so far: ${pp.rapport} (${rapTag})</div>` +
+    `<p class="crisis-desc myth-story">${phoenicianText(scene.text)}</p>`;
+
+  if (scene.final) {
+    const ok = pp.rapport >= scene.need;
+    html += `<div class="crisis-threat" style="border-color:${ok ? "var(--good)" : "var(--bad)"};color:var(--ink)">` +
+      `He needs to feel a rapport of <b>${scene.need}</b> to stay and teach. You have built <b>${pp.rapport}</b> — ` +
+      (ok ? "he trusts you." : "it may not be enough.") + `</div>` +
+      `<div class="crisis-actions"><button class="action-btn diplomatic" id="phoen-end">` +
+      `<span class="ab-title">📜 Hear his decision</span><span class="ab-cost">Success unlocks the Phoenician Alphabet to research</span></button></div>`;
+  } else {
+    html += `<div class="crisis-actions">`;
+    scene.options.forEach((o, i) => {
+      const free = !o.cost || Object.keys(o.cost).length === 0;
+      const can = free || canAfford(o.cost);
+      const rap = o.rapport >= 0 ? `+${o.rapport}` : `${o.rapport}`;
+      html += `<button class="action-btn" data-popt="${i}" ${can ? "" : "disabled"}>` +
+        `<span class="ab-title">${o.label}</span>` +
+        `<span class="ab-cost">${free ? "no cost" : costText(o.cost)}${can ? "" : " — not enough"} · rapport ${rap}</span></button>`;
+    });
+    html += `</div>`;
+  }
+  body.innerHTML = html;
+  if (scene.final) {
+    document.getElementById("phoen-end").addEventListener("click", phoenicianResolve);
+  } else {
+    body.querySelectorAll("[data-popt]").forEach(b => b.addEventListener("click", () => phoenicianChoose(+b.dataset.popt)));
+  }
+}
+
 /* ---------- Catastrophe / flavour-event modal ---------- */
 function renderChoice() {
   const body = document.getElementById("choice-body");
@@ -3240,6 +3629,41 @@ function renderChoice() {
       `<div class="crisis-actions"><button class="action-btn ${god ? "diplomatic" : ""}" id="choice-cat">` +
         `<span class="ab-title">${god ? "🙏 Trust in the god" : "🛡 Endure the catastrophe"}</span></button></div>`;
     document.getElementById("choice-cat").addEventListener("click", resolveCatastrophe);
+    return;
+  }
+
+  if (pc.kind === "godevent") {
+    const god = getGod(pc.godId);
+    const desc = typeof ev.desc === "function" ? ev.desc(god) : ev.desc;
+    const canA = !ev.a.cost || canAfford(ev.a.cost);
+    const lbl = (o) => `${o.label}${o.happy != null ? `  ·  ${o.happy >= 0 ? "+" : ""}${o.happy}😊` : ""}`;
+    body.innerHTML =
+      `<div class="crisis-head"><span class="crisis-icon">${ev.icon}</span><span class="crisis-name">${ev.name}</span></div>` +
+      `<p class="crisis-desc">${desc}</p>` +
+      `<div class="crisis-actions">` +
+        `<button class="action-btn diplomatic" id="choice-a" ${canA ? "" : "disabled"}>` +
+          `<span class="ab-title">${lbl(ev.a)}</span><span class="ab-cost">${canA ? "" : "not enough"}</span></button>` +
+        `<button class="action-btn" id="choice-b"><span class="ab-title">${lbl(ev.b)}</span></button>` +
+      `</div>`;
+    document.getElementById("choice-a").addEventListener("click", () => resolveGodEvent("a"));
+    document.getElementById("choice-b").addEventListener("click", () => resolveGodEvent("b"));
+    return;
+  }
+
+  if (pc.kind === "merchant") {
+    const t = pc.trade;
+    const can = canAfford(t.give);
+    body.innerHTML =
+      `<div class="crisis-head"><span class="crisis-icon">⛵</span><span class="crisis-name">A Foreign Merchant</span></div>` +
+      `<p class="crisis-desc">At the docks, ${t.who} lays out their wares and proposes a barter.</p>` +
+      `<div class="crisis-threat" style="border-color:var(--ochre);color:var(--ink)">They will give <b>${costText(t.get)}</b> for your <b>${costText(t.give)}</b>.</div>` +
+      `<div class="crisis-actions">` +
+        `<button class="action-btn diplomatic" id="merch-yes" ${can ? "" : "disabled"}>` +
+          `<span class="ab-title">🤝 Strike the bargain</span><span class="ab-cost">${can ? "" : "you lack the goods"}</span></button>` +
+        `<button class="action-btn" id="merch-no"><span class="ab-title">🚫 Decline</span></button>` +
+      `</div>`;
+    document.getElementById("merch-yes").addEventListener("click", () => resolveMerchant(true));
+    document.getElementById("merch-no").addEventListener("click", () => resolveMerchant(false));
     return;
   }
 
@@ -3280,15 +3704,30 @@ function renderTech() {
   if (r.halted)
     html += `<div class="rel-banner jealous">⚠ Research is halted this year — ${r.reason === "famine" ? "the people starve" : "a crisis grips the Polis"} and no new knowledge takes root.</div>`;
 
-  // The tree, laid out by column/row to match the branching plan.
-  html += `<div class="tech-tree">`;
+  // The tree flows top → bottom: Terraced, then Mining + Naval side by side,
+  // then the Phoenician Alphabet at the foot.
+  const layout = {
+    terraced: "grid-column:1 / span 2; grid-row:1",
+    mining:   "grid-column:1; grid-row:2",
+    naval:    "grid-column:2; grid-row:2",
+    alphabet: "grid-column:1 / span 2; grid-row:3",
+  };
+  html += `<div class="tech-tree vertical">`;
   ["terraced", "mining", "naval", "alphabet"].forEach(id => {
     const t = TECHS[id];
     const done = !!GameState.techs[id];
     const avail = techAvailable(id);
     const afford = canAfford(t.cost);
     const state = done ? "done" : avail ? (afford ? "ready" : "avail") : "locked";
-    html += `<div class="tech-node st-${state}" style="grid-column:${t.col + 1};grid-row:${t.row + 1}">` +
+    let lockMsg;
+    if (id === "alphabet") {
+      const needTech = t.req.filter(rq => !GameState.techs[rq]).map(rq => TECHS[rq].name);
+      lockMsg = needTech.length ? `🔒 Requires ${needTech.join(" & ")}`
+        : (!GameState.alphabetUnlocked ? `🔒 Requires the Phoenician's gift of letters — build the Docks and win Hiram's trust` : "");
+    } else {
+      lockMsg = `🔒 Requires ${t.req.map(rq => TECHS[rq].name).join(" & ")}`;
+    }
+    html += `<div class="tech-node st-${state}" style="${layout[id]}">` +
       `<div class="tn-head"><span class="tn-ic">${t.icon}</span><span class="tn-name">${t.name}</span></div>` +
       `<div class="tn-desc">${t.desc}</div>` +
       `<div class="tn-eff">${t.effect}</div>` +
@@ -3296,12 +3735,12 @@ function renderTech() {
         ? `<div class="tn-state done">✓ Mastered</div>`
         : avail
           ? `<button class="mini-btn lock${afford ? "" : " off"}" data-tech="${id}" ${afford ? "" : "disabled"}>Research — ${costText(t.cost)}</button>`
-          : `<div class="tn-state locked">🔒 Requires ${t.req.map(rq => TECHS[rq].name).join(" & ")}</div>`) +
+          : `<div class="tn-state locked">${lockMsg}</div>`) +
       `</div>`;
   });
-  // connector arrows
-  html += `<div class="tech-arrow a1">→</div><div class="tech-arrow a2">→</div>` +
-          `<div class="tech-arrow a3">→</div><div class="tech-arrow a4">→</div>`;
+  // downward connector arrows
+  html += `<div class="tech-arrow d1">↓</div><div class="tech-arrow d2">↓</div>` +
+          `<div class="tech-arrow d3">↓</div><div class="tech-arrow d4">↓</div>`;
   html += `</div>`;
 
   body.innerHTML = html;
@@ -3358,7 +3797,7 @@ function renderAdmin() {
     return;
   }
 
-  const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.pendingChoice;
+  const ended = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.pendingChoice || !!GameState.pendingPhoenician;
   const total = INTEGRATION_STAGES.length;
 
   let html =
@@ -3463,6 +3902,7 @@ function initGame() {
   GameState.winter = 0;
   GameState.pendingMyth = null;
   GameState.pendingChoice = null;
+  GameState.pendingPhoenician = null;
   GameState.pendingCrisis = null;
   GameState.pendingFestival = false;
   GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
@@ -3475,8 +3915,12 @@ function initGame() {
   GameState.research = { halted: false, reason: "" };
   GameState.fieldRevealed = false;
   GameState.alphabetWin = false;
-  GameState.techBonus = { grain: 0, grapes: 0, clay: 0, timber: 0 };
+  GameState.alphabetUnlocked = false;
+  GameState.techBonus = { grain: 0, grapes: 0, clay: 0, timber: 0, stone: 0 };
   GameState.ergonMult = 1; GameState.muthosMult = 1;
+  GameState.buildings = { mines: false, docks: false };
+  GameState.minesTurn = -1; GameState.docksTurn = -1;
+  GameState.merchantSeq = 0;
 
   render();
   logChronicle(
@@ -3520,7 +3964,7 @@ function initGame() {
 
   // Backdrop clicks dismiss modals — except the crisis and festival modals,
   // which must be resolved before play resumes.
-  const blocking = ["crisis-modal", "festival-modal", "epiphany-modal", "myth-modal", "choice-modal"];
+  const blocking = ["crisis-modal", "festival-modal", "epiphany-modal", "myth-modal", "choice-modal", "phoenician-modal"];
   document.querySelectorAll(".modal-backdrop").forEach(back =>
     back.addEventListener("click", e => {
       if (e.target === back && !blocking.includes(back.id)) back.hidden = true;
