@@ -897,27 +897,21 @@
               </g>
             </g>
 
-            <!-- dashed roads from the polis out to each hamlet -->
-            <g stroke="#dcc07a" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round" opacity="0.55" fill="none">
-              <path d="M495 360 C 380 380, 280 360, 175 308"/>
-              <path d="M498 366 C 430 432, 360 472, 300 488"/>
-              <path d="M520 362 C 590 410, 645 448, 688 470"/>
-            </g>
-
-            <!-- ===== Central village (the Polis): only simple mud-brick huts ===== -->
+            <!-- ===== Central village (the Polis): a few spread-out mud-brick huts,
+                 set clear of the hilltop centre where the Ancestral Hearth is raised ===== -->
             <g id="scene-polis">
-              <!-- the largest dwelling — the meeting house, still a humble hut -->
-              <g transform="translate(452,260)"><rect x="0" y="9" width="36" height="26" fill="#e3cfa4"/><polygon points="-3,9 39,9 18,-6" fill="url(#roof)"/></g>
-              <!-- surrounding huts of varied size -->
-              <g transform="translate(416,300)"><rect x="0" y="8" width="26" height="20" fill="#decba0"/><polygon points="-2,8 28,8 13,-5" fill="url(#roof)"/></g>
-              <g transform="translate(522,298)"><rect x="0" y="8" width="30" height="22" fill="#e6d3a8"/><polygon points="-2,8 32,8 15,-5" fill="url(#roof)"/></g>
-              <g transform="translate(486,322)"><rect x="0" y="7" width="22" height="17" fill="#e0cc9f"/><polygon points="-2,7 24,7 11,-4" fill="url(#roof)"/></g>
-              <g transform="translate(556,326)"><rect x="0" y="6" width="20" height="15" fill="#dcc79c"/><polygon points="-2,6 22,6 10,-4" fill="url(#roof)"/></g>
-              <!-- a humble stone hearth at the village centre -->
-              <ellipse cx="500" cy="350" rx="13" ry="5" fill="#8a7b5e" opacity="0.7"/>
-              <circle cx="500" cy="347" r="3" fill="#d98a3c" opacity="0.9"/>
-              <!-- olive trees -->
-              <g fill="#5c6f34"><circle cx="404" cy="320" r="9"/><circle cx="590" cy="320" r="8"/><circle cx="560" cy="338" r="6"/></g>
+              <!-- the meeting house, upper-left of the hilltop -->
+              <g transform="translate(404,300)"><rect x="0" y="9" width="34" height="24" fill="#e3cfa4"/><polygon points="-3,9 37,9 17,-6" fill="url(#roof)"/></g>
+              <!-- a hut on the right shoulder -->
+              <g transform="translate(560,302)"><rect x="0" y="8" width="30" height="22" fill="#e6d3a8"/><polygon points="-2,8 32,8 15,-5" fill="url(#roof)"/></g>
+              <!-- two lower huts, well below the hearth -->
+              <g transform="translate(420,356)"><rect x="0" y="8" width="26" height="20" fill="#decba0"/><polygon points="-2,8 28,8 13,-5" fill="url(#roof)"/></g>
+              <g transform="translate(560,356)"><rect x="0" y="6" width="22" height="16" fill="#dcc79c"/><polygon points="-2,6 24,6 11,-5" fill="url(#roof)"/></g>
+              <!-- a humble stone hearth low at the village centre -->
+              <ellipse cx="500" cy="368" rx="12" ry="5" fill="#8a7b5e" opacity="0.7"/>
+              <circle cx="500" cy="365" r="3" fill="#d98a3c" opacity="0.9"/>
+              <!-- olive trees on the outer edges, clear of the huts -->
+              <g fill="#5c6f34"><circle cx="372" cy="332" r="8"/><circle cx="632" cy="328" r="8"/></g>
             </g>
 
             <!-- ===== Ancestral Hearth: a sacred fire ringed by cypress (shown once built) ===== -->
@@ -975,8 +969,9 @@
                 <line x1="800" y1="476" x2="800" y2="488"/>
                 <line x1="762" y1="528" x2="762" y2="540"/><line x1="800" y1="512" x2="800" y2="524"/>
               </g>
-              <!-- a moored trading ship with a square sail -->
-              <g transform="translate(820,486)">
+              <!-- a moored trading ship with a square sail, out in the deep water
+                   well clear of the fishing boat -->
+              <g transform="translate(884,504)">
                 <path d="M0 8 Q16 22 38 8 Q34 4 0 8 Z" fill="#6b4527"/>
                 <line x1="19" y1="8" x2="19" y2="-16" stroke="#5d3a1e" stroke-width="2.5"/>
                 <polygon points="19,-15 19,3 39,-6" fill="#d9c9a3"/>
@@ -1491,6 +1486,7 @@ const GameState = {
   alphabetUnlocked: false,                     // the Phoenician negotiation has been won
   pendingPhoenician: null,                     // an unresolved Phoenician minigame (blocks the turn)
   merchantSeq: 0,                              // count of foreign-merchant visits
+  phoenicianFailTurn: -99,                     // turn the last Phoenician courtship was spurned
   ergonMult: 1, muthosMult: 1,    // generation multipliers raised by tech
 
   // An unresolved crisis awaiting the player's response, if any.
@@ -1729,28 +1725,28 @@ const MERCHANT_TRADES = [
    alphabet (unlocking the tech). Substitution: {city}. */
 const PHOENICIAN_STORY = [
   { id: 0, title: "The Stranger from Tyre",
-    text: "A deep-keeled ship of cedar moors at the new docks of {city}. From it steps Hiram, a Phoenician trader robed in sea-purple, bearing strange marks scratched on clay — not pictures, but the very sounds of speech caught in signs. He asks leave to trade, and marks well how a stranger is received.",
+    text: "A deep-keeled ship of cedar moors at the docks of {city}. From it steps Hiram, a Phoenician master-trader robed in sea-purple, bearing strange marks scratched on clay — not pictures, but the very sounds of speech caught in signs. He has crossed the whole sea; he will not part with such a secret cheaply, and marks well how a stranger is received.",
     options: [
-      { label: "Receive him with a lavish feast", cost: { grapes: 10, cattle: 4 }, rapport: 3, to: 1 },
-      { label: "Offer fine stone and oil as guest-gifts", cost: { stone: 10, olives: 10 }, rapport: 3, to: 1 },
+      { label: "Receive him with a months-long lavish feast", cost: { grapes: 44, cattle: 16, olives: 20 }, rapport: 3, to: 1 },
+      { label: "Heap his ship with stone, oil and wine as guest-gifts", cost: { stone: 40, olives: 34, grapes: 18 }, rapport: 3, to: 1 },
       { label: "Give a plain but honest welcome", cost: {}, rapport: 1, to: 1 },
     ] },
   { id: 1, title: "The Bargain",
-    text: "Hiram spreads his wares — tin, glass beads, the precious purple dye — and drives a shrewd bargain. He is weighing whether your people are worth a long friendship, or merely a single season's easy profit.",
+    text: "Hiram spreads his wares — tin, glass beads, the precious purple dye — and drives a shrewd bargain over a whole season. He is weighing whether your people are worth a lifetime's friendship, or merely a single season's easy profit.",
     options: [
-      { label: "Trade generously, to his advantage", cost: { grain: 18, olives: 8 }, rapport: 3, to: 2 },
+      { label: "Trade lavishly, always to his advantage", cost: { grain: 70, stone: 24, cattle: 8 }, rapport: 3, to: 2 },
       { label: "Drive a hard but fair bargain", cost: {}, rapport: 1, to: 2 },
-      { label: "Cheat him with light measures", cost: {}, rapport: -3, to: 2 },
+      { label: "Cheat him with light measures", cost: {}, rapport: -4, to: 2 },
     ] },
   { id: 2, title: "The Test of Trust",
     text: "A winter storm strands Hiram's ship for the season. Worse, a sailor of his is accused of theft in your market — wrongly, you suspect. Hiram says nothing, but watches to learn what justice a foreigner may hope for in {city}.",
     options: [
       { label: "Judge fairly and clear his man", cost: {}, rapport: 3, to: 3 },
-      { label: "Quietly pay the accuser to drop it", cost: { cattle: 6 }, rapport: 2, to: 3 },
-      { label: "Side with your own, guilt or no", cost: {}, rapport: -4, to: 3 },
+      { label: "Ransom him and pay weregild besides", cost: { cattle: 20, grain: 30 }, rapport: 2, to: 3 },
+      { label: "Side with your own, guilt or no", cost: {}, rapport: -5, to: 3 },
     ] },
-  { id: 3, title: "The Letters", final: true, need: 7,
-    text: "His ship repaired and the winter deep, Hiram must decide. If he has come to trust the people of {city}, he will sit through the long dark teaching your scribes the twenty-two letters — the gift that lets a city write. If not, he sails with the first fair wind, and the secret sails with him." },
+  { id: 3, title: "The Reckoning of Letters", final: true, need: 8,
+    text: "His ship repaired and the winter deep, Hiram must decide. Only if he has come to <b>truly</b> trust the people of {city} will he sit through the long dark teaching your scribes the twenty-two letters — the gift that lets a city write. If not, he sails with the first fair wind, and the secret sails with him; and a courtship so costly is not soon repeated." },
 ];
 
 /*
@@ -2086,8 +2082,10 @@ function nextTurn() {
 
   // --- 4b-iii. The Phoenician negotiation, or a passing foreign merchant (Docks) ---
   if (!blocked && GameState.buildings.docks) {
-    if (!GameState.techs.alphabet && !GameState.alphabetUnlocked && GameState.turn - GameState.docksTurn >= 12 &&
-        Math.random() < 0.10) {
+    const phoenReady = !GameState.techs.alphabet && !GameState.alphabetUnlocked &&
+      GameState.turn - GameState.docksTurn >= 12 &&
+      GameState.turn - GameState.phoenicianFailTurn >= 20;   // a generation must pass after a failed courtship
+    if (phoenReady && Math.random() < 0.10) {
       beginPhoenician();
       blocked = true;
     } else if (Math.random() < CONFIG.MERCHANT_CHANCE) {
@@ -2448,7 +2446,12 @@ function phoenicianResolve() {
     GameState.alphabetUnlocked = true;
     logChronicle("Hiram stays the winter and teaches your scribes the twenty-two letters. The Phoenician Alphabet may now be researched at last — though mastering it will be the work of a generation.", "event");
   } else {
-    logChronicle("Hiram judges the friendship too thin; he sails with the first fair wind, the secret of letters with him. Another may yet come, in years to come.", "warning");
+    // A costly courtship spurned: the goods are already spent, the people are
+    // shamed, and no Phoenician will risk the journey again for many years.
+    GameState.phoenicianFailTurn = GameState.turn;
+    GameState.macros.kleos = Math.max(0, GameState.macros.kleos - 8);
+    GameState.unhappiness += 4;
+    logChronicle("Hiram judges the friendship too thin; he sails with the first fair wind, the secret of letters with him. The lavish courtship is wasted and the people feel the shame of it — no other Phoenician will chance the long crossing for a generation.", "warning");
   }
   render();
 }
@@ -2747,6 +2750,11 @@ function establishGod() {
   }
   if (GameState.gods.length >= RELIGION.SLOTS) {
     logChronicle("The pantheon is full — no further god may be named until one is let go.", "warning");
+    renderReligion();
+    return;
+  }
+  if (GameState.gods.some(g => g.aspect === sel.aspect)) {
+    logChronicle(`The people already worship a god of ${DOMAIN_LABEL[sel.aspect]}; a domain will not suffer two masters. Choose a different Aspect.`, "warning");
     renderReligion();
     return;
   }
@@ -3454,8 +3462,12 @@ function renderReligion() {
               `<span class="rc-ic">${EPITHETS[id].icon}</span><span class="rc-nm">${EPITHETS[id].name}${eC[id] > 1 ? ` ×${eC[id]}` : ""}</span></button>`);
     html += `</div>`;
     let preview, cls = "";
+    const aspectTaken = sel.aspect && GameState.gods.some(g => g.aspect === sel.aspect);
     if (!sel.aspect || !sel.epithet) {
       preview = "Select <b>one Aspect</b> (its domain) and <b>one Epithet</b> (its title) to name a Daimon.";
+    } else if (aspectTaken) {
+      cls = "mismatch";
+      preview = `A god of <b>${DOMAIN_LABEL[sel.aspect]}</b> is already worshipped — a domain will not suffer two masters. Choose a different Aspect.`;
     } else {
       const harm = isHarmonious(sel.aspect, sel.epithet);
       cls = harm ? "match" : "mismatch";
@@ -3463,7 +3475,7 @@ function renderReligion() {
         (harm ? `✦ <b>Harmonious</b>: its favour will run strong.` : `≈ <b>Ill-matched</b>: a confused god of feeble favour.`);
     }
     html += `<div class="bench-preview ${cls}">${preview}</div>`;
-    const can = sel.aspect && sel.epithet && slotsLeft > 0 && canAfford(TEMENOS[1]);
+    const can = sel.aspect && sel.epithet && !aspectTaken && slotsLeft > 0 && canAfford(TEMENOS[1]);
     html += `<div class="cult-actions">` +
       `<button class="mini-btn lock${can ? "" : " off"}" id="rel-establish" ${can ? "" : "disabled"}>⛩️ Name a Daimon — ${costText(TEMENOS[1])}${slotsLeft > 0 ? "" : " · pantheon full"}</button>` +
       `<button class="mini-btn" id="rel-clearsel">Clear</button>` +
@@ -3921,6 +3933,7 @@ function initGame() {
   GameState.buildings = { mines: false, docks: false };
   GameState.minesTurn = -1; GameState.docksTurn = -1;
   GameState.merchantSeq = 0;
+  GameState.phoenicianFailTurn = -99;
 
   render();
   logChronicle(
