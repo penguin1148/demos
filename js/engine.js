@@ -31,13 +31,17 @@ export function eventStakes(turn = GameState.turn) {
   return 1;
 }
 
-/** Scale every numeric field of a stat/cost/damage bundle, keeping its sign and
- *  never rounding a non-zero entry away to nothing. */
-export function scaleBundle(bundle, mult) {
+/** Scale a DAMAGE/stat bundle by the current era's stakes, with grain exempt for
+ *  the first GRAIN_STAKE_EXEMPT_UNTIL turns. (Sign-preserving; for event tolls.) */
+export function stakeScale(bundle, turn = GameState.turn) {
+  const m = eventStakes(turn);
+  if (m === 1) return { ...bundle };
+  const grainExempt = turn < CONFIG.GRAIN_STAKE_EXEMPT_UNTIL;
   const out = {};
   for (const k in bundle) {
     const v = bundle[k];
     if (typeof v !== "number" || v === 0) { out[k] = v; continue; }
+    const mult = (k === "grain" && grainExempt) ? 1 : m;
     const s = Math.round(v * mult);
     out[k] = s !== 0 ? s : (v > 0 ? 1 : -1);
   }
@@ -251,7 +255,9 @@ export function nextTurn() {
 
   // --- 1. Advance the clock ---
   GameState.turn += 1;
-  GameState.year -= CONFIG.YEARS_PER_TURN;   // years count down (BC)
+  // Year is detached from the turn count: each turn spans CONFIG.YEARS_PER_TURN
+  // years, rounded to the nearest year for the BC counter.
+  GameState.year = CONFIG.START_YEAR - Math.round(GameState.turn * CONFIG.YEARS_PER_TURN);
   GameState.lastDeltas = {};                  // reset net-change tracking
 
   logChronicle(`Turn ${GameState.turn} begins. The year is ${formatYear(GameState.year)}.`, "turn");
@@ -277,11 +283,10 @@ export function nextTurn() {
   // --- 3. Stochastic historical flavour (~45% chance) ---
   if (!blocked && Math.random() < 0.45) {
     const ev = pick(DAWN_EVENTS);
-    // Misfortunes escalate with the era's stakes; boons stay modest.
-    const m = eventStakes();
-    const stats = {};
-    for (const k in ev.stats) stats[k] = ev.stats[k] < 0 ? Math.round(ev.stats[k] * m) : ev.stats[k];
-    applyStats(stats);
+    // Misfortunes escalate with the era's stakes (grain-exempt early); boons stay modest.
+    const neg = {}, pos = {};
+    for (const k in ev.stats) (ev.stats[k] < 0 ? neg : pos)[k] = ev.stats[k];
+    applyStats({ ...pos, ...stakeScale(neg) });
     logChronicle(ev.text, "event");
   }
 

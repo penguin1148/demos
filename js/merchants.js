@@ -2,7 +2,7 @@ import { GameState } from "./state.js";
 import { MERCHANT_TRADES, PHOENICIAN_STORY } from "./content.js";
 import { logChronicle, pick } from "./engine.js";
 import { closeModal, openModal } from "./festival.js";
-import { canAfford, costText, gainObj, spendObj } from "./religion.js";
+import { canAfford, costText, costTextLive, gainObj, spendObj } from "./religion.js";
 import { render, renderChoice, renderPhoenician } from "./render.js";
 
 /* ===================================================================
@@ -22,7 +22,7 @@ export function resolveMerchant(accept) {
   if (accept) {
     if (!canAfford(t.give)) return;
     spendObj(t.give); gainObj(t.get);
-    logChronicle(`A bargain is struck with ${t.who}: ${costText(t.give)} for ${costText(t.get)}.`, "event");
+    logChronicle(`A bargain is struck with ${t.who}: ${costTextLive(t.give)} for ${costText(t.get)}.`, "event");
   } else {
     logChronicle(`${t.who.replace(/^a |^an /i, "The ")} is sent on their way without a deal.`, "system");
   }

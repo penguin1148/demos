@@ -19,7 +19,7 @@
  * Olympians: each ascent costs decades of upkeep and a survived story.
  */
 export const RELIGION = Object.freeze({
-  EPIPHANY_INTERVAL: 7,   // years between Divine Epiphanies (card-gifts) once the Hearth burns
+  EPIPHANY_INTERVAL: 6,   // turns between Divine Epiphanies (shortened ~1.25× for the turn=1.25yr scale)
   SLOTS:             3,   // pantheon capacity (consecrated gods)
   HAPPY:             60,  // happiness at/above which a god counts as "happy" this year
   HAPPY_START:       72,  // happiness a freshly-named Daimon begins with
@@ -30,7 +30,7 @@ export const RELIGION = Object.freeze({
   // content is a strain and three is all but impossible. This is the chief brake
   // on a runaway pantheon: realistically one Olympian, maybe two, by 750 BC.
   JEALOUSY_DRAG:     4,
-  ASCEND_TURNS: { 2: 22, 3: 40 },   // consecutive happy years needed before a Mythic Cycle to Heros / Olympian
+  ASCEND_TURNS: { 2: 18, 3: 32 },   // consecutive happy turns before a Mythic Cycle (shortened ~1.25× for the new turn scale)
 });
 
 /* The Temenos — the sacred precinct dedicated when a god is named or ascends.

@@ -8,7 +8,7 @@ import { researchTech, techAvailable } from "./tech.js";
 import { buildStructure } from "./buildings.js";
 import { phoenicianChoose, phoenicianResolve, phoenicianText, resolveMerchant } from "./merchants.js";
 import { closeModal, openAdmin, openModal } from "./festival.js";
-import { OFFERINGS, ackEpiphany, ascendNeed, canAfford, canAscend, costText, disbandGod, domainGod, establishGod, getGod, godName, hasDiplomaticGod, hasMartialGod, isGodHappy, isHarmonious, jealousyDrag, makeOffering, relPick } from "./religion.js";
+import { OFFERINGS, ackEpiphany, ascendNeed, canAfford, canAscend, costText, costTextLive, disbandGod, domainGod, establishGod, getGod, godName, hasDiplomaticGod, hasMartialGod, isGodHappy, isHarmonious, jealousyDrag, makeOffering, relPick } from "./religion.js";
 import { beginAscension, mythChoose, mythFinalOdds, mythResolve, mythText, mythWithdraw } from "./myth.js";
 import { attemptIntegration, bonusText, getHamlet, integrationCost, integrationUnrest } from "./synoikismos.js";
 import { SOCIAL_META, describeSocialClass } from "./social.js";
@@ -247,10 +247,11 @@ export function renderCivic() {
   if (!body) return;
 
   const b = CIVIC.bard, hc = CIVIC.hearth;
+  const bardCost   = { grain: b.grain, cattle: b.cattle };
+  const hearthCost = { timber: hc.timber, clay: hc.clay, cattle: hc.cattle };
   const ended    = GameState.status !== GameStatus.PLAYING || !!GameState.pendingCrisis || !!GameState.pendingFestival || !!GameState.pendingEpiphany || !!GameState.pendingMyth || !!GameState.pendingChoice || !!GameState.pendingPhoenician;
-  const canBard  = GameState.stats.grain >= b.grain && GameState.stats.cattle >= b.cattle;
-  const canHearth = !GameState.hearthBuilt &&
-    GameState.stats.timber >= hc.timber && GameState.stats.clay >= hc.clay && GameState.stats.cattle >= hc.cattle;
+  const canBard  = canAfford(bardCost);
+  const canHearth = !GameState.hearthBuilt && canAfford(hearthCost);
   const locked = GameState.gods;
 
   body.innerHTML =
@@ -265,7 +266,7 @@ export function renderCivic() {
       `<div class="hamlet-actions">` +
         `<button class="action-btn diplomatic" id="civic-bard" ${(!canBard || ended) ? "disabled" : ""}>` +
           `<span class="ab-title">🎻 Fund the Aoidos</span>` +
-          `<span class="ab-cost">🌾 ${b.grain} grain · 🐄 ${b.cattle} cattle</span>` +
+          `<span class="ab-cost">${costTextLive(bardCost)}</span>` +
         `</button>` +
       `</div>` +
     `</div>` +
@@ -281,7 +282,7 @@ export function renderCivic() {
           ? `<div class="civic-built">✓ The Ancestral Hearth burns — open ⛩ Gods &amp; Temple to name and tend your gods.</div>`
           : `<button class="action-btn" id="civic-hearth" ${(!canHearth || ended) ? "disabled" : ""}>` +
               `<span class="ab-title">🪵 Kindle the Hearth</span>` +
-              `<span class="ab-cost">🪵 ${hc.timber} timber · 🧱 ${hc.clay} clay · 🐄 ${hc.cattle} cattle — built once</span>` +
+              `<span class="ab-cost">${costTextLive(hearthCost)} — built once</span>` +
             `</button>`) +
       `</div>` +
     `</div>` +
@@ -326,7 +327,7 @@ export function civicBuildingCard(id, ended) {
   else if (!hamletIn) action = `<div class="rc-hint">🔒 Requires absorbing <b>${h ? h.name : b.hamlet}</b> through synoikismos.</div>`;
   else action = `<button class="action-btn" data-build="${id}" ${(!afford || ended) ? "disabled" : ""}>` +
                   `<span class="ab-title">${b.icon} Raise ${b.name}</span>` +
-                  `<span class="ab-cost">${costText(b.cost)}${afford ? "" : " — not enough"}</span></button>`;
+                  `<span class="ab-cost">${costTextLive(b.cost)}${afford ? "" : " — not enough"}</span></button>`;
   return `<div class="hamlet-card">` +
     `<div class="hc-head"><span class="hc-name">${b.icon} ${b.name}</span><span class="hc-pop">Building</span></div>` +
     `<div class="hc-desc">${b.desc}</div>` +
@@ -445,7 +446,7 @@ export function renderReligion() {
     html += `<div class="bench-preview ${cls}">${preview}</div>`;
     const can = sel.aspect && sel.epithet && !aspectTaken && slotsLeft > 0 && canAfford(TEMENOS[1]);
     html += `<div class="cult-actions">` +
-      `<button class="mini-btn lock${can ? "" : " off"}" id="rel-establish" ${can ? "" : "disabled"}>⛩️ Name a Daimon — ${costText(TEMENOS[1])}${slotsLeft > 0 ? "" : " · pantheon full"}</button>` +
+      `<button class="mini-btn lock${can ? "" : " off"}" id="rel-establish" ${can ? "" : "disabled"}>⛩️ Name a Daimon — ${costTextLive(TEMENOS[1])}${slotsLeft > 0 ? "" : " · pantheon full"}</button>` +
       `<button class="mini-btn" id="rel-clearsel">Clear</button>` +
     `</div>`;
   }
@@ -484,7 +485,7 @@ export function renderReligion() {
     html += `<div class="cult-actions">`;
     for (const k in OFFERINGS) {
       const o = OFFERINGS[k]; const ok = canAfford(o.cost);
-      html += `<button class="mini-btn${ok ? "" : " off"}" data-offer="${g.id}" data-kind="${k}" ${ok ? "" : "disabled"}>${o.label} (${costText(o.cost)} → +${o.happy}😊)</button>`;
+      html += `<button class="mini-btn${ok ? "" : " off"}" data-offer="${g.id}" data-kind="${k}" ${ok ? "" : "disabled"}>${o.label} (${costTextLive(o.cost)} → +${o.happy}😊)</button>`;
     }
     if (canAscend(g))
       html += `<button class="mini-btn lock" data-ascend="${g.id}">⚔ Begin the Mythic Cycle → ${TIER_NAME[g.tier + 1]}</button>`;
@@ -535,7 +536,7 @@ export function renderMyth() {
       const ok = free || canAfford(o.cost);
       html += `<button class="action-btn" data-opt="${i}" ${ok ? "" : "disabled"}>` +
         `<span class="ab-title">${o.label}</span>` +
-        `<span class="ab-cost">${free ? "no cost" : costText(o.cost) + (ok ? "" : " — not enough")}</span></button>`;
+        `<span class="ab-cost">${free ? "no cost" : costTextLive(o.cost) + (ok ? "" : " — not enough")}</span></button>`;
     });
     html += `</div>`;
     if (pm.scene === 0)
@@ -579,7 +580,7 @@ export function renderPhoenician() {
       const rap = o.rapport >= 0 ? `+${o.rapport}` : `${o.rapport}`;
       html += `<button class="action-btn" data-popt="${i}" ${can ? "" : "disabled"}>` +
         `<span class="ab-title">${o.label}</span>` +
-        `<span class="ab-cost">${free ? "no cost" : costText(o.cost)}${can ? "" : " — not enough"} · rapport ${rap}</span></button>`;
+        `<span class="ab-cost">${free ? "no cost" : costTextLive(o.cost)}${can ? "" : " — not enough"} · rapport ${rap}</span></button>`;
     });
     html += `</div>`;
   }
@@ -622,7 +623,7 @@ export function renderChoice() {
       `<p class="crisis-desc">${desc}</p>` +
       `<div class="crisis-actions">` +
         `<button class="action-btn diplomatic" id="choice-a" ${canA ? "" : "disabled"}>` +
-          `<span class="ab-title">${lbl(ev.a)}</span><span class="ab-cost">${canA ? "" : "not enough"}</span></button>` +
+          `<span class="ab-title">${lbl(ev.a)}</span><span class="ab-cost">${ev.a.cost ? costTextLive(ev.a.cost) : ""}${canA ? "" : " — not enough"}</span></button>` +
         `<button class="action-btn" id="choice-b"><span class="ab-title">${lbl(ev.b)}</span></button>` +
       `</div>`;
     document.getElementById("choice-a").addEventListener("click", () => resolveGodEvent("a"));
@@ -636,7 +637,7 @@ export function renderChoice() {
     body.innerHTML =
       `<div class="crisis-head"><span class="crisis-icon">⛵</span><span class="crisis-name">A Foreign Merchant</span></div>` +
       `<p class="crisis-desc">At the docks, ${t.who} lays out their wares and proposes a barter.</p>` +
-      `<div class="crisis-threat" style="border-color:var(--ochre);color:var(--ink)">They will give <b>${costText(t.get)}</b> for your <b>${costText(t.give)}</b>.</div>` +
+      `<div class="crisis-threat" style="border-color:var(--ochre);color:var(--ink)">They will give <b>${costText(t.get)}</b> for your <b>${costTextLive(t.give)}</b>.</div>` +
       `<div class="crisis-actions">` +
         `<button class="action-btn diplomatic" id="merch-yes" ${can ? "" : "disabled"}>` +
           `<span class="ab-title">🤝 Strike the bargain</span><span class="ab-cost">${can ? "" : "you lack the goods"}</span></button>` +
@@ -655,9 +656,9 @@ export function renderChoice() {
     `<p class="crisis-desc">${ev.desc}</p>` +
     `<div class="crisis-actions">` +
       `<button class="action-btn diplomatic" id="choice-a" ${canA ? "" : "disabled"}>` +
-        `<span class="ab-title">${ev.a.label}</span><span class="ab-cost">${canA ? "" : "not enough"}</span></button>` +
+        `<span class="ab-title">${ev.a.label}</span><span class="ab-cost">${ev.a.cost ? costTextLive(ev.a.cost) : ""}${canA ? "" : " — not enough"}</span></button>` +
       `<button class="action-btn" id="choice-b" ${canB ? "" : "disabled"}>` +
-        `<span class="ab-title">${ev.b.label}</span></button>` +
+        `<span class="ab-title">${ev.b.label}</span><span class="ab-cost">${ev.b.cost ? costTextLive(ev.b.cost) + (canB ? "" : " — not enough") : ""}</span></button>` +
     `</div>`;
   document.getElementById("choice-a").addEventListener("click", () => resolveChoice("a"));
   document.getElementById("choice-b").addEventListener("click", () => resolveChoice("b"));
@@ -828,11 +829,11 @@ export function renderAdmin() {
         `<div class="hamlet-actions">` +
           `<button class="action-btn diplomatic" data-talk="${h.id}" ${(!canT || ended) ? "disabled" : ""}>` +
             `<span class="ab-title">🕊 ${stage.talk.label}</span>` +
-            `<span class="ab-cost">${costText(tCost)}${canT ? "" : " — not enough"}</span>` +
+            `<span class="ab-cost">${costTextLive(tCost)}${canT ? "" : " — not enough"}</span>` +
           `</button>` +
           `<button class="action-btn" data-force="${h.id}" ${(!canF || ended) ? "disabled" : ""}>` +
             `<span class="ab-title">⚔ ${stage.force.label}</span>` +
-            `<span class="ab-cost">${costText(fCost)}${fUnrest ? ` · +${fUnrest} unrest` : ""}${canF ? "" : " — not enough"}</span>` +
+            `<span class="ab-cost">${costTextLive(fCost)}${fUnrest ? ` · +${fUnrest} unrest` : ""}${canF ? "" : " — not enough"}</span>` +
           `</button>` +
         `</div>`;
     }
