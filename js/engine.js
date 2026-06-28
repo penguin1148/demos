@@ -21,6 +21,29 @@ export function formatYear(y) {
 /** Pick a random element from an array. */
 export function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+/**
+ * The escalating stakes multiplier for the given turn. Event costs and damages
+ * are scaled by this so a hoarded surplus still feels them as the era matures.
+ * (Tiers defined in CONFIG.EVENT_STAKES; 1× before the first threshold.)
+ */
+export function eventStakes(turn = GameState.turn) {
+  for (const tier of CONFIG.EVENT_STAKES) if (turn >= tier.fromTurn) return tier.mult;
+  return 1;
+}
+
+/** Scale every numeric field of a stat/cost/damage bundle, keeping its sign and
+ *  never rounding a non-zero entry away to nothing. */
+export function scaleBundle(bundle, mult) {
+  const out = {};
+  for (const k in bundle) {
+    const v = bundle[k];
+    if (typeof v !== "number" || v === 0) { out[k] = v; continue; }
+    const s = Math.round(v * mult);
+    out[k] = s !== 0 ? s : (v > 0 ? 1 : -1);
+  }
+  return out;
+}
+
 /** Format a stat-change object as readable text, e.g. "−30 Grain, −6 Population". */
 export function formatChanges(obj) {
   const parts = Object.keys(obj).map(k => {
@@ -99,6 +122,12 @@ export function processTick() {
   // Standing bonuses from researched technologies (Terraced Farming, etc.).
   for (const key in GameState.techBonus) {
     if (GameState.techBonus[key]) prod[key] = (prod[key] || 0) + GameState.techBonus[key];
+  }
+
+  // Global scarcity throttle on generation (grain cut more gently than the rest).
+  for (const key in prod) {
+    const scarcity = key === "grain" ? CONFIG.GRAIN_PRODUCTION_MULT : CONFIG.PRODUCTION_MULT;
+    prod[key] = prod[key] * scarcity;
   }
 
   // Civil unrest (from a failed annexation) throttles all production.
@@ -248,7 +277,11 @@ export function nextTurn() {
   // --- 3. Stochastic historical flavour (~45% chance) ---
   if (!blocked && Math.random() < 0.45) {
     const ev = pick(DAWN_EVENTS);
-    applyStats(ev.stats);
+    // Misfortunes escalate with the era's stakes; boons stay modest.
+    const m = eventStakes();
+    const stats = {};
+    for (const k in ev.stats) stats[k] = ev.stats[k] < 0 ? Math.round(ev.stats[k] * m) : ev.stats[k];
+    applyStats(stats);
     logChronicle(ev.text, "event");
   }
 
