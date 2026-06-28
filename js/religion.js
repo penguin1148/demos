@@ -1,6 +1,7 @@
 import { ASPECTS, DOMAIN_LABEL, DRAWABLE_EPITHETS, EPITHETS, EPITHET_EFFECT, HARMONY, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, godUpkeep } from "./religionData.js";
+import { CONFIG } from "./config.js";
 import { GameState } from "./state.js";
-import { applyStats, logChronicle, pick } from "./engine.js";
+import { applyStats, eventStakes, logChronicle, pick } from "./engine.js";
 import { closeModal, openModal } from "./festival.js";
 import { render, renderEpiphany, renderReligion } from "./render.js";
 
@@ -16,21 +17,44 @@ export function resAvail(key) {
   if (key === "muthos") return GameState.muthos;
   return GameState.stats[key] || 0;
 }
-export function canAfford(cost) {
+/**
+ * Scale a player COST bundle by the current era's stakes (grain exempt for the
+ * first GRAIN_STAKE_EXEMPT_UNTIL turns), so essentially every purchase, offering
+ * and decision grows costlier as the Polis matures and hoards. Positive costs,
+ * floored at 1. (Damage bundles use engine.stakeScale instead.)
+ */
+export function stakeCost(cost) {
+  const m = eventStakes(GameState.turn);
+  if (m === 1) return cost;
+  const grainExempt = GameState.turn < CONFIG.GRAIN_STAKE_EXEMPT_UNTIL;
+  const out = {};
   for (const k in cost) {
+    if (k === "priests") { out[k] = cost[k]; continue; }   // labour, not a stockpile
+    const mult = (k === "grain" && grainExempt) ? 1 : m;
+    out[k] = Math.max(1, Math.round(cost[k] * mult));
+  }
+  return out;
+}
+/** costText for the escalated (live) price of a cost bundle. */
+export function costTextLive(cost) { return costText(stakeCost(cost)); }
+
+export function canAfford(cost, opts) {
+  const c = opts && opts.raw ? cost : stakeCost(cost);
+  for (const k in c) {
     if (k === "priests") continue;            // labour, not a stockpile
-    if (resAvail(k) < cost[k]) return false;
+    if (resAvail(k) < c[k]) return false;
   }
   return true;
 }
-export function spendObj(cost) {
-  for (const k in cost) {
-    if (k === "priests") { GameState.priests += cost[k]; continue; }
-    if (k === "piety")  { GameState.macros.eusebeia = Math.max(0, GameState.macros.eusebeia - cost[k]); continue; }
-    if (k === "kleos")  { GameState.macros.kleos = Math.max(0, GameState.macros.kleos - cost[k]); continue; }
-    if (k === "ergon")  { GameState.ergon = Math.max(0, GameState.ergon - cost[k]); continue; }
-    if (k === "muthos") { GameState.muthos = Math.max(0, GameState.muthos - cost[k]); continue; }
-    applyStats({ [k]: -cost[k] });
+export function spendObj(cost, opts) {
+  const c = opts && opts.raw ? cost : stakeCost(cost);
+  for (const k in c) {
+    if (k === "priests") { GameState.priests += c[k]; continue; }
+    if (k === "piety")  { GameState.macros.eusebeia = Math.max(0, GameState.macros.eusebeia - c[k]); continue; }
+    if (k === "kleos")  { GameState.macros.kleos = Math.max(0, GameState.macros.kleos - c[k]); continue; }
+    if (k === "ergon")  { GameState.ergon = Math.max(0, GameState.ergon - c[k]); continue; }
+    if (k === "muthos") { GameState.muthos = Math.max(0, GameState.muthos - c[k]); continue; }
+    applyStats({ [k]: -c[k] });
   }
 }
 /** Apply a {key: +/-n} bundle that may touch stats, macros, ergon/muthos. */
@@ -179,8 +203,8 @@ export function tickGods() {
   for (const g of GameState.gods) {
     const up = godUpkeep(g.tier);
     const drag = jealousyDrag(g);
-    if (canAfford(up)) {
-      spendObj(up);
+    if (canAfford(up, { raw: true })) {        // passive upkeep is exempt from stakes escalation
+      spendObj(up, { raw: true });
       g.happiness = Math.min(100, g.happiness + RELIGION.HAPPY_GAIN - drag);
       if (drag > 0 && g.happiness < RELIGION.HAPPY && GameState.turn % 4 === 0)
         logChronicle(`${godName(g)} grows jealous of the other great gods — even well fed, its favour slips (Phthonos).`, "warning");

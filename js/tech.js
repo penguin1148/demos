@@ -20,8 +20,8 @@ export function researchTech(id) {
   const t = TECHS[id];
   if (!t || GameState.techs[id] || !techAvailable(id)) return;
   if (GameState.status !== GameStatus.PLAYING) return;
-  if (!canAfford(t.cost)) { renderTech(); return; }
-  spendObj(t.cost);
+  if (!canAfford(t.cost, { raw: true })) { renderTech(); return; }   // tech is the win-condition track — exempt from stakes
+  spendObj(t.cost, { raw: true });
   GameState.techs[id] = true;
   if (t.apply) t.apply();
   logChronicle(`The Polis masters ${t.name}. ${t.effect}`, "system");

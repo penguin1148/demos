@@ -3,7 +3,7 @@ import { GameState } from "./state.js";
 import { BUILDINGS } from "./content.js";
 import { logChronicle } from "./engine.js";
 import { afterAction } from "./merchants.js";
-import { canAfford, costText, spendObj } from "./religion.js";
+import { canAfford, costTextLive, spendObj } from "./religion.js";
 import { getHamlet } from "./synoikismos.js";
 import { renderCivic } from "./render.js";
 
@@ -21,7 +21,7 @@ export function buildStructure(id) {
   const b = BUILDINGS[id];
   if (!b || GameState.status !== GameStatus.PLAYING) return;
   if (!canBuild(id)) return;
-  if (!canAfford(b.cost)) { logChronicle(`${b.name} cannot yet be raised — ${costText(b.cost)} is needed.`, "warning"); renderCivic(); return; }
+  if (!canAfford(b.cost)) { logChronicle(`${b.name} cannot yet be raised — ${costTextLive(b.cost)} is needed.`, "warning"); renderCivic(); return; }
   spendObj(b.cost);
   GameState.buildings[id] = true;
   if (id === "mines") { GameState.techBonus.stone += 4; GameState.minesTurn = GameState.turn; }

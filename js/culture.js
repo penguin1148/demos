@@ -2,10 +2,10 @@ import { CIVIC, GameStatus } from "./config.js";
 import { DOMAIN_LABEL, RELIGION, TIER_NAME } from "./religionData.js";
 import { GameState } from "./state.js";
 import { CATASTROPHES, CHOICE_EVENTS, CRISES, GOD_EVENTS } from "./content.js";
-import { collapse, eventStakes, formatChanges, logChronicle, pick, scaleBundle } from "./engine.js";
+import { collapse, eventStakes, formatChanges, logChronicle, pick, stakeScale } from "./engine.js";
 import { afterAction } from "./merchants.js";
 import { closeModal, openModal } from "./festival.js";
-import { canAfford, domainGod, gainObj, getGod, godName, grantEpiphany, spendObj } from "./religion.js";
+import { canAfford, domainGod, gainObj, getGod, godName, grantEpiphany, spendObj, stakeCost } from "./religion.js";
 import { render, renderChoice, renderCrisis } from "./render.js";
 
 /* ===================================================================
@@ -24,12 +24,13 @@ export function spend(changes) {
 export function fundBard() {
   if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;
   const c = CIVIC.bard;
-  if (GameState.stats.grain < c.grain || GameState.stats.cattle < c.cattle) {
+  const cost = stakeCost({ grain: c.grain, cattle: c.cattle });
+  if (GameState.stats.grain < cost.grain || GameState.stats.cattle < cost.cattle) {
     logChronicle("There is too little to provision a travelling bard.", "warning");
     afterAction();
     return;
   }
-  spend({ grain: -c.grain, cattle: -c.cattle });
+  spend({ grain: -cost.grain, cattle: -cost.cattle });
   GameState.macros.kleos += c.kleos;
   logChronicle(
     `An aoidos sings the deeds of ${GameState.cityName} in far-off halls; ` +
@@ -44,12 +45,13 @@ export function buildHearth() {
   if (GameState.status !== GameStatus.PLAYING || GameState.pendingCrisis || GameState.pendingFestival || GameState.pendingEpiphany || GameState.pendingMyth || GameState.pendingChoice || GameState.pendingPhoenician) return;
   if (GameState.hearthBuilt) return;
   const c = CIVIC.hearth;
-  if (GameState.stats.timber < c.timber || GameState.stats.clay < c.clay || GameState.stats.cattle < c.cattle) {
+  const cost = stakeCost({ timber: c.timber, clay: c.clay, cattle: c.cattle });
+  if (GameState.stats.timber < cost.timber || GameState.stats.clay < cost.clay || GameState.stats.cattle < cost.cattle) {
     logChronicle("The people lack the timber, clay and cattle to raise the Ancestral Hearth.", "warning");
     afterAction();
     return;
   }
-  spend({ timber: -c.timber, clay: -c.clay, cattle: -c.cattle });
+  spend({ timber: -cost.timber, clay: -cost.clay, cattle: -cost.cattle });
   GameState.hearthBuilt = true;
   GameState.hearthTurn = GameState.turn;
   logChronicle(
@@ -71,17 +73,11 @@ export function scaleDamage(dmg, avert) {
   return out;
 }
 
-/** Copy an event option, scaling only the resources it costs the player. */
-function scaleOption(opt, mult) {
-  return opt.cost ? { ...opt, cost: scaleBundle(opt.cost, mult) } : opt;
-}
-
 /** Roll an ordinary domain crisis and present it for the player's response. The
  *  unshielded toll (and the Piety needed to soften it) scale with the era's stakes. */
 export function triggerCrisis() {
   const base = pick(CRISES);
-  const m = eventStakes();
-  const crisis = { ...base, damage: scaleBundle(base.damage, m), pietyCost: Math.max(1, Math.round(base.pietyCost * m)) };
+  const crisis = { ...base, damage: stakeScale(base.damage), pietyCost: Math.max(1, Math.round(base.pietyCost * eventStakes())) };
   GameState.pendingCrisis = crisis;
   logChronicle(`A crisis befalls the Polis: ${crisis.name}!`, "warning");
   renderCrisis();
@@ -129,8 +125,7 @@ export function resolveCrisis(invoke) {
 /* ---------- Catastrophes & respond-able flavour events (shared modal) ---------- */
 export function triggerCatastrophe() {
   const base = pick(CATASTROPHES);
-  const m = eventStakes();
-  const cat = { ...base, damage: scaleBundle(base.damage, m), savedDamage: scaleBundle(base.savedDamage, m) };
+  const cat = { ...base, damage: stakeScale(base.damage), savedDamage: stakeScale(base.savedDamage) };
   const god = domainGod(cat.domain);
   GameState.pendingChoice = { kind: "catastrophe", ev: cat, godId: god ? god.id : null };
   logChronicle(`⚠ CATASTROPHE — ${cat.name} falls upon ${GameState.cityName}!`, "warning");
@@ -158,9 +153,7 @@ export function resolveCatastrophe() {
 export function mythlessSub(str, god) { return str.replace(/{god}/g, godName(god)); }
 
 export function triggerChoiceEvent() {
-  const base = pick(CHOICE_EVENTS);
-  const m = eventStakes();
-  const ev = { ...base, a: scaleOption(base.a, m), b: scaleOption(base.b, m) };
+  const ev = pick(CHOICE_EVENTS);   // option costs escalate at spend/afford time via stakeCost
   GameState.pendingChoice = { kind: "event", ev };
   logChronicle(`The people bring a matter before you: ${ev.name}.`, "system");
   renderChoice();
@@ -186,9 +179,7 @@ export function resolveChoice(which) {
 export function triggerGodEvent() {
   if (GameState.gods.length === 0) return;
   const g = pick(GameState.gods);
-  const base = pick(GOD_EVENTS);
-  const m = eventStakes();
-  const ev = { ...base, a: scaleOption(base.a, m), b: scaleOption(base.b, m) };
+  const ev = pick(GOD_EVENTS);   // option costs escalate at spend/afford time via stakeCost
   GameState.pendingChoice = { kind: "godevent", ev, godId: g.id };
   logChronicle(`A matter touches the worship of ${godName(g)}: ${ev.name}.`, "system");
   renderChoice();

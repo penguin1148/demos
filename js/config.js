@@ -9,7 +9,7 @@
 export const CONFIG = Object.freeze({
   START_YEAR:        900,   // 900 BC
   END_YEAR:          750,   // 750 BC — end of the Dawn Era
-  YEARS_PER_TURN:    1,
+  YEARS_PER_TURN:    1.25,  // each Dawn-Era turn spans 1.25 years (year counter rounds)
   PHASE_NAME:        "The Dawn Era",
   // Base grain each citizen eats per turn. Early survival is meant to bite:
   // farming alone barely breaks even, so a single bad year or unshielded
@@ -38,16 +38,20 @@ export const CONFIG = Object.freeze({
   GOD_EVENT_CHANCE:    0.16,   // chance per turn of a happiness fork upon one god
   MERCHANT_CHANCE:     0.22,   // chance per turn a foreign merchant visits (once Docks are built)
 
-  // Escalating STAKES. The costs and damages of random events and decisions are
-  // multiplied by these as the era wears on, so a mature, resource-hoarding
-  // Polis still feels them. Tiers are checked high turn → low; below the first
-  // threshold the multiplier is 1×.
+  // Escalating STAKES. The costs and damages of essentially every event,
+  // decision and purchase are multiplied by these as the era wears on, so a
+  // mature, resource-hoarding Polis still feels them. Tiers are checked high
+  // turn → low; below the first threshold the multiplier is 1×. (The era now
+  // runs ~120 turns at 1.25 years each, so the steep tiers bite near the end.)
   EVENT_STAKES: [
-    { fromTurn: 150, mult: 4.0 },
-    { fromTurn: 100, mult: 3.0 },
-    { fromTurn: 75,  mult: 2.2 },
-    { fromTurn: 50,  mult: 1.6 },
+    { fromTurn: 100, mult: 6.0 },
+    { fromTurn: 75,  mult: 4.0 },
+    { fromTurn: 50,  mult: 2.5 },
+    { fromTurn: 25,  mult: 1.6 },
   ],
+  // Grain costs/damages are exempt from the escalation for the first 50 turns,
+  // so early subsistence stays survivable while everything else ramps up.
+  GRAIN_STAKE_EXEMPT_UNTIL: 50,
 });
 
 /* The FSM states the game can occupy. */
