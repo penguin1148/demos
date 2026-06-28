@@ -41,9 +41,10 @@ export function initGame() {
   GameState.archaicEra = false;
   GameState.lastGrainBalance = 0;
   recomputeDiscontent();
-  // Threat-forecast clock and work-site capacity.
+  // Threat-forecast clock, work-site capacity, and climate.
   GameState.threats = [];
   GameState.capacityBonus = {};
+  GameState.climate = { id: "fair", until: 0 };
   // Knowledge / research economy.
   GameState.ergon = 0; GameState.muthos = 0;
   GameState.lastErgon = 0; GameState.lastMuthos = 0;

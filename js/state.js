@@ -107,4 +107,8 @@ export const GameState = {
   // Work-site capacity earned beyond each trade's base (from tech, buildings and
   // absorbed hamlets); added to JOBS[key].capacity. Keyed by job.
   capacityBonus: {},
+
+  // Climate: the current multi-year weather phase and the turn it lasts until.
+  // { id, until } — see js/climate.js. Shifts trade yields and grain need.
+  climate: { id: "fair", until: 0 },
 };
