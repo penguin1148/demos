@@ -241,8 +241,13 @@
   .map-btn:hover  { filter: brightness(1.08); }
   .map-btn:active { transform: translateY(2px); box-shadow: none; }
   .map-btn .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 17px; height: 17px; padding: 0 4px;
+    margin-left: 7px; vertical-align: middle;
     background: #f3e6c8; color: var(--terra-dark);
-    border-radius: 8px; padding: 0 6px; margin-left: 6px; font-weight: 700;
+    border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(94,38,22,.4);
+    font-variant: normal; font-size: 11px; font-weight: 700; line-height: 1;
+    text-shadow: none;
   }
 
   #map-field { position: absolute; inset: 0; background: #9cc0d8; }
@@ -621,8 +626,11 @@
   .tech-bank.ergon  { border-color: #c8a86a; }
   .tech-bank.muthos { border-color: #b48fc4; }
   .tech-tree { display: grid; position: relative; margin: 6px auto 0; }
-  .tech-tree.vertical { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto;
-    gap: 26px 26px; max-width: 560px; }
+  /* Five rows: tech, connector, tech, connector, tech. The connector rows give
+     the down-arrows their own space, so they sit cleanly between the techs. */
+  .tech-tree.vertical { grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    column-gap: 26px; row-gap: 0; max-width: 560px; align-items: stretch; }
   .tech-node { border: 2px solid var(--border-d); border-radius: 9px; padding: 10px 12px;
     background: linear-gradient(170deg,#eee4cb,#e2d2ac); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
   .tech-node.st-done   { border-color: var(--good); background: linear-gradient(170deg,#e2ecd0,#cfe0b6); }
@@ -636,12 +644,11 @@
   .tech-node .tn-state { font-size: 11.5px; font-weight: 700; }
   .tech-node .tn-state.done   { color: var(--good); }
   .tech-node .tn-state.locked { color: var(--ink-soft); font-weight: 600; }
-  .tech-arrow { position: absolute; font-size: 22px; color: var(--border-d); font-weight: 700; pointer-events: none; }
-  /* downward connectors between the three rows */
-  .tech-arrow.d1 { left: 26%; top: 30%; }
-  .tech-arrow.d2 { left: 74%; top: 30%; }
-  .tech-arrow.d3 { left: 26%; top: 64%; }
-  .tech-arrow.d4 { left: 74%; top: 64%; }
+  /* Down-arrows live in their own grid rows (placed inline), centred in the
+     gap between the techs they connect. */
+  .tech-arrow { display: flex; align-items: center; justify-content: center;
+    height: 34px; font-size: 30px; line-height: 1; color: var(--terra);
+    font-weight: 700; pointer-events: none; }
 
   /* Hamlet integration progress track */
   .stage-track { font-size: 13px; margin: 6px 0 2px; color: var(--terra-dark); }
