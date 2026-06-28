@@ -7,6 +7,7 @@ import { beginPhoenician, triggerMerchant } from "./merchants.js";
 import { openFestival } from "./festival.js";
 import { applyGodPerks, godName, grantEpiphany, tickGods } from "./religion.js";
 import { render, renderLogEntry } from "./render.js";
+import { tickSocialOrders } from "./social.js";
 
 /* ===================================================================
    ENGINE LOGIC
@@ -160,6 +161,10 @@ export function processTick() {
   // --- Religion: gods take their upkeep, grow happy or sour, and bless the city ---
   tickGods();
   applyGodPerks();
+
+  // --- Social Orders: this year's labour split and harvest reshape each rank's
+  //     Clout & Satisfaction, and with them the Polis's Discontent. ---
+  tickSocialOrders(grainProduced - needed);
 
   // --- Knowledge: workers generate Ergon, cultural life generates Muthos.
   //     A starving or crisis-stricken people invent nothing this year. ---

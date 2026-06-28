@@ -66,6 +66,7 @@
         <span>The Lands of Demos</span>
         <span class="map-tools">
           <button class="map-btn" id="open-labor">⚒ Labor of the Demos</button>
+          <button class="map-btn" id="open-social">👥 Social Orders</button>
           <button class="map-btn" id="open-religion" style="display:none">🏛 Gods &amp; Temple<span class="badge" id="religion-badge">0</span></button>
           <button class="map-btn" id="open-admin">⚖ Administration<span class="badge" id="admin-badge">0</span></button>
         </span>
@@ -404,6 +405,19 @@
       </div>
       <div id="admin-body" class="modal-body">
         <!-- populated by renderAdmin() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SOCIAL ORDERS MODAL ============ -->
+  <div class="modal-backdrop" id="social-modal" hidden>
+    <div class="modal panel">
+      <div class="panel-header">
+        <span>The Social Orders</span>
+        <button class="modal-close" data-close="social-modal" aria-label="Close">×</button>
+      </div>
+      <div id="social-body" class="modal-body">
+        <!-- populated by renderSocial() -->
       </div>
     </div>
   </div>

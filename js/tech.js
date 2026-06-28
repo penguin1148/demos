@@ -5,6 +5,7 @@ import { endEra, logChronicle } from "./engine.js";
 import { closeModal } from "./festival.js";
 import { canAfford, spendObj } from "./religion.js";
 import { render, renderTech } from "./render.js";
+import { transitionToArchaicEra } from "./social.js";
 
 /* ===================================================================
    THE TECH TREE — Ergon + Muthos research
@@ -26,6 +27,7 @@ export function researchTech(id) {
   logChronicle(`The Polis masters ${t.name}. ${t.effect}`, "system");
   if (t.endsEra) {
     GameState.alphabetWin = true;
+    transitionToArchaicEra();   // herding lords → Eupatridai; farmers + landless → the Demos; retire Labor sliders
     closeModal("tech-modal");
     endEra();
     render();
