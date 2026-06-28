@@ -99,4 +99,12 @@ export const GameState = {
   globalDiscontent: 0,           // derived top-bar discontent (0 = content, 100 = seething)
   lastGrainBalance: 0,           // last tick's grain surplus (for mood read-outs)
   archaicEra: false,             // set when the Phoenician Alphabet closes the Dawn Era
+
+  // Threat-forecast clock: dangers scheduled ahead of time as visible omens.
+  // Each: { type:"crisis"|"catastrophe", id, name, icon, domain, due } (see js/threats.js).
+  threats: [],
+
+  // Work-site capacity earned beyond each trade's base (from tech, buildings and
+  // absorbed hamlets); added to JOBS[key].capacity. Keyed by job.
+  capacityBonus: {},
 };

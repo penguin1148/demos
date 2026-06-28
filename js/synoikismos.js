@@ -32,6 +32,10 @@ export function absorbHamlet(h) {
   for (const key in h.asset.bonus) {
     GameState.bonuses[key] = (GameState.bonuses[key] || 0) + h.asset.bonus[key];
   }
+  // Their lands and trades widen the Polis's work-site capacity.
+  for (const key in (h.capacity || {})) {
+    GameState.capacityBonus[key] = (GameState.capacityBonus[key] || 0) + h.capacity[key];
+  }
   logChronicle(
     `${h.name} joins ${GameState.cityName} through synoikismos — ${h.population} souls ` +
     `and their gift of ${h.asset.label} now enrich the Polis.`,

@@ -73,16 +73,19 @@ export function scaleDamage(dmg, avert) {
   return out;
 }
 
-/** Roll an ordinary domain crisis and present it for the player's response. The
- *  unshielded toll (and the Piety needed to soften it) scale with the era's stakes. */
-export function triggerCrisis() {
-  const base = pick(CRISES);
+/** Present a SPECIFIC domain crisis (by id, from the threat clock) for the
+ *  player's response. The unshielded toll and the Piety needed to soften it
+ *  scale with the era's stakes. */
+export function triggerCrisisFor(id) {
+  const base = CRISES.find(c => c.id === id) || pick(CRISES);
   const crisis = { ...base, damage: stakeScale(base.damage), pietyCost: Math.max(1, Math.round(base.pietyCost * eventStakes())) };
   GameState.pendingCrisis = crisis;
   logChronicle(`A crisis befalls the Polis: ${crisis.name}!`, "warning");
   renderCrisis();
   openModal("crisis-modal");
 }
+/** Roll a random ordinary domain crisis (fallback / non-scheduled callers). */
+export function triggerCrisis() { triggerCrisisFor(pick(CRISES).id); }
 
 /**
  * Resolve the pending crisis. A god of the crisis's domain shields the people
@@ -123,8 +126,9 @@ export function resolveCrisis(invoke) {
 }
 
 /* ---------- Catastrophes & respond-able flavour events (shared modal) ---------- */
-export function triggerCatastrophe() {
-  const base = pick(CATASTROPHES);
+/** Present a SPECIFIC catastrophe (by id, from the threat clock). */
+export function triggerCatastropheFor(id) {
+  const base = CATASTROPHES.find(c => c.id === id) || pick(CATASTROPHES);
   const cat = { ...base, damage: stakeScale(base.damage), savedDamage: stakeScale(base.savedDamage) };
   const god = domainGod(cat.domain);
   GameState.pendingChoice = { kind: "catastrophe", ev: cat, godId: god ? god.id : null };
@@ -132,6 +136,8 @@ export function triggerCatastrophe() {
   renderChoice();
   openModal("choice-modal");
 }
+/** Roll a random catastrophe (fallback / non-scheduled callers). */
+export function triggerCatastrophe() { triggerCatastropheFor(pick(CATASTROPHES).id); }
 export function resolveCatastrophe() {
   const pc = GameState.pendingChoice; if (!pc || pc.kind !== "catastrophe") return;
   const cat = pc.ev;

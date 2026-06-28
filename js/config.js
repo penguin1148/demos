@@ -52,6 +52,19 @@ export const CONFIG = Object.freeze({
   // Grain costs/damages are exempt from the escalation for the first 50 turns,
   // so early subsistence stays survivable while everything else ramps up.
   GRAIN_STAKE_EXEMPT_UNTIL: 50,
+
+  // Yield fraction earned by workers crammed past a trade's work-site capacity.
+  OVERCAP_FACTOR: 0.3,
+
+  // THREAT-FORECAST CLOCK. Dangers (domain crises and catastrophes) are no
+  // longer rolled the instant they strike: they are scheduled a few years ahead
+  // as visible omens, so the player can prepare (name a domain god, stockpile,
+  // brace). These tune how many threats loom and how much warning each gives.
+  THREAT_HORIZON:      3,      // most threats allowed pending (on the horizon) at once
+  THREAT_SCHEDULE_CHANCE: 0.34, // chance per turn of scheduling a new threat (while below the horizon)
+  THREAT_CAT_WEIGHT:   0.18,   // fraction of scheduled threats that are catastrophes (rest are crises)
+  CRISIS_LEAD:    [2, 4],      // [min,max] turns of warning before a crisis strikes
+  CATASTROPHE_LEAD: [3, 6],    // [min,max] turns of warning before a catastrophe strikes
 });
 
 /* The FSM states the game can occupy. */
@@ -62,18 +75,19 @@ export const GameStatus = Object.freeze({
 });
 
 /*
- * Fixed early-game job assignments. Each turn the population is divided
- * among these trades by these ratios, and each worker passively yields
- * resources. Ratios are intentionally fixed for the Dawn Era; future
- * phases will let the player reassign labour.
+ * The trades, each tied to a resource and a finite number of WORK-SITES
+ * (`capacity`): tillable plots, grazing runs, clay faces, etc. Workers up to a
+ * trade's capacity yield in full; any beyond it crowd the same ground and yield
+ * only OVERCAP_FACTOR of normal. Capacity is expanded by tech, buildings and
+ * absorbed hamlets — so a growing city must open new ground, not just reassign.
  */
 export const JOBS = Object.freeze({
-  farmers:      { icon: "🌾", name: "Farmers",     yields: "grain"  },
-  herders:      { icon: "🐄", name: "Herders",     yields: "cattle" },
-  woodcutters:  { icon: "🪓", name: "Woodcutters", yields: "timber" },
-  potters:      { icon: "🏺", name: "Potters",     yields: "clay"   },
-  oliveGrowers: { icon: "🫒", name: "Olive Tenders", yields: "olives" },
-  vintners:     { icon: "🍇", name: "Vintners",    yields: "grapes" },
+  farmers:      { icon: "🌾", name: "Farmers",       yields: "grain",  capacity: 64, site: "tillable plots" },
+  herders:      { icon: "🐄", name: "Herders",       yields: "cattle", capacity: 26, site: "grazing runs"   },
+  woodcutters:  { icon: "🪓", name: "Woodcutters",   yields: "timber", capacity: 30, site: "wood-lots"      },
+  potters:      { icon: "🏺", name: "Potters",       yields: "clay",   capacity: 24, site: "clay faces"     },
+  oliveGrowers: { icon: "🫒", name: "Olive Tenders", yields: "olives", capacity: 20, site: "olive terraces" },
+  vintners:     { icon: "🍇", name: "Vintners",      yields: "grapes", capacity: 18, site: "vine rows"      },
 });
 
 /*

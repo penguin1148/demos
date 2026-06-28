@@ -24,8 +24,11 @@ export function buildStructure(id) {
   if (!canAfford(b.cost)) { logChronicle(`${b.name} cannot yet be raised — ${costTextLive(b.cost)} is needed.`, "warning"); renderCivic(); return; }
   spendObj(b.cost);
   GameState.buildings[id] = true;
-  if (id === "mines") { GameState.techBonus.stone += 4; GameState.minesTurn = GameState.turn; }
-  if (id === "docks") { GameState.docksTurn = GameState.turn; }
+  if (id === "mines") { GameState.techBonus.stone += 4; GameState.minesTurn = GameState.turn;
+    GameState.capacityBonus.potters = (GameState.capacityBonus.potters || 0) + 14; }   // worked faces & adits
+  if (id === "docks") { GameState.docksTurn = GameState.turn;
+    GameState.capacityBonus.farmers = (GameState.capacityBonus.farmers || 0) + 16; }    // a fishing fleet feeds more
+
   logChronicle(`The Polis raises ${b.name}. ${b.effect.replace(/<\/?b>/g, "")}`, "system");
   afterAction();
 }
