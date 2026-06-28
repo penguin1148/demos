@@ -87,4 +87,16 @@ export const GameState = {
 
   // The chronicle: an append-only list of historical entries.
   chronicle: [],
+
+  // Social Orders: three ranks whose Clout (political weight, summing to 100%)
+  // and Satisfaction (0–100) together set the Polis's Discontent. Driven each
+  // year by the labour sliders and tech unlocks (see js/social.js).
+  socialClasses: {
+    oikosLords: { clout: 50, satisfaction: 80 },
+    autourgoi:  { clout: 35, satisfaction: 75 },
+    akleroi:    { clout: 15, satisfaction: 70 },
+  },
+  globalDiscontent: 0,           // derived top-bar discontent (0 = content, 100 = seething)
+  lastGrainBalance: 0,           // last tick's grain surplus (for mood read-outs)
+  archaicEra: false,             // set when the Phoenician Alphabet closes the Dawn Era
 };

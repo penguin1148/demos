@@ -11,6 +11,7 @@ import { closeModal, openAdmin, openModal } from "./festival.js";
 import { OFFERINGS, ackEpiphany, ascendNeed, canAfford, canAscend, costText, disbandGod, domainGod, establishGod, getGod, godName, hasDiplomaticGod, hasMartialGod, isGodHappy, isHarmonious, jealousyDrag, makeOffering, relPick } from "./religion.js";
 import { beginAscension, mythChoose, mythFinalOdds, mythResolve, mythText, mythWithdraw } from "./myth.js";
 import { attemptIntegration, bonusText, getHamlet, integrationCost, integrationUnrest } from "./synoikismos.js";
+import { SOCIAL_META, describeSocialClass } from "./social.js";
 
 /* ===================================================================
    RENDERING
@@ -25,9 +26,9 @@ export function render() {
   const erg = document.getElementById("hud-ergon");   if (erg) erg.textContent = GameState.ergon;
   const mut = document.getElementById("hud-muthos");  if (mut) mut.textContent = GameState.muthos;
   const dis = document.getElementById("hud-discontent");
-  dis.textContent = GameState.unhappiness;
-  dis.style.color = GameState.unhappiness >= 12 ? "#e07a5f"
-                  : GameState.unhappiness >= 6  ? "#d6a44a" : "#9bbf6a";
+  dis.textContent = GameState.globalDiscontent;
+  dis.style.color = GameState.globalDiscontent >= 40 ? "#e07a5f"
+                  : GameState.globalDiscontent >= 20 ? "#d6a44a" : "#9bbf6a";
   document.getElementById("hud-year").textContent  = formatYear(GameState.year);
   document.getElementById("hud-turn").textContent  = GameState.turn;
   document.getElementById("hud-phase").textContent = GameState.phase;
@@ -87,6 +88,7 @@ export function render() {
   }
   if (!document.getElementById("religion-modal").hidden) renderReligion();
   if (!document.getElementById("tech-modal").hidden) renderTech();
+  if (!document.getElementById("social-modal").hidden) renderSocial();
 
   // Control panel reflects the FSM and any pending demand.
   const btn = document.getElementById("end-turn-btn");
@@ -839,6 +841,47 @@ export function renderAdmin() {
     btn.addEventListener("click", () => attemptIntegration(btn.getAttribute("data-talk"), "talk")));
   body.querySelectorAll("[data-force]").forEach(btn =>
     btn.addEventListener("click", () => attemptIntegration(btn.getAttribute("data-force"), "force")));
+}
+
+/* ---------- The Social Orders panel ---------- */
+export function openSocial() { renderSocial(); openModal("social-modal"); }
+
+/** Render the Social Orders modal: each order's Clout %, Satisfaction, drivers. */
+export function renderSocial() {
+  const body = document.getElementById("social-body");
+  if (!body) return;
+  const sc = GameState.socialClasses;
+
+  let html =
+    `<p class="admin-intro">The Polis is no single people but an order of ranks. Each <b>order</b> holds a share of ` +
+    `political <b>Clout</b> (always summing to 100%) and a measure of <b>Satisfaction</b> (0–100); together they set the ` +
+    `city's <b>Discontent</b>. Re-balance the <b>Labor of the Demos</b> and master new crafts to reshape who holds sway.</p>`;
+
+  const dC = GameState.globalDiscontent;
+  const dClass = dC >= 40 ? "hot" : dC >= 20 ? "warm" : "cool";
+  html += `<div class="social-discontent ${dClass}">Global Discontent <b>${dC}</b><span>/100</span></div>`;
+
+  for (const key in sc) {
+    const c = sc[key];
+    const meta = SOCIAL_META[key] || { name: key, sub: "", accent: "#a8492c" };
+    const clout = Math.round(c.clout);
+    const sat = Math.round(c.satisfaction);
+    const satSad = sat >= 60 ? "" : " sad";
+    html +=
+      `<div class="social-card" style="border-left-color:${meta.accent}">` +
+        `<div class="social-head">` +
+          `<span class="social-name" style="color:${meta.accent}">${meta.name}</span>` +
+          `<span class="social-sub">${meta.sub}</span>` +
+        `</div>` +
+        `<div class="happy-line"><span>⚖ Clout</span><b>${clout}%</b></div>` +
+        `<div class="happy-bar"><div class="happy-fill" style="width:${clout}%;background:${meta.accent}"></div></div>` +
+        `<div class="happy-line"><span>😊 Satisfaction</span><b>${sat}</b>/100</div>` +
+        `<div class="happy-bar"><div class="happy-fill${satSad}" style="width:${sat}%"></div></div>` +
+        `<div class="social-driver">${describeSocialClass(key)}</div>` +
+      `</div>`;
+  }
+
+  body.innerHTML = html;
 }
 
 /** Append a single chronicle entry to the log panel and scroll into view. */

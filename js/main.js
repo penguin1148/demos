@@ -3,7 +3,8 @@ import { GameState } from "./state.js";
 import { HAMLETS } from "./content.js";
 import { assignJobs, formatYear, logChronicle, nextTurn } from "./engine.js";
 import { closeModal, openAdmin, openCivic, openLabor } from "./festival.js";
-import { openReligion, openTech, render } from "./render.js";
+import { openReligion, openSocial, openTech, render } from "./render.js";
+import { freshSocialClasses, recomputeDiscontent } from "./social.js";
 
 /* ===================================================================
    BOOTSTRAP
@@ -35,6 +36,11 @@ export function initGame() {
   GameState.festivalAlloc = { cattle: 0, grapes: 0, grain: 0 };
   GameState.unhappiness = 0;
   GameState.macros = { kleos: 0, eusebeia: 0 };
+  // Social Orders: reset the three ranks and derive the starting discontent.
+  GameState.socialClasses = freshSocialClasses();
+  GameState.archaicEra = false;
+  GameState.lastGrainBalance = 0;
+  recomputeDiscontent();
   // Knowledge / research economy.
   GameState.ergon = 0; GameState.muthos = 0;
   GameState.lastErgon = 0; GameState.lastMuthos = 0;
@@ -76,6 +82,7 @@ export function initGame() {
   document.getElementById("open-tech").addEventListener("click", openTech);
   document.getElementById("open-civic").addEventListener("click", openCivic);
   document.getElementById("open-religion").addEventListener("click", openReligion);
+  document.getElementById("open-social").addEventListener("click", openSocial);
   document.getElementById("open-admin").addEventListener("click", openAdmin);
 
   // Chronicle enlarge / shrink toggle.
