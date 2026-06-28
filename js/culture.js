@@ -2,7 +2,7 @@ import { CIVIC, GameStatus } from "./config.js";
 import { DOMAIN_LABEL, RELIGION, TIER_NAME } from "./religionData.js";
 import { GameState } from "./state.js";
 import { CATASTROPHES, CHOICE_EVENTS, CRISES, GOD_EVENTS } from "./content.js";
-import { collapse, formatChanges, logChronicle, pick } from "./engine.js";
+import { collapse, eventStakes, formatChanges, logChronicle, pick, scaleBundle } from "./engine.js";
 import { afterAction } from "./merchants.js";
 import { closeModal, openModal } from "./festival.js";
 import { canAfford, domainGod, gainObj, getGod, godName, grantEpiphany, spendObj } from "./religion.js";
@@ -71,9 +71,17 @@ export function scaleDamage(dmg, avert) {
   return out;
 }
 
-/** Roll an ordinary domain crisis and present it for the player's response. */
+/** Copy an event option, scaling only the resources it costs the player. */
+function scaleOption(opt, mult) {
+  return opt.cost ? { ...opt, cost: scaleBundle(opt.cost, mult) } : opt;
+}
+
+/** Roll an ordinary domain crisis and present it for the player's response. The
+ *  unshielded toll (and the Piety needed to soften it) scale with the era's stakes. */
 export function triggerCrisis() {
-  const crisis = pick(CRISES);
+  const base = pick(CRISES);
+  const m = eventStakes();
+  const crisis = { ...base, damage: scaleBundle(base.damage, m), pietyCost: Math.max(1, Math.round(base.pietyCost * m)) };
   GameState.pendingCrisis = crisis;
   logChronicle(`A crisis befalls the Polis: ${crisis.name}!`, "warning");
   renderCrisis();
@@ -120,7 +128,9 @@ export function resolveCrisis(invoke) {
 
 /* ---------- Catastrophes & respond-able flavour events (shared modal) ---------- */
 export function triggerCatastrophe() {
-  const cat = pick(CATASTROPHES);
+  const base = pick(CATASTROPHES);
+  const m = eventStakes();
+  const cat = { ...base, damage: scaleBundle(base.damage, m), savedDamage: scaleBundle(base.savedDamage, m) };
   const god = domainGod(cat.domain);
   GameState.pendingChoice = { kind: "catastrophe", ev: cat, godId: god ? god.id : null };
   logChronicle(`⚠ CATASTROPHE — ${cat.name} falls upon ${GameState.cityName}!`, "warning");
@@ -148,7 +158,9 @@ export function resolveCatastrophe() {
 export function mythlessSub(str, god) { return str.replace(/{god}/g, godName(god)); }
 
 export function triggerChoiceEvent() {
-  const ev = pick(CHOICE_EVENTS);
+  const base = pick(CHOICE_EVENTS);
+  const m = eventStakes();
+  const ev = { ...base, a: scaleOption(base.a, m), b: scaleOption(base.b, m) };
   GameState.pendingChoice = { kind: "event", ev };
   logChronicle(`The people bring a matter before you: ${ev.name}.`, "system");
   renderChoice();
@@ -174,7 +186,9 @@ export function resolveChoice(which) {
 export function triggerGodEvent() {
   if (GameState.gods.length === 0) return;
   const g = pick(GameState.gods);
-  const ev = pick(GOD_EVENTS);
+  const base = pick(GOD_EVENTS);
+  const m = eventStakes();
+  const ev = { ...base, a: scaleOption(base.a, m), b: scaleOption(base.b, m) };
   GameState.pendingChoice = { kind: "godevent", ev, godId: g.id };
   logChronicle(`A matter touches the worship of ${godName(g)}: ${ev.name}.`, "system");
   renderChoice();

@@ -16,6 +16,12 @@ export const CONFIG = Object.freeze({
   // catastrophe can spell famine — pushing players to name protective gods fast.
   GRAIN_PER_CITIZEN: 0.85,
 
+  // Global throttle on passive resource generation, to curb the late-game
+  // hoarding that made events feel trivial. Grain is throttled more gently so
+  // bare subsistence stays viable.
+  PRODUCTION_MULT:       0.8,    // non-grain trades (timber, clay, olives, grapes, cattle)
+  GRAIN_PRODUCTION_MULT: 0.95,   // grain (food) — cut only lightly, to keep subsistence viable
+
   // Synoikismos — drawing neighbouring hamlets into the Polis is no quick
   // conquest but a long event-chain of overtures, mixing aggression and
   // negotiation. A hamlet rests between stages, so unification is the work of
@@ -31,6 +37,17 @@ export const CONFIG = Object.freeze({
   CATASTROPHE_CHANCE:  0.07,   // chance per turn of a catastrophe (needs a domain god)
   GOD_EVENT_CHANCE:    0.16,   // chance per turn of a happiness fork upon one god
   MERCHANT_CHANCE:     0.22,   // chance per turn a foreign merchant visits (once Docks are built)
+
+  // Escalating STAKES. The costs and damages of random events and decisions are
+  // multiplied by these as the era wears on, so a mature, resource-hoarding
+  // Polis still feels them. Tiers are checked high turn → low; below the first
+  // threshold the multiplier is 1×.
+  EVENT_STAKES: [
+    { fromTurn: 150, mult: 4.0 },
+    { fromTurn: 100, mult: 3.0 },
+    { fromTurn: 75,  mult: 2.2 },
+    { fromTurn: 50,  mult: 1.6 },
+  ],
 });
 
 /* The FSM states the game can occupy. */
