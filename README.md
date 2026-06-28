@@ -1,4 +1,4 @@
-# Demos — The Dawn Era
+# Demos
 
 A 2D strategy game set in ancient Greece
 ## Running
