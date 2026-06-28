@@ -1,8 +1,6 @@
 # Demos — The Dawn Era
 
-A 2D strategy game set in ancient Greece (Phase 1: 900 BC – 750 BC), built with
-plain HTML, CSS and **native ES modules** — no build tools, no dependencies.
-
+A 2D strategy game set in ancient Greece
 ## Running
 
 Native ES modules can't be loaded over `file://`, so the game must be served
