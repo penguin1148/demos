@@ -1,7 +1,7 @@
-import { ASPECTS, DOMAIN_LABEL, DRAWABLE_EPITHETS, EPITHETS, EPITHET_EFFECT, HARMONY, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, godUpkeep } from "./religionData.js";
+import { ASPECTS, DOMAIN_LABEL, DRAWABLE_EPITHETS, EPITHETS, EPITHET_EFFECT, HARMONY, MIRACLES, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, godUpkeep } from "./religionData.js";
 import { CONFIG } from "./config.js";
 import { GameState } from "./state.js";
-import { applyStats, eventStakes, logChronicle, pick } from "./engine.js";
+import { applyStats, eventStakes, formatChanges, logChronicle, pick } from "./engine.js";
 import { closeModal, openModal } from "./festival.js";
 import { render, renderEpiphany, renderReligion } from "./render.js";
 
@@ -190,6 +190,33 @@ export function makeOffering(godId, kind) {
   spendObj(o.cost);
   g.happiness = Math.min(100, g.happiness + o.happy);
   logChronicle(`An offering gladdens ${godName(g)} (+${o.happy} happiness).`, "event");
+  renderReligion(); render();
+}
+
+/* ---------- miracles: a happy great god bends fate in its domain ---------- */
+/** Piety a god's miracle costs (scales with tier). */
+export function miracleCost(g) { return CONFIG.MIRACLE_PIETY_PER_TIER * g.tier; }
+/** Whether a god may work a miracle right now. */
+export function canInvokeMiracle(g) {
+  return !!MIRACLES[g.aspect] && g.tier >= 2 && isGodHappy(g) &&
+    GameState.turn >= (g.miracleUntil || 0) && GameState.macros.eusebeia >= miracleCost(g);
+}
+/** Invoke a god's miracle: avert the soonest looming threat in its domain, or —
+ *  if none looms — grant a domain bounty. Costs Piety and sets a cooldown. */
+export function invokeMiracle(godId) {
+  const g = getGod(godId);
+  if (!g || !canInvokeMiracle(g)) return;
+  GameState.macros.eusebeia -= miracleCost(g);
+  g.miracleUntil = GameState.turn + CONFIG.MIRACLE_COOLDOWN;
+  const m = MIRACLES[g.aspect];
+  const target = GameState.threats.filter(t => t.domain === g.aspect).sort((a, b) => a.due - b.due)[0];
+  if (target) {
+    GameState.threats = GameState.threats.filter(t => t !== target);
+    logChronicle(`✨ ${godName(g)} works a miracle — ${m.name} — turning aside the coming ${target.name} before it can strike!`, "event");
+  } else {
+    gainObj(m.bounty);
+    logChronicle(`✨ ${godName(g)} works a miracle — ${m.name} (${formatChanges(m.bounty)}).`, "event");
+  }
   renderReligion(); render();
 }
 

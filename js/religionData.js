@@ -83,33 +83,47 @@ export const MYTH_STORY = [
   { id: 0, title: "The Summons",
     text: "In {place}, {foe} rises against the people of {city}. The cult of {god} must answer the omen, or be forgotten by the generations to come.",
     options: [
-      { label: "Raise a war-band and march to meet it", cost: { cattle: 6, grain: 12 }, to: 1 },
-      { label: "Seek a sign with sacrifice at the altar", cost: { piety: 14 }, to: 2 },
-      { label: "Send a lone champion, trusting to glory", cost: { kleos: 18 }, to: 3 },
+      { label: "Raise a war-band and march to meet it", cost: { cattle: 6, grain: 12 }, resolve: 3, to: 1 },
+      { label: "Seek a sign with sacrifice at the altar", cost: { piety: 14 }, resolve: 3, to: 2 },
+      { label: "Send a lone champion, trusting to glory", cost: { kleos: 18 }, resolve: 2, to: 3 },
     ] },
   { id: 1, title: "The Muster",
     text: "Your warriors mass at the edge of {place}. {foe} is cunning, and the levies are afraid.",
     options: [
-      { label: "Press the assault with full supplies", cost: { grain: 14, cattle: 4 }, to: 4 },
-      { label: "Fall back and lay a patient ambush", cost: {}, to: 5 },
+      { label: "Press the assault with full supplies", cost: { grain: 14, cattle: 4 }, resolve: 4, to: 4 },
+      { label: "Fall back and lay a patient ambush", cost: {}, resolve: 1, to: 5 },
     ] },
   { id: 2, title: "The Omen",
     text: "The altar-smoke twists into a shape only the eldest priestess can read. She names a price for the god's favour.",
     options: [
-      { label: "Heed the omen; fast and purify three days", cost: { grain: 10 }, to: 4 },
-      { label: "Defy the omen and strike at once", cost: {}, to: 5 },
+      { label: "Heed the omen; fast and purify three days", cost: { grain: 10 }, resolve: 4, to: 4 },
+      { label: "Defy the omen and strike at once", cost: {}, resolve: 0, to: 5 },
     ] },
   { id: 3, title: "The Champion",
     text: "Your champion walks alone toward {foe}, the hopes of {city} upon their shoulders.",
     options: [
-      { label: "Arm them with the city's finest bronze", cost: { timber: 10, cattle: 3 }, to: 4 },
-      { label: "Let them go with only their courage", cost: {}, to: 5 },
+      { label: "Arm them with the city's finest bronze", cost: { timber: 10, cattle: 3 }, resolve: 4, to: 4 },
+      { label: "Let them go with only their courage", cost: {}, resolve: 1, to: 5 },
     ] },
   { id: 4, title: "The Reckoning", final: true, odds: 0.78,
     text: "Prepared, resolute and well-led, the people of {city} close upon {foe} for the final reckoning. Even so, the outcome rests with the god — and the god is not yet sure of them." },
   { id: 5, title: "The Reckoning", final: true, odds: 0.38,
     text: "Half-ready and short of supply, the people must still face {foe}. It will be a desperate, bloody thing, and many may not return." },
 ];
+
+/* MIRACLES — a happy Heros/Olympian may be invoked (for Piety, on a cooldown) to
+   bend fate in its domain: it averts the soonest looming threat there, or — if
+   none looms — grants a domain bounty. Keyed by Aspect/domain. */
+export const MIRACLES = Object.freeze({
+  sky:    { name: "Stay the Storm",    bounty: { grain: 14 } },
+  sea:    { name: "Calm the Waters",   bounty: { grain: 12, cattle: 4 } },
+  earth:  { name: "Quicken the Soil",  bounty: { grain: 18 } },
+  hearth: { name: "Purify the Wells",  bounty: { piety: 14 } },
+  forge:  { name: "Steady the Stone",  bounty: { clay: 16, stone: 8 } },
+  wild:   { name: "Turn the Beasts",   bounty: { cattle: 8 } },
+  vine:   { name: "Bless the Vintage", bounty: { grapes: 12, kleos: 4 } },
+  war:    { name: "Rout the Raiders",  bounty: { kleos: 8, cattle: 5 } },
+});
 
 /* The Aspect deck — the untamed forces the dark-age Greeks feared or relied on. */
 export const ASPECTS = {

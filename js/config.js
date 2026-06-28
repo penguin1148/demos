@@ -65,6 +65,22 @@ export const CONFIG = Object.freeze({
   THREAT_CAT_WEIGHT:   0.18,   // fraction of scheduled threats that are catastrophes (rest are crises)
   CRISIS_LEAD:    [2, 4],      // [min,max] turns of warning before a crisis strikes
   CATASTROPHE_LEAD: [3, 6],    // [min,max] turns of warning before a catastrophe strikes
+
+  // MAINTENANCE — a standing per-year upkeep in timber & clay that grows with
+  // the city's works and population. Left unpaid, roads, walls and granaries
+  // fall into disrepair (discontent), so the materials economy can't be hoarded
+  // and abandoned. Grain (food) is handled separately by consumption.
+  MAINT_PER_BUILDING: { timber: 4, clay: 3 },   // each raised structure (Mines, Docks)
+  MAINT_HEARTH:       { timber: 2 },             // the Ancestral Hearth
+  MAINT_PER_POP:      { timber: 0.05, clay: 0.03 }, // infrastructure per citizen
+
+  // CLIMATE — multi-year weather phases that shift which trades thrive and how
+  // much grain is eaten, so the best labour mix changes every few years.
+  CLIMATE_PHASE_LEN: [3, 5],   // [min,max] turns a climate phase lasts
+
+  // MIRACLES — a happy Heros/Olympian may be invoked to bend fate in its domain.
+  MIRACLE_COOLDOWN:   8,        // turns between a god's miracles
+  MIRACLE_PIETY_PER_TIER: 6,    // Piety cost = this × god tier
 });
 
 /* The FSM states the game can occupy. */

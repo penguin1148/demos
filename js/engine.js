@@ -9,6 +9,7 @@ import { openFestival } from "./festival.js";
 import { applyGodPerks, godName, grantEpiphany, tickGods } from "./religion.js";
 import { render, renderLogEntry } from "./render.js";
 import { tickSocialOrders } from "./social.js";
+import { climateGrainNeed, climateYield, tickClimate } from "./climate.js";
 
 /* ===================================================================
    ENGINE LOGIC
@@ -109,6 +110,18 @@ export function effectiveWorkers(key, count) {
   return count <= cap ? count : cap + (count - cap) * CONFIG.OVERCAP_FACTOR;
 }
 
+/** The city's standing per-year maintenance cost (timber & clay), scaling with
+ *  its buildings, the Hearth and its population. */
+export function computeMaintenance() {
+  const m = { timber: 0, clay: 0 };
+  const builds = (GameState.buildings.mines ? 1 : 0) + (GameState.buildings.docks ? 1 : 0);
+  m.timber += builds * CONFIG.MAINT_PER_BUILDING.timber + (GameState.hearthBuilt ? CONFIG.MAINT_HEARTH.timber : 0);
+  m.clay   += builds * CONFIG.MAINT_PER_BUILDING.clay;
+  m.timber += Math.floor(GameState.stats.population * CONFIG.MAINT_PER_POP.timber);
+  m.clay   += Math.floor(GameState.stats.population * CONFIG.MAINT_PER_POP.clay);
+  return m;
+}
+
 /**
  * Process the deterministic part of a timeline tick:
  * passive production from labour, grain consumption / starvation,
@@ -123,9 +136,9 @@ export function processTick() {
   GameState.jobs = jobs;
 
   // Base production from labour — each trade limited by its work-site capacity
-  // (workers crammed past it yield only a fraction).
+  // (workers crammed past it yield only a fraction), then swung by the climate.
   const eff = {};
-  for (const key in JOBS) eff[key] = effectiveWorkers(key, jobs[key]);
+  for (const key in JOBS) eff[key] = effectiveWorkers(key, jobs[key]) * climateYield(key);
   const prod = {
     grain:  eff.farmers      * YIELD.grain,
     timber: eff.woodcutters  * YIELD.timber,
@@ -166,8 +179,23 @@ export function processTick() {
     GameState.unrest -= 1;
   }
 
-  // --- Consumption: every citizen eats grain (more so in a Great Winter) ---
-  const coldMult = GameState.winter > 0 ? 1.25 : 1;
+  // --- Maintenance: a standing upkeep on the city's works & infrastructure.
+  //     Left unpaid (timber/clay short), things fall into disrepair. ---
+  const upkeep = computeMaintenance();
+  let disrepair = 0;
+  for (const k of ["timber", "clay"]) {
+    const pay = Math.min(GameState.stats[k], upkeep[k]);
+    if (pay > 0) applyStats({ [k]: -pay });
+    disrepair += upkeep[k] - pay;
+  }
+  if (disrepair > 0) {
+    GameState.unhappiness += Math.max(1, Math.ceil(disrepair / 6));
+    logChronicle("Walls, roads and granaries fall into disrepair for want of upkeep — discontent rises.", "warning");
+  }
+
+  // --- Consumption: every citizen eats grain (more so in a Great Winter or a
+  //     bitter climate) ---
+  const coldMult = (GameState.winter > 0 ? 1.25 : 1) * climateGrainNeed();
   const needed = Math.ceil(s.population * CONFIG.GRAIN_PER_CITIZEN * coldMult);
 
   let starving = false;
@@ -284,6 +312,9 @@ export function nextTurn() {
   GameState.winter = (w >= 1 && w <= 5) ? (6 - w) : 0;
   if (GameState.winter > 0 && !wasWinter)
     logChronicle("A Great Winter closes upon the hills; the cold deepens and grain is eaten faster.", "warning");
+
+  // --- 1a-ii. The climate: a rotating weather phase that reshapes the fields ---
+  tickClimate();
 
   // --- 1b. Every tenth year: the Hekatomb Festival replaces the normal tick ---
   if (GameState.turn % HEKATOMB.INTERVAL === 0) {

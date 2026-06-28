@@ -1,16 +1,17 @@
 import { CIVIC, CONFIG, DEFAULT_ALLOC, GameStatus, JOBS, YIELD } from "./config.js";
-import { ASPECTS, DOMAIN_LABEL, EPITHETS, EPITHET_EFFECT, MYTH_FLAVOR, MYTH_STORY, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, TIER_SUB, godUpkeep } from "./religionData.js";
+import { ASPECTS, DOMAIN_LABEL, EPITHETS, EPITHET_EFFECT, MIRACLES, MYTH_FLAVOR, MYTH_STORY, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, TIER_SUB, godUpkeep } from "./religionData.js";
 import { GameState } from "./state.js";
 import { BUILDINGS, INTEGRATION_STAGES, PHOENICIAN_STORY, STAT_META, TECHS } from "./content.js";
-import { assignJobs, effectiveWorkers, formatChanges, formatYear, jobCapacity } from "./engine.js";
+import { assignJobs, computeMaintenance, effectiveWorkers, formatChanges, formatYear, jobCapacity } from "./engine.js";
 import { forecast, threatYearsOff } from "./threats.js";
+import { CLIMATE_PHASES, climateGrainNeed, climateYield, currentClimate } from "./climate.js";
 import { DIVINE_AVERT, buildHearth, fundBard, resolveCatastrophe, resolveChoice, resolveCrisis, resolveGodEvent, scaleDamage } from "./culture.js";
 import { researchTech, techAvailable } from "./tech.js";
 import { buildStructure } from "./buildings.js";
 import { phoenicianChoose, phoenicianResolve, phoenicianText, resolveMerchant } from "./merchants.js";
 import { closeModal, openAdmin, openModal } from "./festival.js";
-import { OFFERINGS, ackEpiphany, ascendNeed, canAfford, canAscend, costText, costTextLive, disbandGod, domainGod, establishGod, getGod, godName, hasDiplomaticGod, hasMartialGod, isGodHappy, isHarmonious, jealousyDrag, makeOffering, relPick } from "./religion.js";
-import { beginAscension, mythChoose, mythFinalOdds, mythResolve, mythText, mythWithdraw } from "./myth.js";
+import { OFFERINGS, ackEpiphany, ascendNeed, canAfford, canAscend, canInvokeMiracle, costText, costTextLive, disbandGod, domainGod, establishGod, getGod, godName, hasDiplomaticGod, hasMartialGod, invokeMiracle, isGodHappy, isHarmonious, jealousyDrag, makeOffering, miracleCost, relPick } from "./religion.js";
+import { MYTH_INVOKE_COST, beginAscension, mythChoose, mythFinalOdds, mythInvoke, mythResolve, mythText, mythWithdraw } from "./myth.js";
 import { attemptIntegration, bonusText, getHamlet, integrationCost, integrationUnrest } from "./synoikismos.js";
 import { SOCIAL_META, describeSocialClass } from "./social.js";
 
@@ -57,6 +58,18 @@ export function render() {
         `<span class="delta ${deltaClass}">${deltaText}</span>` +
       `</span>`;
     body.appendChild(row);
+  }
+  // Standing maintenance (timber & clay upkeep on the city's works).
+  const up = computeMaintenance();
+  if (up.timber || up.clay) {
+    const short = (up.timber > GameState.stats.timber || up.clay > GameState.stats.clay);
+    const upRow = document.createElement("div");
+    upRow.className = "stat-row maint-row" + (short ? " short" : "");
+    upRow.innerHTML =
+      `<span class="stat-name"><span class="stat-icon">🔧</span>` +
+        `<span><div>Upkeep</div><div class="stat-sub">${short ? "disrepair — discontent rises" : "works & infrastructure"}</div></span></span>` +
+      `<span class="stat-figures"><span class="maint-cost">🪵 ${up.timber} · 🧱 ${up.clay}<small>/yr</small></span></span>`;
+    body.appendChild(upRow);
   }
 
   // Labour allocation panel.
@@ -140,8 +153,9 @@ export function renderLabor() {
   body.innerHTML =
     `<p class="admin-intro">Distribute your citizens among the trades. Each trade has only so many ` +
     `<b>work-sites</b> (fields, grazing runs, clay faces…); workers crammed past them yield little, so a ` +
-    `growing city must open new ground through tech, buildings and synoikismos — not just reassign. Weights ` +
-    `are relative; head-counts update live and take effect next turn.</p>` +
+    `growing city must open new ground through tech, buildings and synoikismos — not just reassign. The ` +
+    `<b>climate</b> swings which trades thrive, so the best mix shifts every few years.</p>` +
+    laborClimateBanner() +
     rows +
     `<div class="ja-balance" id="ja-balance"></div>` +
     `<div class="ja-foot"><span id="ja-total"></span>` +
@@ -157,6 +171,24 @@ export function renderLabor() {
   });
 
   updateLaborReadout();
+}
+
+/** A short banner naming the current climate and which trades it favours. */
+function laborClimateBanner() {
+  const c = currentClimate();
+  const ups = [], downs = [];
+  for (const key in JOBS) {
+    const m = climateYield(key);
+    if (m > 1.001) ups.push(JOBS[key].name);
+    else if (m < 0.999) downs.push(JOBS[key].name);
+  }
+  const need = climateGrainNeed();
+  return `<div class="climate-banner">` +
+    `<span class="cb-ic">${c.icon}</span> <b>${c.name}</b> — ${c.blurb}` +
+    (ups.length ? ` <span class="cb-up">▲ ${ups.join(", ")}</span>` : "") +
+    (downs.length ? ` <span class="cb-down">▼ ${downs.join(", ")}</span>` : "") +
+    (need > 1.001 ? ` <span class="cb-down">▼ grain need +${Math.round((need - 1) * 100)}%</span>` : "") +
+    `</div>`;
 }
 
 /** A labour slider moved: update the weight, recompute counts, refresh readouts. */
@@ -176,7 +208,11 @@ export function updateLaborReadout() {
 
   for (const key in JOBS) {
     const el = document.getElementById(`ja-count-${key}`);
-    if (el) el.innerHTML = `<b>${counts[key]}</b> · ${Math.round((alloc[key] || 0) / total * 100)}%`;
+    if (el) {
+      const m = climateYield(key);
+      const arrow = m > 1.001 ? ` <span class="cb-up">▲</span>` : m < 0.999 ? ` <span class="cb-down">▼</span>` : "";
+      el.innerHTML = `<b>${counts[key]}</b> · ${Math.round((alloc[key] || 0) / total * 100)}%${arrow}`;
+    }
     const capEl = document.getElementById(`ja-cap-${key}`);
     if (capEl) {
       const cap = jobCapacity(key);
@@ -189,9 +225,9 @@ export function updateLaborReadout() {
 
   // Grain outlook mirrors processTick: effective farmers (capped) + bonuses,
   // throttled by scarcity, against need (heavier in a Great Winter).
-  const effFarmers = effectiveWorkers("farmers", counts.farmers);
+  const effFarmers = effectiveWorkers("farmers", counts.farmers) * climateYield("farmers");
   const grainProd = Math.floor((effFarmers * YIELD.grain + (GameState.bonuses.grain || 0) + (GameState.techBonus.grain || 0)) * CONFIG.GRAIN_PRODUCTION_MULT);
-  const coldMult = GameState.winter > 0 ? 1.25 : 1;
+  const coldMult = (GameState.winter > 0 ? 1.25 : 1) * climateGrainNeed();
   const grainNeed = Math.ceil(pop * CONFIG.GRAIN_PER_CITIZEN * coldMult);
   const bal = grainProd - grainNeed;
   const balEl = document.getElementById("ja-balance");
@@ -211,12 +247,17 @@ export function updateLaborReadout() {
 export function renderForecast() {
   const el = document.getElementById("threat-forecast");
   if (!el) return;
+  const c = currentClimate();
+  const yrsLeft = Math.max(1, Math.round(Math.max(0, GameState.climate.until - GameState.turn) * CONFIG.YEARS_PER_TURN));
+  const climateChip = `<span class="tf-climate" title="${c.blurb}">` +
+    `<span class="tf-ic">${c.icon}</span><span class="tf-name">${c.name}</span>` +
+    `<span class="tf-meta">~${yrsLeft}y left</span></span>`;
   const list = forecast();
   if (!list.length) {
-    el.innerHTML = `<span class="tf-label">⌛ The Horizon</span><span class="tf-calm">the skies are calm — for now</span>`;
+    el.innerHTML = `<span class="tf-label">⌛ The Horizon</span>${climateChip}<span class="tf-calm">no threats loom — for now</span>`;
     return;
   }
-  el.innerHTML = `<span class="tf-label">⌛ The Horizon</span>` + list.map(t => {
+  el.innerHTML = `<span class="tf-label">⌛ The Horizon</span>${climateChip}` + list.map(t => {
     const shielded = !!domainGod(t.domain);
     return `<span class="tf-chip ${t.type === "catastrophe" ? "cat" : ""} ${shielded ? "shielded" : "exposed"}" ` +
       `title="${t.type === "catastrophe" ? "CATASTROPHE" : "Crisis"} · ${DOMAIN_LABEL[t.domain]} · ${shielded ? "a god guards this domain" : "no god guards this domain"}">` +
@@ -551,6 +592,20 @@ export function renderReligion() {
     }
     if (canAscend(g))
       html += `<button class="mini-btn lock" data-ascend="${g.id}">⚔ Begin the Mythic Cycle → ${TIER_NAME[g.tier + 1]}</button>`;
+    // Miracles — a happy Heros/Olympian may bend fate in its domain.
+    if (g.tier >= 2 && MIRACLES[g.aspect]) {
+      const targeted = GameState.threats.some(t => t.domain === g.aspect);
+      if (canInvokeMiracle(g)) {
+        html += `<button class="mini-btn miracle" data-miracle="${g.id}" title="${targeted ? "avert the looming threat in this domain" : "grant a domain bounty"}">` +
+          `✨ ${MIRACLES[g.aspect].name} (−${miracleCost(g)}🔥)${targeted ? " ⚠" : ""}</button>`;
+      } else {
+        const cd = (g.miracleUntil || 0) - GameState.turn;
+        const why = cd > 0 ? `ready in ~${Math.max(1, Math.round(cd * 1.25))}y`
+          : !isGodHappy(g) ? "the god must be happy"
+          : `needs ${miracleCost(g)} Piety`;
+        html += `<span class="miracle-cd">✨ ${MIRACLES[g.aspect].name} · ${why}</span>`;
+      }
+    }
     html += `<button class="mini-btn danger" data-disband="${g.id}">Disband</button>`;
     html += `</div></div>`;
   });
@@ -562,6 +617,7 @@ export function renderReligion() {
   const clr = document.getElementById("rel-clearsel"); if (clr) clr.addEventListener("click", () => { GameState.relSelect = { aspect: null, epithet: null }; renderReligion(); });
   body.querySelectorAll("[data-offer]").forEach(b => b.addEventListener("click", () => makeOffering(+b.dataset.offer, b.dataset.kind)));
   body.querySelectorAll("[data-ascend]").forEach(b => b.addEventListener("click", () => beginAscension(+b.dataset.ascend)));
+  body.querySelectorAll("[data-miracle]").forEach(b => b.addEventListener("click", () => invokeMiracle(+b.dataset.miracle)));
   body.querySelectorAll("[data-disband]").forEach(b => b.addEventListener("click", () => disbandGod(+b.dataset.disband)));
 }
 
@@ -582,13 +638,27 @@ export function renderMyth() {
     `<p class="crisis-desc myth-story">${mythText(scene.text, g)}</p>`;
 
   if (scene.final) {
-    const odds = Math.round(mythFinalOdds(scene, pm.target) * 100);
+    const odds = Math.round(mythFinalOdds(scene, pm) * 100);
     const stakes = pm.target === 3
       ? "Win, and an OLYMPIAN is born; fail, and the foe ravages the land and the god is CAST DOWN to a Daimon — all its progress lost."
       : "Win and the god ascends to Heros; fail and the foe ravages the land.";
+    const happyDelta = Math.round((g.happiness - RELIGION.HAPPY) / 100 * 35);
+    const breakdown =
+      `<div class="myth-odds-bd">Drawn from: ` +
+      `preparedness <b>${scene.id === 4 ? "strong" : "thin"}</b> · ` +
+      `resolve <b>+${Math.round((pm.resolve || 0) * 3)}%</b> · ` +
+      `the god's favour <b>${happyDelta >= 0 ? "+" : ""}${happyDelta}%</b> · ` +
+      `${g.harmonious ? "harmonious <b>+8%</b>" : "ill-matched <b>−6%</b>"}` +
+      `${pm.pietyBoost ? ` · piety <b>+${Math.round(pm.pietyBoost * 100)}%</b>` : ""}</div>`;
+    const canInvoke = (pm.pietyBoost || 0) < 0.24 && GameState.macros.eusebeia >= MYTH_INVOKE_COST;
     html += `<div class="crisis-threat">The reckoning is at hand — the odds of victory are <b>${odds}%</b>. ${pm.target === 3 ? "<b>An Olympian bid is perilous.</b>" : ""}</div>` +
+      breakdown +
       `<div class="crisis-actions">` +
-        `<button class="action-btn diplomatic" id="myth-face"><span class="ab-title">⚔ Face ${fl.foe}</span>` +
+        (canInvoke
+          ? `<button class="action-btn diplomatic" id="myth-invoke"><span class="ab-title">🔥 Pour out Piety</span>` +
+            `<span class="ab-cost">−${MYTH_INVOKE_COST} Piety → +8% odds</span></button>`
+          : "") +
+        `<button class="action-btn" id="myth-face"><span class="ab-title">⚔ Face ${fl.foe}</span>` +
         `<span class="ab-cost">${stakes}</span></button>` +
       `</div>`;
   } else {
@@ -608,6 +678,7 @@ export function renderMyth() {
   body.innerHTML = html;
   if (scene.final) {
     document.getElementById("myth-face").addEventListener("click", mythResolve);
+    const inv = document.getElementById("myth-invoke"); if (inv) inv.addEventListener("click", mythInvoke);
   } else {
     body.querySelectorAll("[data-opt]").forEach(b => b.addEventListener("click", () => mythChoose(+b.dataset.opt)));
     const wd = document.getElementById("myth-withdraw"); if (wd) wd.addEventListener("click", mythWithdraw);
