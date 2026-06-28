@@ -2,7 +2,8 @@ import { CONFIG, GameStatus, HEKATOMB, JOBS, YIELD } from "./config.js";
 import { RELIGION, TIER_NAME } from "./religionData.js";
 import { GameState } from "./state.js";
 import { DAWN_EVENTS, STAT_META } from "./content.js";
-import { triggerCatastrophe, triggerChoiceEvent, triggerCrisis, triggerGodEvent } from "./culture.js";
+import { triggerChoiceEvent, triggerGodEvent } from "./culture.js";
+import { fireDueThreats, scheduleThreats } from "./threats.js";
 import { beginPhoenician, triggerMerchant } from "./merchants.js";
 import { openFestival } from "./festival.js";
 import { applyGodPerks, godName, grantEpiphany, tickGods } from "./religion.js";
@@ -96,6 +97,18 @@ export function assignJobs(population) {
   return counts;
 }
 
+/** A trade's current work-site capacity: its base plus any earned bonus. */
+export function jobCapacity(key) {
+  return (JOBS[key].capacity ?? Infinity) + (GameState.capacityBonus[key] || 0);
+}
+
+/** Effective producing workers in a trade: full yield up to capacity, then only
+ *  OVERCAP_FACTOR of each crowded worker beyond it. */
+export function effectiveWorkers(key, count) {
+  const cap = jobCapacity(key);
+  return count <= cap ? count : cap + (count - cap) * CONFIG.OVERCAP_FACTOR;
+}
+
 /**
  * Process the deterministic part of a timeline tick:
  * passive production from labour, grain consumption / starvation,
@@ -109,14 +122,17 @@ export function processTick() {
   const jobs = assignJobs(s.population);
   GameState.jobs = jobs;
 
-  // Base production from labour.
+  // Base production from labour — each trade limited by its work-site capacity
+  // (workers crammed past it yield only a fraction).
+  const eff = {};
+  for (const key in JOBS) eff[key] = effectiveWorkers(key, jobs[key]);
   const prod = {
-    grain:  jobs.farmers      * YIELD.grain,
-    timber: jobs.woodcutters  * YIELD.timber,
-    clay:   jobs.potters      * YIELD.clay,
-    olives: jobs.oliveGrowers * YIELD.olives,
-    grapes: jobs.vintners     * YIELD.grapes,
-    cattle: Math.floor(jobs.herders * YIELD.cattle),
+    grain:  eff.farmers      * YIELD.grain,
+    timber: eff.woodcutters  * YIELD.timber,
+    clay:   eff.potters      * YIELD.clay,
+    olives: eff.oliveGrowers * YIELD.olives,
+    grapes: eff.vintners     * YIELD.grapes,
+    cattle: Math.floor(eff.herders * YIELD.cattle),
   };
 
   // Permanent bonuses from hamlets absorbed via synoikismos.
@@ -290,18 +306,11 @@ export function nextTurn() {
     logChronicle(ev.text, "event");
   }
 
-  // --- 4. A rare CATASTROPHE — ruinous without a god of its domain (rises after the early years) ---
-  const catChance = CONFIG.CATASTROPHE_CHANCE * (GameState.turn < 20 ? 0.4 : 1);
-  if (!blocked && Math.random() < catChance) {
-    triggerCatastrophe();
-    blocked = true;
-  }
-
-  // --- 4a. An ordinary domain crisis (mitigated by a matching god) ---
-  if (!blocked && Math.random() < CONFIG.CRISIS_CHANCE) {
-    triggerCrisis();
-    blocked = true;
-  }
+  // --- 4. Threat-forecast clock: post new omens to the horizon, then let any
+  //        threat whose appointed year has come strike (telegraphed crises &
+  //        catastrophes the player has had years to prepare for). ---
+  scheduleThreats();
+  if (!blocked && fireDueThreats()) blocked = true;
 
   // --- 4b. A respond-able flavour event the player answers ---
   if (!blocked && Math.random() < CONFIG.CHOICE_EVENT_CHANCE) {

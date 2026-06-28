@@ -164,22 +164,25 @@ export const TECHS = {
     name: "Terraced Farming", icon: "🌾", req: [], cost: { ergon: 55, muthos: 15 },
     col: 0, row: 1,
     desc: "Stone-walled terraces climb the hillside, banking soil and water against the dry years.",
-    effect: "+4 Grain and +2 Wine each year, and a green terraced field rises at the foot of the hill.",
-    apply() { GameState.techBonus.grain += 4; GameState.techBonus.grapes += 2; GameState.fieldRevealed = true; },
+    effect: "+4 Grain and +2 Wine each year, a green terraced field rises at the foot of the hill, and new fields open (+30 farmland capacity).",
+    apply() { GameState.techBonus.grain += 4; GameState.techBonus.grapes += 2; GameState.fieldRevealed = true;
+      GameState.capacityBonus.farmers = (GameState.capacityBonus.farmers || 0) + 30; },   // terraces open new fields
   },
   mining: {
     name: "Deep-Shaft Mining", icon: "⛏️", req: ["terraced"], cost: { ergon: 120, muthos: 35 },
     col: 1, row: 0,
     desc: "Timbered shafts sink deep after potter's clay and building-stone, and harden the people to heavy labour.",
-    effect: "+5 Clay each year and Ergon generation is raised by a quarter.",
-    apply() { GameState.techBonus.clay += 5; GameState.ergonMult += 0.25; },
+    effect: "+5 Clay each year, Ergon generation raised by a quarter, and deeper clay faces (+12 pottery capacity).",
+    apply() { GameState.techBonus.clay += 5; GameState.ergonMult += 0.25;
+      GameState.capacityBonus.potters = (GameState.capacityBonus.potters || 0) + 12; },
   },
   naval: {
     name: "Naval Carpentry", icon: "⛵", req: ["terraced"], cost: { ergon: 110, muthos: 55 },
     col: 1, row: 2,
     desc: "Mortise-and-tenon hulls open the sea-roads, bringing a richer catch and tales of far shores.",
-    effect: "+4 Grain (the catch) each year and Muthos generation is raised by a third.",
-    apply() { GameState.techBonus.grain += 4; GameState.muthosMult += 0.34; },
+    effect: "+4 Grain (the catch) each year, Muthos generation raised by a third, and the sea-roads feed more hands (+12 farmland/fishing capacity).",
+    apply() { GameState.techBonus.grain += 4; GameState.muthosMult += 0.34;
+      GameState.capacityBonus.farmers = (GameState.capacityBonus.farmers || 0) + 12; },
   },
   alphabet: {
     name: "The Phoenician Alphabet", icon: "📜", req: ["mining", "naval"], cost: { ergon: 170, muthos: 260, stone: 30 },
@@ -268,18 +271,21 @@ export const HAMLETS = [
     population: 30, pos: { top: "52%", left: "14%" },
     desc: "Hardy highlanders who fell timber and quarry stone from the upland forests.",
     asset: { label: "timber from the high forests", bonus: { timber: +6 } },
+    capacity: { woodcutters: 12, potters: 6 },
   },
   {
     id: "coastal", name: "The Coastal Fishermen", icon: "🌊",
     population: 25, pos: { top: "84%", left: "69%" },
     desc: "Fisherfolk whose nets bring a steady catch to feed the growing city.",
     asset: { label: "a steady catch that swells the food stores", bonus: { grain: +8 } },
+    capacity: { farmers: 16 },
   },
   {
     id: "river", name: "The River Valley Tribe", icon: "🏞️",
     population: 40, pos: { top: "85%", left: "28%" },
     desc: "Potters and farmers of the fertile river bend, rich in clay and grain.",
     asset: { label: "clay and grain from the river bend", bonus: { clay: +6, grain: +3 } },
+    capacity: { farmers: 14, potters: 8 },
   },
 ];
 

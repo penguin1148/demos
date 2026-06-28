@@ -611,6 +611,48 @@
   .social-driver { font-size: 12.5px; color: var(--ink); line-height: 1.5; margin-top: 6px;
     padding-top: 7px; border-top: 1px dashed var(--border-d); }
 
+  /* ---------- The Horizon: threat-forecast strip ---------- */
+  #threat-forecast {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 6px 18px; min-height: 34px;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, transparent 2px 9px),
+      linear-gradient(180deg, #241a12, #1c1510);
+    border-bottom: 2px solid var(--terra-dark);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.4);
+    z-index: 1;
+  }
+  #threat-forecast .tf-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ochre); font-weight: 700; margin-right: 4px; }
+  #threat-forecast .tf-calm { font-size: 12px; font-style: italic; color: #93805f; }
+  .tf-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 5px;
+    font-size: 12px; color: #ecdfc0; border: 1px solid var(--border-d);
+    background: linear-gradient(180deg, #3a2c1d, #2a2014); }
+  .tf-chip .tf-ic { font-size: 14px; }
+  .tf-chip .tf-name { font-weight: 700; }
+  .tf-chip .tf-meta { font-size: 10.5px; color: #b9a37a; font-variant: small-caps; letter-spacing: .5px; }
+  .tf-chip .tf-shield { font-size: 13px; }
+  .tf-chip.exposed { border-color: var(--bad); box-shadow: 0 0 0 1px rgba(157,51,32,.45); }
+  .tf-chip.exposed .tf-shield { filter: drop-shadow(0 0 3px rgba(224,122,95,.8)); }
+  .tf-chip.shielded { border-color: var(--good); }
+  .tf-chip.cat { background: linear-gradient(180deg, #4a2418, #341711); }
+  .tf-chip.cat .tf-name { color: #f0b9a0; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* ---------- Labour: work-site capacity read-outs ---------- */
+  .ja-cap { font-variant: small-caps; letter-spacing: .3px; }
+  .ja-cap .cap-over { color: var(--bad); font-weight: 700; }
+
+  /* ---------- Religion: domain coverage (gods as a portfolio) ---------- */
+  .dom-cover { border: 1px solid var(--border-d); border-radius: 7px; padding: 9px 11px; margin: 4px 0 14px;
+    background: rgba(0,0,0,.05); }
+  .dom-cover-head { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .dom-cover-head .dom-warn { color: var(--bad); }
+  .dom-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dom-chip { font-size: 11.5px; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border-d);
+    background: var(--parch-2); color: var(--ink-soft); }
+  .dom-chip.covered { border-color: var(--good); color: var(--ink); background: rgba(91,122,44,.12); }
+  .dom-chip.threatened { border-color: var(--bad); color: var(--terra-dark); background: rgba(157,51,32,.12); font-weight: 700; }
+
   /* Mythic Cycle story */
   .myth-sub { text-align: center; font-variant: small-caps; letter-spacing: 1px; color: #5a3f7a; font-size: 12px; margin: 2px 0 8px; }
   .myth-story { font-size: 14px; line-height: 1.6; font-style: italic; }

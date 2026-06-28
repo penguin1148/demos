@@ -2,7 +2,8 @@ import { CIVIC, CONFIG, DEFAULT_ALLOC, GameStatus, JOBS, YIELD } from "./config.
 import { ASPECTS, DOMAIN_LABEL, EPITHETS, EPITHET_EFFECT, MYTH_FLAVOR, MYTH_STORY, RELIGION, TEMENOS, TIER_MULT, TIER_NAME, TIER_SUB, godUpkeep } from "./religionData.js";
 import { GameState } from "./state.js";
 import { BUILDINGS, INTEGRATION_STAGES, PHOENICIAN_STORY, STAT_META, TECHS } from "./content.js";
-import { assignJobs, formatChanges, formatYear } from "./engine.js";
+import { assignJobs, effectiveWorkers, formatChanges, formatYear, jobCapacity } from "./engine.js";
+import { forecast, threatYearsOff } from "./threats.js";
 import { DIVINE_AVERT, buildHearth, fundBard, resolveCatastrophe, resolveChoice, resolveCrisis, resolveGodEvent, scaleDamage } from "./culture.js";
 import { researchTech, techAvailable } from "./tech.js";
 import { buildStructure } from "./buildings.js";
@@ -72,7 +73,8 @@ export function render() {
   const docks = document.getElementById("scene-docks");
   if (docks) docks.style.display = GameState.buildings.docks ? "" : "none";
 
-  // Map, civic and administration views.
+  // The Horizon (threat forecast), map, civic and administration views.
+  renderForecast();
   renderMap();
   renderCivic();
   renderAdmin();
@@ -129,16 +131,17 @@ export function renderLabor() {
     rows +=
       `<div class="job-alloc">` +
         `<span class="ja-icon">${job.icon}</span>` +
-        `<span class="ja-name">${job.name}<small>${job.yields}</small></span>` +
+        `<span class="ja-name">${job.name}<small>${job.yields} · <span class="ja-cap" id="ja-cap-${key}"></span></small></span>` +
         `<input type="range" min="0" max="100" value="${alloc[key] || 0}" data-job="${key}" class="ja-range">` +
         `<span class="ja-count" id="ja-count-${key}"></span>` +
       `</div>`;
   }
 
   body.innerHTML =
-    `<p class="admin-intro">Distribute your citizens among the trades. In these early years the ` +
-    `<b>vast majority must farm</b>, or the granaries will run dry. Weights are relative; the head-counts ` +
-    `update live and take effect from the next turn.</p>` +
+    `<p class="admin-intro">Distribute your citizens among the trades. Each trade has only so many ` +
+    `<b>work-sites</b> (fields, grazing runs, clay faces…); workers crammed past them yield little, so a ` +
+    `growing city must open new ground through tech, buildings and synoikismos — not just reassign. Weights ` +
+    `are relative; head-counts update live and take effect next turn.</p>` +
     rows +
     `<div class="ja-balance" id="ja-balance"></div>` +
     `<div class="ja-foot"><span id="ja-total"></span>` +
@@ -174,20 +177,55 @@ export function updateLaborReadout() {
   for (const key in JOBS) {
     const el = document.getElementById(`ja-count-${key}`);
     if (el) el.innerHTML = `<b>${counts[key]}</b> · ${Math.round((alloc[key] || 0) / total * 100)}%`;
+    const capEl = document.getElementById(`ja-cap-${key}`);
+    if (capEl) {
+      const cap = jobCapacity(key);
+      const over = counts[key] - cap;
+      capEl.innerHTML = over > 0
+        ? `<span class="cap-over">${cap} ${JOBS[key].site} · ${over} crowded</span>`
+        : `${counts[key]}/${cap} ${JOBS[key].site}`;
+    }
   }
 
-  const grainProd = counts.farmers * YIELD.grain + (GameState.bonuses.grain || 0);
-  const grainNeed = Math.ceil(pop * CONFIG.GRAIN_PER_CITIZEN);
+  // Grain outlook mirrors processTick: effective farmers (capped) + bonuses,
+  // throttled by scarcity, against need (heavier in a Great Winter).
+  const effFarmers = effectiveWorkers("farmers", counts.farmers);
+  const grainProd = Math.floor((effFarmers * YIELD.grain + (GameState.bonuses.grain || 0) + (GameState.techBonus.grain || 0)) * CONFIG.GRAIN_PRODUCTION_MULT);
+  const coldMult = GameState.winter > 0 ? 1.25 : 1;
+  const grainNeed = Math.ceil(pop * CONFIG.GRAIN_PER_CITIZEN * coldMult);
   const bal = grainProd - grainNeed;
   const balEl = document.getElementById("ja-balance");
   if (balEl) {
     balEl.className = "ja-balance " + (bal >= 0 ? "good" : "bad");
+    const winterNote = GameState.winter > 0 ? " (Great Winter — more eaten)" : "";
     balEl.innerHTML = bal >= 0
-      ? `🌾 Harvest outlook: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a surplus of +${bal}/yr.`
-      : `⚠ Harvest outlook: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a shortfall of ${bal}/yr; famine looms.`;
+      ? `🌾 Harvest outlook${winterNote}: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a surplus of +${bal}/yr.`
+      : `⚠ Harvest outlook${winterNote}: <b>${grainProd}</b> grain grown vs <b>${grainNeed}</b> eaten — a shortfall of ${bal}/yr; famine looms.`;
   }
   const tot = document.getElementById("ja-total");
   if (tot) tot.textContent = `👥 ${pop} citizens`;
+}
+
+/** Render the Horizon strip: telegraphed threats with their domain, how many
+ *  years off, and whether a god of that domain shields the people. */
+export function renderForecast() {
+  const el = document.getElementById("threat-forecast");
+  if (!el) return;
+  const list = forecast();
+  if (!list.length) {
+    el.innerHTML = `<span class="tf-label">⌛ The Horizon</span><span class="tf-calm">the skies are calm — for now</span>`;
+    return;
+  }
+  el.innerHTML = `<span class="tf-label">⌛ The Horizon</span>` + list.map(t => {
+    const shielded = !!domainGod(t.domain);
+    return `<span class="tf-chip ${t.type === "catastrophe" ? "cat" : ""} ${shielded ? "shielded" : "exposed"}" ` +
+      `title="${t.type === "catastrophe" ? "CATASTROPHE" : "Crisis"} · ${DOMAIN_LABEL[t.domain]} · ${shielded ? "a god guards this domain" : "no god guards this domain"}">` +
+      `<span class="tf-ic">${t.icon}</span>` +
+      `<span class="tf-name">${t.name}</span>` +
+      `<span class="tf-meta">${DOMAIN_LABEL[t.domain]} · ~${threatYearsOff(t)}y</span>` +
+      `<span class="tf-shield">${shielded ? "🛡" : "⚠"}</span>` +
+    `</span>`;
+  }).join("");
 }
 
 /** Render the interactive overlay (labels) atop the painted map scene. */
@@ -411,6 +449,30 @@ export function renderReligion() {
 
   if (GameState.winter > 0)
     html += `<div class="rel-banner cold">❄ A Great Winter grips the hills — grain is scarce and the gods go hungrier.</div>`;
+
+  // ---- Domain coverage vs the Horizon: gods as insurance you can read ----
+  {
+    const domains = Object.keys(DOMAIN_LABEL);
+    const incoming = {};
+    forecast().forEach(t => { (incoming[t.domain] = incoming[t.domain] || []).push(t); });
+    const exposed = domains.filter(d => incoming[d] && !domainGod(d));
+    html += `<div class="dom-cover">` +
+      `<div class="dom-cover-head">🛡 Domain Coverage` +
+        (exposed.length
+          ? ` — <span class="dom-warn">${exposed.length} threatened domain${exposed.length > 1 ? "s" : ""} unguarded!</span>`
+          : (Object.keys(incoming).length ? ` — every looming threat is shielded` : ` — no threats loom`)) +
+      `</div>` +
+      `<div class="dom-grid">` +
+      domains.map(d => {
+        const g = domainGod(d);
+        const inc = incoming[d];
+        const cls = g ? "covered" : (inc ? "threatened" : "");
+        const mark = g ? "🛡" : (inc ? "⚠" : "·");
+        return `<span class="dom-chip ${cls}" title="${DOMAIN_LABEL[d]}${g ? ` · guarded by ${godName(g)}` : ""}${inc ? ` · ${inc.length} omen(s) on the horizon` : ""}">` +
+          `${mark} ${DOMAIN_LABEL[d]}${inc ? ` <b>×${inc.length}</b>` : ""}</span>`;
+      }).join("") +
+      `</div></div>`;
+  }
 
   // ---- Founding bench: name a Daimon (needs BOTH cards; preview harmony) ----
   const sel = GameState.relSelect || { aspect: null, epithet: null };
