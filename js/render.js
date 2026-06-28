@@ -686,11 +686,12 @@ export function renderTech() {
 
   // The tree flows top → bottom: Terraced, then Mining + Naval side by side,
   // then the Phoenician Alphabet at the foot.
+  // Techs sit on rows 1 / 3 / 5; the connector rows 2 & 4 hold the down-arrows.
   const layout = {
     terraced: "grid-column:1 / span 2; grid-row:1",
-    mining:   "grid-column:1; grid-row:2",
-    naval:    "grid-column:2; grid-row:2",
-    alphabet: "grid-column:1 / span 2; grid-row:3",
+    mining:   "grid-column:1; grid-row:3",
+    naval:    "grid-column:2; grid-row:3",
+    alphabet: "grid-column:1 / span 2; grid-row:5",
   };
   html += `<div class="tech-tree vertical">`;
   ["terraced", "mining", "naval", "alphabet"].forEach(id => {
@@ -718,9 +719,12 @@ export function renderTech() {
           : `<div class="tn-state locked">${lockMsg}</div>`) +
       `</div>`;
   });
-  // downward connector arrows
-  html += `<div class="tech-arrow d1">↓</div><div class="tech-arrow d2">↓</div>` +
-          `<div class="tech-arrow d3">↓</div><div class="tech-arrow d4">↓</div>`;
+  // Downward connectors, placed in the gap rows: terraced→mining/naval (row 2),
+  // mining/naval→alphabet (row 4).
+  html += `<div class="tech-arrow" style="grid-column:1; grid-row:2">↓</div>` +
+          `<div class="tech-arrow" style="grid-column:2; grid-row:2">↓</div>` +
+          `<div class="tech-arrow" style="grid-column:1; grid-row:4">↓</div>` +
+          `<div class="tech-arrow" style="grid-column:2; grid-row:4">↓</div>`;
   html += `</div>`;
 
   body.innerHTML = html;
