@@ -5,7 +5,20 @@ plain HTML, CSS and **native ES modules** — no build tools, no dependencies.
 
 ## Running
 
-ES modules require HTTP (not `file://`). Serve the folder and open `index.html`:
+Native ES modules can't be loaded over `file://`, so the game must be served
+over HTTP — **double-clicking `index.html` will not work** (the page loads but
+the JavaScript never runs).
+
+**Easiest — use the launcher** (starts a local server and opens your browser):
+
+- macOS: double-click `start.command`, or run `./start.sh`
+- Linux: run `./start.sh`
+- Windows: double-click `start.bat`
+
+The launcher needs Python (or Node) installed and stops the server when you
+press Ctrl+C.
+
+**Manual alternative:**
 
 ```sh
 python3 -m http.server 8000
